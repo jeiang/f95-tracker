@@ -43,7 +43,7 @@ Counting distinct threads that list the host (7 threads total) and total listing
 | workupload | 2 | 10 | yes |
 | krakenfiles, up2share, bunkr, yourfilestore | 1 each | 3-4 | no |
 
-Takeaways: **pixeldrain and mega are on every thread** (every game has at least these two as a path). Hosts vary per release/part, so the downloader must be "try mirrors in order", like F95-Manager does ("Mirrors are tried in order until one succeeds", F95-Manager README).
+Takeaways: **pixeldrain and mega were on every thread of the cache sample** (the logged-in addendum below found pixeldrain on 6/6 live threads and mega on 5/6, not 12760). Hosts vary per release/part, so the downloader must be "try mirrors in order", like F95-Manager does ("Mirrors are tried in order until one succeeds", F95-Manager README).
 
 ## 3. Per-host analysis
 
@@ -72,7 +72,7 @@ Generic tools available in nixpkgs: `curl` 8.22, `wget`, `aria2` 1.37.0, `rclone
 - **Needs a human step or a real browser**: workupload, buzzheavier (Cloudflare challenge), datanodes, mediafire and likely the other plain-link hosts with reCAPTCHA.
 - **Not automatable**: none proven impossible, but captcha-gated hosts are out of scope by constraint (no solver).
 
-Key point for the architecture: because **mega and pixeldrain appear on every sampled thread** and both are automatable *after* unmasking, a human captcha solve on F95 plus MEGAcmd/pixeldrain API covers every sampled game without touching the harder hosts.
+Key point for the architecture: because **pixeldrain and mega appeared on nearly every sampled thread** (all but mega on 12760) and both are automatable *after* unmasking, a human captcha solve on F95 plus MEGAcmd/pixeldrain API covers most sampled games without touching the harder hosts. Exception: 12760's headline archive has neither (see addendum).
 
 ## 5. How the user's logged-in browser can cover the human step
 
@@ -95,17 +95,67 @@ Options for this tracker (server on a NixOS host, downloader on `artemis`, user'
 6. Respect host limits: concurrency 1 per host, honour pixeldrain/mega quota errors by backing off rather than rotating anything.
 7. Post-download: verify size/checksum when provided, extract, then record in the tracker; the tracker never needs the game files.
 8. Authentication between tracker and downloader and between extension and tracker is an open design item for grilling (OIDC session vs. per-device API token).
-9. Open verification still needed (needs a logged-in browser, see below): actual hosts on live threads, which of the "plain" hosts are really plain links, and file-page behaviour of workupload/buzzheavier/datanodes/vikingfile/mediafire.
+9. Open verification (see "Logged-in addendum" and "Still unverified"): masked-page captcha scope, real bowfile href, and file-page behaviour of non-masked hosts. Live hosts per thread are now observed.
 
-## Blocked on logged-in access (partial)
+## Logged-in addendum (6 live threads, 8 page loads, nothing clicked)
 
-The core question is answerable from source code and docs. These items could not be verified because the logged-in relay was unavailable:
-- Direct reading of the live download blocks of the 5 sample threads (I used the F95Checker public cache; hosts match but real hrefs for non-masked hosts and whether F95 shows any additional host were not seen).
-- Whether a single captcha solve covers all masked links on a thread in the live site (observed only in the userscript's design).
-- File-page behaviour (captcha / Cloudflare) of non-masked hosts beyond their landing pages.
+Method: the user's signed-in browser (own tab, CDP), first post of 12760, 31912, 98051, 134987, 50488, 125074 (12760 and 31912 loaded twice). I only read DOM `href`s and scripts; I did not click, did not load any `/masked/` URL, and kept no tokens. **[obs]** unless marked.
+
+### A. Hosts per platform (headline block = the visible, un-spoilered "DOWNLOAD" lines for the current version)
+
+Each cell lists host (M = masked `f95zone.to/masked/...`, D = direct external href).
+
+| Thread | Win/Linux | Mac | Android |
+|---|---|---|---|
+| 12760 | bowfile, buzzheavier, datanodes, vikingfile (all D; 0 M) | same 4 (D) | none |
+| 31912 | buzzheavier, datanodes, krakenfiles, vikingfile (D); pixeldrain (M) | same 5 | same 5 |
+| 98051 | buzzheavier, datanodes, vikingfile (D); pixeldrain, mega (M) | same 5 | none |
+| 134987 | (Windows and Linux each) mediafire, buzzheavier, datanodes (D); pixeldrain, mega (M) | same 5 | same 5 |
+| 50488 | (Win/Linux/Mac one line) buzzheavier, datanodes, vikingfile (D); mega, pixeldrain (M) | in same line | separate `Android (v1.60)` line, same 5 hosts |
+| 125074 | (Win only) buzzheavier, datanodes, vikingfile (D); pixeldrain, mega (M) | none | none |
+
+Totals over those headline lines: 14 platform lines; 9 of them carry 2 masked links, 3 carry 1, 2 carry none (12760). Masked links in headline lines are **only pixeldrain and mega**. Everything else is direct.
+
+Spoiler blocks ("older/other mirror sets" and split `Part N` lines) add more: 31912 has 24 masked links in total (pixeldrain 9, mega 6, workupload 6, gofile 3); gofile and workupload appear **only** inside spoilers (31912, 98051, 50488). Platform lines repeat the same host list for Win/Linux, Mac and Android, so per platform the host set is the same; links differ per platform and per part.
+
+Across all six posts (incl. spoilers) masked hosts: pixeldrain 6/6, mega 5/6 (not 12760), gofile 3/6, workupload 3/6. No pixeldrain, mega or gofile link was direct in any of the six posts.
+
+### B. URL shapes (lengths for random parts, no values)
+
+Masked: `https://f95zone.to/masked/<host-domain>/<thread id>/<7-digit number>/<27>/<22>/<64|107|43>` (token length varies with host: pixeldrain/workupload 64, mega 107, gofile 43). In 31912 all 24 hrefs are unique (per-link tokens). The 7-digit number is identical for every link in the post (and, **[INFERENCE]**, matched on both 31912 and 12760, so it is likely the viewer's id rather than a post id; not recorded). `<a target=_blank rel="nofollow noopener" class="link link--external has-favicon">`; no `data-*` attributes, no inline handler.
+
+Direct hosts, as the thread links them:
+
+| Host | Shape |
+|---|---|
+| buzzheavier | `https://bzzhr.to/<12 chars>` |
+| datanodes | `https://datanodes.to/<12 chars>/<filename>` (filename carries the release name) |
+| vikingfile | `https://vikingfile.com/f/<10 chars>` |
+| mixdrop | `https://mixdrop.ag/f/<14-15 chars>` |
+| krakenfiles | `https://krakenfiles.com/view/<10 chars>/file.html` |
+| mediafire | `https://www.mediafire.com/file/<id>/<name>/file` (134987) or `/file/<15 chars>` (50488) |
+| bunkr | `https://bunkr.pk/f/<13 chars>` |
+| up2share | `https://up2sha.re/file?f=<...>` |
+| uploadhaven | `https://uploadhaven.com/download/<32 chars>` form |
+| files.fm, we.tl | `https://files.fm/u/<9>`, `https://we.tl/<12>` |
+| bowfile | href host is the literal `cancerads` (`https://cancerads/<5>`), not a resolvable domain. **[INFERENCE]** a placeholder or something rewriting the link in the user's browser (extension/ad blocker); the real bowfile URL was not observed. Treat bowfile as unusable until checked in a clean profile |
+
+Because no pixeldrain/mega/gofile href is direct, the planned adapters receive these only after unmasking, in the host forms they already parse (`pixeldrain.com/u/<id>`, `mega.nz/file/<id>#<key>` or `/folder/...`, `gofile.io/d/<id>`) **[INFERENCE: the post-unmask target was not observed]**.
+
+### C. How masked links get resolved (markup and scripts only)
+
+- Thread-page behaviour **[obs]**: masked links are ordinary `<a href="https://f95zone.to/masked/...">` that open a new tab. None of F95zone's loaded scripts (`xf/*`, `themehouse`, `siropu`, `sv`, searched for `masked|recaptcha|hcaptcha|turnstile`) handles them, and the thread page has no captcha widget, `.g-recaptcha`, `[data-sitekey]`, captcha iframe or `grecaptcha` global. The only inline script that mentions `masked` just extracts the host from the path to pick the favicon.
+- So resolution happens on the **masked-link page itself** (a separate page load), not by an XHR from the thread page. The endpoint is the masked URL itself; `POST <masked url>` with `xhr=1&download=1[&captcha=...]` is known from the userscript and F95-Manager (section 1) **[src; not re-observed: I did not load a masked page]**.
+- Captcha scope **[INFERENCE]**: the widget is rendered on the masked page, so it is per link page. Whether a solve unlocks the others is not visible from the thread page (no hint text; searching the page text for "captcha" returned nothing). The "one solve covers all" claim still rests only on the userscript's cookie-replay design and F95-Manager's `status:"captcha"` branch (section 1).
+
+## Still unverified
+
+- The masked page itself: widget type, whether one solve carries to other links, post-unmask target forms. Needs one deliberate masked-page load (reveals one link) which was out of bounds here.
+- The real bowfile href (`cancerads` host).
+- File-page behaviour of the non-masked hosts beyond landing pages (unchanged from above).
 
 ## Recommendation
 
 Do not try to automate the F95zone captcha. Make the downloader a **pull-based worker on artemis that only accepts already-resolved host URLs**. The user clears the one human step, F95's reCAPTCHA on masked links, in their own logged-in browser. The recommended way is a small userscript/extension that unmasks every masked link on the thread after a single solve and posts the real URLs to the tracker. The fallback is a "paste resolved link" hand-off page in the tracker. Never store the F95 cookie on the server or artemis.
 
-Host support for the first version: **pixeldrain** (official REST API, no key), **mega** (MEGAcmd `mega-get`, no login, IP-based quota that resumes), and **gofile** (via gallery-dl; reverse-engineered token, so mark brittle). In my 7-thread sample, pixeldrain and mega were on all 7 threads, so these three cover every sampled game. **workupload, buzzheavier (Cloudflare challenge), datanodes, mediafire and the remaining hosts need a human step** and should be surfaced as "download manually" with the mirror list rather than attempted. Treat mixdrop and bunkr (gallery-dl extractors exist) as optional later adapters. If the user is an F95 donor, Donor DDL (`/sam/dddl.php`) is a captcha-free alternative worth a separate check.
+Host support for the first version: **pixeldrain** (official REST API, no key), **mega** (MEGAcmd `mega-get`, no login, IP-based quota that resumes), and **gofile** (via gallery-dl; reverse-engineered token, so mark brittle). **Logged-in addendum correction**: pixeldrain was on 6 of 6 live threads and mega on 5 of 6 (not 12760), but all of them are *masked* everywhere, so the three planned adapters never receive a link straight from the thread; they only ever get URLs the user's browser unmasked. Adapters therefore take a resolved URL, never a thread link. On thread 12760 the headline (full-archive) block has no masked or automatable host at all (bowfile, buzzheavier, datanodes, vikingfile only); pixeldrain appears only as split `Part N` links. The downloader must therefore cope with "no supported mirror: needs manual download" even for pixeldrain-era games, and with multi-part archives. **workupload, buzzheavier (Cloudflare challenge), datanodes, mediafire and the remaining hosts need a human step** and should be surfaced as "download manually" with the mirror list rather than attempted. Treat mixdrop and bunkr (gallery-dl extractors exist) as optional later adapters. If the user is an F95 donor, Donor DDL (`/sam/dddl.php`) is a captcha-free alternative worth a separate check.
