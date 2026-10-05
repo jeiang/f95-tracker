@@ -92,13 +92,22 @@ pkgs.testers.runNixOSTest {
     # A second run replaces the backup atomically instead of failing on the existing file.
     machine.succeed("systemctl start f95-tracker-backup.service")
 
-    # Restore: with the live DB gone, the restore unit copies the backup into place.
+    # Losing the live DB while a backup exists: restarting serve restores it (ExecStartPre), marker included.
     machine.succeed("systemctl stop f95-tracker.service")
+    machine.succeed("runuser -u f95-tracker -- sqlite3 /var/lib/f95-tracker/f95-tracker.db 'create table restore_marker(x)'")
+    machine.succeed("systemctl start f95-tracker-backup.service")
     machine.succeed("rm -f /var/lib/f95-tracker/f95-tracker.db*")
-    machine.succeed("systemctl restart f95-tracker-restore.service")
-    assert machine.succeed("stat -c '%U %a' /var/lib/f95-tracker/f95-tracker.db").strip() == "f95-tracker 600"
-    machine.succeed("systemctl start f95-tracker.service")
+    machine.succeed("systemctl restart f95-tracker.service")
     machine.wait_for_open_port(8470)
     assert machine.succeed("curl -sf http://127.0.0.1:8470/healthz").strip() == "ok"
+    assert machine.succeed("stat -c '%U %a' /var/lib/f95-tracker/f95-tracker.db").strip() == "f95-tracker 600"
+    assert machine.succeed("sqlite3 /var/lib/f95-tracker/f95-tracker.db \"select count(*) from sqlite_master where name='restore_marker'\"").strip() == "1"
+
+    # With neither live DB nor backup, the backup unit fails and creates nothing.
+    machine.succeed("systemctl stop f95-tracker.service")
+    machine.succeed("rm -f /var/lib/f95-tracker/f95-tracker.db* /var/lib/f95-tracker/backup/f95-tracker.db")
+    machine.fail("systemctl start f95-tracker-backup.service")
+    machine.fail("test -e /var/lib/f95-tracker/f95-tracker.db")
+    machine.fail("test -e /var/lib/f95-tracker/backup/f95-tracker.db")
   '';
 }
