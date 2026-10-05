@@ -1,0 +1,243 @@
+package ui
+
+import "strconv"
+
+templ AddGamePage(v AddView) {
+	<h1 class="text-2xl font-semibold">Add Game</h1>
+	<section class="panel mt-4 px-4 py-4" aria-labelledby="h-src" x-data={ "{ kind: '" + v.Kind + "' }" }>
+		<h2 id="h-src" class="label mb-2">Source</h2>
+		<form method="post" action="/games/fetch" hx-post="/games/fetch" hx-target="#parse-panels" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" class="grid gap-3">
+			<div class="seg" role="radiogroup" aria-labelledby="h-src">
+				for _, o := range addKinds {
+					<label>
+						<input type="radio" class="sr-only" name="kind" value={ o.Value } x-model="kind" checked?={ o.Value == v.Kind }/>
+						{ o.Label }
+					</label>
+				}
+			</div>
+			@Field(FieldProps{ID: "src-input", Name: "input", Label: "Link or F95 thread id", Value: v.Input, Placeholder: "https://f95zone.to/threads/… or 238127", Error: v.Error, Required: true, Attrs: templ.Attributes{"autocomplete": "off", "inputmode": "url", "autofocus": true},
+				Hint: "F95: we read the title, latest version, Dev status, F95 tags and the Genre text. Nothing is added until you confirm."})
+			<div class="grid gap-3 sm:grid-cols-2" x-show="kind === 'manual'">
+				@Field(FieldProps{ID: "src-name", Name: "name", Label: "Name", Value: v.Name})
+				@Field(FieldProps{ID: "src-version", Name: "version", Label: "Latest version", Value: v.Version, Hint: "You keep this up to date by hand."})
+			</div>
+			<div x-show="kind !== 'f95_thread'">
+				@Field(FieldProps{ID: "src-tags", Name: "tags", Label: "Tag text (optional)", Value: v.TagText, Multiline: true, Rows: 3, Hint: "Paste tags from the page; they go through the same parser as an F95 Genre text."})
+			</div>
+			<div>
+				@Button(ButtonProps{Variant: "primary", Type: "submit"}) {
+					Fetch
+				}
+			</div>
+		</form>
+	</section>
+	@templ.Fragment("parse-panels") {
+		<div id="parse-panels" aria-live="polite">
+			if v.Notice != nil {
+				<section class={ "panel mt-4 px-4 py-3 text-sm", templ.KV("border-bad/50 text-bad", v.Notice.Tone == "bad"), templ.KV("border-warn/50 text-warn", v.Notice.Tone == "warn") } role="alert">{ v.Notice.Text }</section>
+			}
+			if v.Tracked != nil {
+				<section class="panel mt-4 px-4 py-4" role="alert" id="already-tracked">
+					<p class="font-medium">You already track { v.Tracked.Name }.</p>
+					<p class="mt-1 text-sm text-muted">One F95 thread is one Game, including remakes and part 2s posted on the same thread.</p>
+					<div class="mt-3">
+						@Button(ButtonProps{Variant: "primary", Href: "/games/" + strconv.FormatInt(v.Tracked.GameID, 10)}) {
+							Open it
+						}
+					</div>
+				</section>
+			}
+			if v.Parse != nil {
+				@addParseChecked(v)
+			}
+		</div>
+	}
+}
+
+type addKind struct{ Value, Label string }
+
+var addKinds = []addKind{{"f95_thread", "F95 thread"}, {"itchio", "itch.io page"}, {"manual", "Manual link"}}
+
+templ addParseChecked(v AddView) {
+	{{ p := v.Parse }}
+	<form method="post" action="/games" class="mt-4">
+		for _, h := range p.Hidden {
+			<input type="hidden" name={ h[0] } value={ h[1] }/>
+		}
+		<section class="panel flex gap-4 px-4 py-4" aria-label="Fetched Source">
+			if p.CoverURL != "" {
+				<img src={ p.CoverURL } alt="" referrerpolicy="no-referrer" loading="lazy" class="h-28 w-20 rounded object-cover"/>
+			}
+			<div class="min-w-0 flex-1">
+				<p class="label">{ p.SourceLabel }</p>
+				<div class="mt-1 max-w-md">
+					@Field(FieldProps{ID: "add-name", Name: "name", Label: "Name", Value: p.Name, Required: !p.Pending})
+				</div>
+				<div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+					if p.Version != "" {
+						<span class="chip">latest <span class="font-mono">{ p.Version }</span></span>
+					}
+					if p.DevStatus != "" {
+						@Chip(DevChip(p.DevStatus))
+					}
+					if p.OpenURL != "" {
+						<a href={ templ.SafeURL(p.OpenURL) } target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Open page ↗</a>
+					}
+				</div>
+				<div class="mt-3 flex flex-wrap items-center gap-2">
+					<label for="add-play" class="text-sm">Play status</label>
+					@PlayStatusSelect(PlayStatusSelectProps{ID: "add-play", Name: "play", Selected: "planned"})
+				</div>
+			</div>
+		</section>
+		if p.Pending {
+			<section class="panel mt-4 border-warn/50 px-4 py-3 text-sm" role="status" id="details-pending">
+				<p class="font-medium text-warn">Added with details pending.</p>
+				<p class="mt-1">The Genre text could not be read (F95 cookie invalid or the page is public only). The Game gets <strong>details pending</strong> and a queued detail fetch; its tags are parsed after you fix the cookie.</p>
+			</section>
+		} else {
+			if p.HasGenre {
+				<section class="panel mt-4 px-4 py-4" aria-labelledby="h-genre">
+					<div class="flex flex-wrap items-baseline justify-between gap-2">
+						<h2 id="h-genre" class="label">Genre text</h2>
+						<ul class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted" aria-label="Highlight legend">
+							<li><mark class="hl hl-exact">exact</mark></li>
+							<li><mark class="hl hl-synonym">synonym</mark></li>
+							<li><mark class="hl hl-custom">no match</mark></li>
+							<li><mark class="hl hl-marker">Possible / Planned</mark></li>
+							<li><mark class="hl hl-prose">prose</mark></li>
+						</ul>
+					</div>
+					<p class="mt-3 whitespace-pre-line text-base leading-loose">
+						for _, s := range p.Segments {
+							if s.Class == "" {
+								{ s.Text }
+							} else {
+								<mark class={ "hl hl-" + s.Class }>{ s.Text }</mark>
+							}
+						}
+					</p>
+				</section>
+			}
+			<section class="panel mt-4" aria-labelledby="h-look" id="needs-a-look">
+				<div class="border-b border-line px-4 py-3">
+					<h2 id="h-look" class="font-semibold">Needs a look <span class="font-normal text-muted">{ strconv.Itoa(len(p.Look)) }</span></h2>
+					<p class="text-xs text-muted">Synonyms, phrases with no match, prose and Possible / Planned items. Defaults shown; change what is off.</p>
+				</div>
+				<ul class="divide-y divide-line/60">
+					for _, r := range p.Look {
+						<li class="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+							<input type="hidden" name={ r.Field("raw") } value={ r.Raw }/>
+							<div class="min-w-0">
+								<div class="flex flex-wrap items-center gap-2 text-sm">
+									<mark class={ "hl hl-" + lookClass(r) }>{ r.Raw }</mark>
+									<span class="text-muted" aria-hidden="true">→</span>
+									<input class="field h-8 min-h-0 !w-44 py-1 font-mono text-xs" name={ r.Field("target") } value={ r.Target } list="tag-list" aria-label={ "Tag for " + r.Raw } placeholder={ lookPlaceholder(r) }/>
+									if r.NewCustom {
+										<span class="chip chip-muted">new Custom tag</span>
+									}
+								</div>
+								<p class="mt-1 text-xs text-muted">{ r.ReasonText() }</p>
+							</div>
+							<div class="flex flex-wrap items-center gap-3">
+								<select class="field h-8 min-h-0 w-28 py-1 text-xs" name={ r.Field("qual") } aria-label={ "Qualifier for " + r.Raw }>
+									for _, q := range addQualifiers {
+										<option value={ q } selected?={ q == r.Qualifier }>{ q }</option>
+									}
+								</select>
+								<label class="flex items-center gap-1 text-sm">
+									<input type="checkbox" name={ r.Field("accept") } value="1" checked?={ r.Accept } class="h-4 w-4 accent-[rgb(var(--accent))]"/>
+									if r.Prose {
+										make tag
+									} else {
+										accept
+									}
+								</label>
+							</div>
+						</li>
+					}
+					if len(p.Look) == 0 {
+						<li class="px-4 py-3 text-sm text-muted">Nothing to check.</li>
+					}
+				</ul>
+			</section>
+			<div class="mt-4 grid gap-4 md:grid-cols-2">
+				<section class="panel px-4 py-4" aria-labelledby="h-exact" id="exact-matches">
+					<h2 id="h-exact" class="font-semibold">Exact matches <span class="font-normal text-muted">{ strconv.Itoa(len(p.Exact)) }</span></h2>
+					<p class="text-xs text-muted">Pre-accepted. Untick to drop.</p>
+					<ul class="mt-2 grid gap-1">
+						for _, r := range p.Exact {
+							<li>
+								<input type="hidden" name={ r.Field("raw") } value={ r.Raw }/>
+								<label class="flex items-center gap-2 text-sm">
+									<input type="checkbox" name={ r.Field("accept") } value="1" checked?={ r.Accept } class="h-4 w-4 accent-[rgb(var(--accent))]"/>
+									<span>{ r.Target }</span>
+									if r.Note != "" {
+										<span class="text-xs italic text-muted">— { r.Note }</span>
+									}
+								</label>
+							</li>
+						}
+					</ul>
+				</section>
+				<section class="panel px-4 py-4" aria-labelledby="h-f95only" id="f95-only">
+					<h2 id="h-f95only" class="font-semibold">F95 only <span class="font-normal text-muted">{ strconv.Itoa(len(p.F95Only)) }</span></h2>
+					<p class="text-xs text-muted">On the thread's F95 tag list but not in the Genre text. Added as present tags.</p>
+					<ul class="mt-2 grid gap-1">
+						for _, r := range p.F95Only {
+							<li>
+								<input type="hidden" name={ r.Field("slug") } value={ r.Slug }/>
+								<label class="flex items-center gap-2 text-sm">
+									<input type="checkbox" name={ r.Field("accept") } value="1" checked?={ r.Accept } class="h-4 w-4 accent-[rgb(var(--accent))]"/>
+									<span>{ r.Label }</span>
+								</label>
+							</li>
+						}
+					</ul>
+				</section>
+			</div>
+			<datalist id="tag-list">
+				for _, l := range v.Vocab {
+					<option value={ l }></option>
+				}
+			</datalist>
+		}
+		<div class="mt-6 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center">
+			<p class="text-sm text-muted">
+				if !p.Pending {
+					<strong class="text-ink">{ strconv.Itoa(p.Accepted) }</strong> tags are pre-accepted, all
+				}
+				<strong class="text-ink">unverified</strong>. Confirming does not verify any tag; that happens in a Tag review after you play.
+			</p>
+			<div class="flex shrink-0 gap-2 sm:ml-auto">
+				@Button(ButtonProps{Href: "/games/new"}) {
+					Back
+				}
+				@Button(ButtonProps{Variant: "primary", Type: "submit"}) {
+					Confirm &amp; add Game
+				}
+			</div>
+		</div>
+	</form>
+}
+
+var addQualifiers = []string{"present", "planned", "optional"}
+
+func lookClass(r ParseRow) string {
+	switch {
+	case r.Prose:
+		return "prose"
+	case r.Reason == "possible":
+		return "marker"
+	case r.Reason == "no_match":
+		return "custom"
+	}
+	return "synonym"
+}
+
+func lookPlaceholder(r ParseRow) string {
+	if r.Prose {
+		return "tag name"
+	}
+	return ""
+}
