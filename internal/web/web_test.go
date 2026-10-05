@@ -11,7 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jeiang/f95-tracker/internal/auth"
 	"github.com/jeiang/f95-tracker/internal/clock"
+	"github.com/jeiang/f95-tracker/internal/config"
+	"github.com/jeiang/f95-tracker/internal/db"
 	"github.com/jeiang/f95-tracker/internal/domain"
 	"github.com/jeiang/f95-tracker/internal/testutil"
 	"github.com/jeiang/f95-tracker/internal/web/static"
@@ -20,8 +23,27 @@ import (
 func newTestServer(t *testing.T) (*Server, func()) {
 	t.Helper()
 	store := testutil.NewStore(t)
-	s := New(Deps{Store: store, Clock: clock.NewFake(time.Unix(0, 0)), Log: slog.New(slog.NewTextHandler(io.Discard, nil))})
-	return s, func() { store.Close() }
+	return newServer(t, store, testutil.NewOIDCFake(t)), func() { store.Close() }
+}
+
+func newTestConfig() config.Config { return config.Config{} }
+
+func newServer(t *testing.T, store *db.Store, fake *testutil.OIDCFake) *Server {
+	t.Helper()
+	return newServerWithConfig(t, store, fake.Apply(newTestConfig()))
+}
+
+func newServerWithConfig(t *testing.T, store *db.Store, cfg config.Config) *Server {
+	t.Helper()
+	clk := clock.NewFake(time.Unix(0, 0))
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	return New(Deps{Store: store, Clock: clk, Log: log, Config: cfg, Auth: auth.New(cfg, store, clk, log)})
+}
+
+// signedIn returns a handler and a session cookie for it.
+func signedIn(t *testing.T, s *Server, fake *testutil.OIDCFake) (http.Handler, *http.Cookie) {
+	h := s.Handler()
+	return h, testutil.LoginSession(t, h, fake)
 }
 
 func do(h http.Handler, method, target string, hdr map[string]string) *httptest.ResponseRecorder {
@@ -47,12 +69,13 @@ func TestHealthzFollowsDatabase(t *testing.T) {
 }
 
 func TestRootRedirectsAndGamesRendersLayout(t *testing.T) {
-	s, _ := newTestServer(t)
-	h := s.Handler()
-	if rec := do(h, "GET", "/", nil); rec.Code != http.StatusFound || rec.Header().Get("Location") != "/games" {
+	fake := testutil.NewOIDCFake(t)
+	h, c := signedIn(t, newServer(t, testutil.NewStore(t), fake), fake)
+	hdr := map[string]string{"Cookie": c.Name + "=" + c.Value}
+	if rec := do(h, "GET", "/", hdr); rec.Code != http.StatusFound || rec.Header().Get("Location") != "/games" {
 		t.Fatalf("/: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
-	rec := do(h, "GET", "/games", nil)
+	rec := do(h, "GET", "/games", hdr)
 	body := rec.Body.String()
 	if rec.Code != 200 || !strings.Contains(body, `aria-current="page"`) || !strings.Contains(body, "/settings") {
 		t.Fatalf("/games: %d %s", rec.Code, body)
