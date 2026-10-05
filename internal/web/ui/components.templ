@@ -23,6 +23,16 @@ templ Chip(p ChipProps) {
 	>{ p.Text }</span>
 }
 
+// devChipLabeled is DevChip with a "Dev:" prefix, for places without a Dev status column
+// header where it would read like a Play status ("On hold" exists in both).
+func devChipLabeled(s string) ChipProps {
+	c := DevChip(s)
+	if s != "" {
+		c.Text = "Dev: " + c.Text
+	}
+	return c
+}
+
 // Badge is a count pill for navigation entries and entry strips.
 type BadgeProps struct {
 	Count int
@@ -190,11 +200,22 @@ templ HalfStars(p HalfStarsProps) {
 		x-data={ fmt.Sprintf("{ h: 0, v: %d }", p.RatingX2) }
 		{ p.Attrs... }
 	>
-		<span class="inline-flex" role="img" aria-label={ ratingText(p.RatingX2) } @mouseleave="h = 0">
+		<span
+			class="inline-flex"
+			if p.Action != "" {
+				role="group"
+				aria-label="Rating"
+			} else {
+				role="img"
+				aria-label={ ratingText(p.RatingX2) }
+			}
+			@mouseleave="h = 0"
+		>
 			for i := 1; i <= 5; i++ {
-				<span class="relative inline-block h-8 w-8 text-center text-3xl leading-8 text-line" aria-hidden="true">
-					★
+				<span class="relative inline-block h-8 w-8 text-center text-3xl leading-8 text-muted/70">
+					<span aria-hidden="true">★</span>
 					<span
+						aria-hidden="true"
 						class="absolute inset-y-0 left-0 overflow-hidden text-accent"
 						style={ fmt.Sprintf("width:%d%%", starFill(p.RatingX2, i)) }
 						:style={ fmt.Sprintf("{ width: ((h || v) >= %d ? 100 : (h || v) === %d ? 50 : 0) + '%%' }", 2*i, 2*i-1) }
@@ -322,5 +343,12 @@ templ FormError(msg string) {
 // ErrorPage is the full-page body for non-htmx errors.
 templ ErrorPage(heading, msg string) {
 	<h1 class="mb-4 text-2xl font-semibold">{ heading }</h1>
-	@FormError(msg)
+	<div class="max-w-xl">
+		@FormError(msg)
+	</div>
+	<div class="mt-4">
+		@Button(ButtonProps{Href: "/games"}) {
+			Back to Games
+		}
+	</div>
 }

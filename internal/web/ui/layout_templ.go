@@ -195,12 +195,12 @@ func Layout(page PageMeta, body templ.Component) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</nav><button type=\"button\" onclick=\"toggleTheme()\" class=\"btn btn-ghost btn-sm\" aria-label=\"Toggle light or dark theme\"><span aria-hidden=\"true\">◐</span><span class=\"hidden sm:inline\">Theme</span></button></div></header><div id=\"banners\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</nav><button type=\"button\" onclick=\"toggleTheme()\" class=\"btn btn-ghost btn-sm\" aria-label=\"Theme: switch light or dark\"><span aria-hidden=\"true\">◐</span><span class=\"hidden sm:inline\">Theme</span></button></div></header><div id=\"banners\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, b := range page.Banners {
-			var templ_7745c5c3_Var11 = []any{"border-b px-4 py-2 text-sm", bannerTone(b.Tone)}
+			var templ_7745c5c3_Var11 = []any{"border-b py-2 text-sm", bannerTone(b.Tone)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -218,7 +218,7 @@ func Layout(page PageMeta, body templ.Component) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\"><div class=\"mx-auto flex max-w-6xl flex-wrap items-center gap-x-3\"><span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\"><div class=\"mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 px-4\"><span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -280,12 +280,12 @@ func Layout(page PageMeta, body templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</main><nav aria-label=\"Primary\" class=\"fixed inset-x-0 bottom-0 z-40 grid grid-flow-col auto-cols-fr border-t border-line bg-surface sm:hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</main><nav aria-label=\"Primary\" class=\"fixed inset-x-0 bottom-0 z-40 grid h-14 grid-flow-col auto-cols-fr border-t border-line bg-surface sm:hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, it := range page.navItems() {
-			var templ_7745c5c3_Var16 = []any{"flex min-h-14 items-center justify-center px-1 text-center text-xs font-medium", templ.KV("text-accent", it.Tab == page.ActiveTab), templ.KV("text-muted", it.Tab != page.ActiveTab)}
+			var templ_7745c5c3_Var16 = []any{"flex items-center justify-center border-t-2 px-1 text-center text-xs font-medium leading-tight", templ.KV("border-accent text-accent", it.Tab == page.ActiveTab), templ.KV("border-transparent text-muted", it.Tab != page.ActiveTab)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var16...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

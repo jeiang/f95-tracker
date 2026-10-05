@@ -1,6 +1,5 @@
 package ui
 
-
 templ GameDetailPage(v GameDetailView) {
 	<a href="/games" class="text-sm text-muted hover:text-ink">← Games</a>
 	@templ.Fragment("game-detail") {
@@ -33,7 +32,7 @@ templ GameDetailPage(v GameDetailView) {
 								<noscript><button class="btn btn-sm" type="submit">Save</button></noscript>
 							</form>
 						} else {
-							@Chip(DevChip(v.Dev))
+							@Chip(devChipLabeled(v.Dev))
 						}
 						if v.Update {
 							@Chip(ChipProps{Tone: "info", Text: "Update", Title: "Latest version changed since the last check"})
@@ -93,12 +92,12 @@ templ GameDetailPage(v GameDetailView) {
 					</form>
 				</div>
 			}
-			<div class="mt-6 grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
-				<div class="grid gap-6">
+			<div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
+				<div class="grid min-w-0 grid-cols-1 gap-6">
 					<section class="panel px-4 py-4" aria-labelledby="h-play">
 						<h2 id="h-play" class="label mb-3">Play status</h2>
 						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/play-status")) } class="flex items-center gap-2" { hxChange(gameURL(v.ID, "/play-status"))... }>
-							@PlayStatusSelect(PlayStatusSelectProps{ID: "play-status", Name: "play_status", Selected: v.Play})
+							@PlayStatusSelect(PlayStatusSelectProps{ID: "play-status", Name: "play_status", Selected: v.Play, Attrs: templ.Attributes{"aria-labelledby": "h-play"}})
 							<noscript><button class="btn btn-sm" type="submit">Save</button></noscript>
 						</form>
 						<p class="mt-2 text-xs text-muted">{ alertHint(v.PlayAlerts) } <a href="/settings" class="underline">Alert set</a></p>
@@ -129,27 +128,29 @@ templ GameDetailPage(v GameDetailView) {
 								<ol class="mt-3 divide-y divide-line/60">
 									for _, e := range v.Log {
 										<li class="py-2 text-sm">
-											<div class="flex items-center gap-3">
-												<span class={ "w-24 shrink-0 font-mono text-xs", templ.KV("text-muted", e.Date == "") }>
-													if e.Date == "" {
-														undated
-													} else {
-														{ e.Date }
+											<div class="flex items-center gap-2">
+												<div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+													<span class={ "w-20 shrink-0 font-mono text-xs", templ.KV("text-muted", e.Date == "") }>
+														if e.Date == "" {
+															undated
+														} else {
+															{ e.Date }
+														}
+													</span>
+													<span class="min-w-0 break-all font-mono">{ e.Version }</span>
+													if e.Imported {
+														@Chip(ChipProps{Tone: "muted", Text: "imported"})
 													}
-												</span>
-												<span class="font-mono">{ e.Version }</span>
-												if e.Imported {
-													@Chip(ChipProps{Tone: "muted", Text: "imported"})
-												}
-												if e.Last {
-													<span class="text-xs text-muted">last played</span>
-												}
-												<form method="post" action={ templ.SafeURL(logURL(v.ID, e.ID, "/delete")) } class="ml-auto" { hxDetail(logURL(v.ID, e.ID, "/delete"))... }>
+													if e.Last {
+														<span class="whitespace-nowrap text-xs text-muted">last played</span>
+													}
+												</div>
+												<form method="post" action={ templ.SafeURL(logURL(v.ID, e.ID, "/delete")) } class="shrink-0" { hxDetail(logURL(v.ID, e.ID, "/delete"))... }>
 													<button type="submit" class="btn btn-ghost btn-sm" aria-label={ "Delete entry " + e.Version }>Delete</button>
 												</form>
 											</div>
 											<details class="mt-1">
-												<summary class="cursor-pointer text-xs text-muted hover:text-ink">Edit</summary>
+												<summary class="cursor-pointer text-xs text-muted hover:text-ink" aria-label={ "Edit entry " + e.Version }>Edit</summary>
 												<form method="post" action={ templ.SafeURL(logURL(v.ID, e.ID, "")) } class="mt-2 flex flex-wrap items-end gap-2" { hxDetail(logURL(v.ID, e.ID, ""))... }>
 													<input name="version" class="field mono w-32" value={ e.Version } required aria-label="Version"/>
 													<input name="played_on" type="date" class="field w-auto" value={ e.Date } required?={ !e.Imported } aria-label="Date"/>
@@ -183,8 +184,8 @@ templ GameDetailPage(v GameDetailView) {
 						</ul>
 						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/sources")) } class="mt-3 flex gap-2" { hxDetail(gameURL(v.ID, "/sources"))... }>
 							<label for="source-url" class="sr-only">Add a Source link</label>
-							<input id="source-url" name="url" type="url" class="field" placeholder="Add a Source link (F95 thread or itch.io page)" required/>
-							<button type="submit" class="btn">Add</button>
+							<input id="source-url" name="url" type="url" class="field" placeholder="F95 thread or itch.io link" required/>
+							<button type="submit" class="btn" aria-label="Add Source">Add</button>
 						</form>
 					</section>
 				</div>
@@ -246,17 +247,17 @@ templ GameDetailPage(v GameDetailView) {
 						}
 						if len(v.TagGroups) == 0 {
 							<p class="mt-4 text-sm text-muted">
-								No tags yet
 								if v.DetailsPending {
-									— they arrive with the details
+									No tags yet — they arrive with the details.
+								} else {
+									No tags yet. Add one by hand below.
 								}
-								.
 							</p>
 						}
 						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/tags")) } class="mt-4 flex gap-2" { hxTags(gameURL(v.ID, "/tags"))... }>
 							<label for="new-tag" class="sr-only">Add a tag by hand</label>
 							<input id="new-tag" name="tag" class="field" placeholder="Add a tag by hand (F95 tag or Custom tag)" list="known-tags" required/>
-							<button class="btn" type="submit">Add</button>
+							<button class="btn" type="submit" aria-label="Add tag">Add</button>
 						</form>
 						<datalist id="known-tags">
 							for _, l := range v.KnownTags {
@@ -296,4 +297,3 @@ func orNever(s string) string {
 	}
 	return s
 }
-

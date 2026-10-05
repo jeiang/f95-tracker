@@ -268,7 +268,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-sm\"><div class=\"mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3\"><p class=\"text-xs text-muted\">Tags without a verdict stay unverified.</p><div class=\"ml-auto flex gap-2\"><button type=\"submit\" class=\"btn\" formaction=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"fixed inset-x-0 bottom-14 z-40 border-t border-line bg-surface sm:bottom-0\"><div class=\"mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3\"><p class=\"text-xs text-muted\">Tags without a verdict stay unverified.</p><div class=\"ml-auto flex gap-2\"><button type=\"submit\" class=\"btn\" formaction=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

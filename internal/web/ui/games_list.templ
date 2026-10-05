@@ -41,7 +41,7 @@ templ GamesListPage(v GameListView) {
 			</div>
 		</section>
 	} else {
-		<div class="md:grid md:grid-cols-[15rem_1fr] md:items-start md:gap-6">
+		<div class="md:grid md:grid-cols-[15rem_minmax(0,1fr)] md:items-start md:gap-6">
 			@gamesFilterForm(v)
 			@templ.Fragment("game-table") {
 				<div id="game-table" aria-live="polite">
@@ -73,7 +73,7 @@ func listNav(href string) templ.Attributes {
 
 templ gamesFilterForm(v GameListView) {
 	<details
-		class="panel mb-4 md:sticky md:top-4 md:mb-0"
+		class="group panel mb-4 md:sticky md:top-4 md:mb-0"
 		open?={ v.Active }
 		x-data={ "{ open: " + strconv.FormatBool(v.Active) + " || matchMedia('(min-width: 768px)').matches }" }
 		:open="open"
@@ -84,6 +84,7 @@ templ gamesFilterForm(v GameListView) {
 			if v.ActiveCount > 0 {
 				@Chip(ChipProps{Tone: "accent", Text: strconv.Itoa(v.ActiveCount) + " active"})
 			}
+			<span class="ml-auto text-muted transition-transform group-open:rotate-180" aria-hidden="true">▾</span>
 		</summary>
 		<form
 			id="filters"
@@ -164,7 +165,7 @@ templ tagChips(v GameListView) {
 		<input type="hidden" form="filters" name="tag" value={ t }/>
 	}
 	if len(v.Tags) > 0 {
-		<fieldset class="panel mb-4 px-4 py-3">
+		<fieldset class="panel mb-4 min-w-0 px-4 py-3">
 			<legend class="label px-1">Tags</legend>
 			<p class="mb-2 text-xs text-muted">Select once to include, twice to exclude, a third time to clear. Tags marked wrong never match.</p>
 			<div class="flex flex-wrap gap-1">
@@ -223,7 +224,7 @@ func tagStateText(state string) string {
 
 templ ratingCell(x2 int) {
 	if x2 > 0 {
-		<span class="text-accent" aria-label={ ratingText(x2) }>{ starsText(x2) }</span>
+		<span class="text-accent" role="img" aria-label={ ratingText(x2) }>{ starsText(x2) }</span>
 		<span class="ml-1 font-mono text-xs text-muted">{ ratingNumber(x2) }</span>
 	} else {
 		<span class="font-mono text-xs text-muted">unrated</span>
@@ -256,10 +257,10 @@ templ gamesTable(rows []GameRow) {
 	<div class="panel hidden overflow-hidden md:block">
 		<table class="w-full text-left text-sm">
 			<thead class="border-b border-line">
-				<tr class="label bg-raised/60">
-					<th scope="col" class="px-4 py-2 font-semibold">Game</th>
-					<th scope="col" class="px-2 py-2 font-semibold">Play / Dev</th>
-					<th scope="col" class="px-2 py-2 font-semibold">Last played → latest</th>
+				<tr class="bg-raised/60 text-xs uppercase tracking-wider text-muted">
+					<th scope="col" class="w-full px-4 py-2 font-semibold">Game</th>
+					<th scope="col" class="whitespace-nowrap px-2 py-2 font-semibold">Play / Dev</th>
+					<th scope="col" class="whitespace-nowrap px-2 py-2 font-semibold">Last played → latest</th>
 					<th scope="col" class="px-2 py-2 font-semibold">Rating</th>
 					<th scope="col" class="px-4 py-2 text-right font-semibold">Updated</th>
 				</tr>
@@ -279,8 +280,10 @@ templ gamesTable(rows []GameRow) {
 								@Chip(DevChip(g.Dev))
 							</div>
 						</td>
-						<td class="whitespace-nowrap px-2 py-3">
-							@versions(g)
+						<td class="px-2 py-3">
+							<span class="flex flex-wrap items-baseline gap-x-1 whitespace-nowrap">
+								@versions(g)
+							</span>
 						</td>
 						<td class="whitespace-nowrap px-2 py-3">
 							@ratingCell(g.RatingX2)
@@ -307,7 +310,7 @@ templ gamesStack(rows []GameRow) {
 					<span class="flex items-baseline justify-between gap-2">
 						<span class="truncate font-medium">{ g.Name }</span>
 						if g.RatingX2 > 0 {
-							<span class="shrink-0 text-xs text-accent" aria-label={ ratingText(g.RatingX2) }>{ starsText(g.RatingX2) }</span>
+							<span class="shrink-0 text-xs text-accent" role="img" aria-label={ ratingText(g.RatingX2) }>{ starsText(g.RatingX2) }</span>
 						}
 					</span>
 					<span class="mt-0.5 flex items-baseline gap-1">
@@ -316,7 +319,7 @@ templ gamesStack(rows []GameRow) {
 					<span class="mt-1 flex flex-wrap gap-1">
 						@Chip(ChipProps{Tone: playTone(g.Play), Text: PlayStatusLabel(g.Play)})
 						if g.Dev != "" {
-							@Chip(DevChip(g.Dev))
+							@Chip(devChipLabeled(g.Dev))
 						}
 						@gameBadges(g)
 					</span>

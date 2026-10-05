@@ -92,8 +92,7 @@ templ ImportReviewPage(v ImportReviewView) {
 												if r.Version != "" {
 													<span>last played <span class="font-mono text-ink">{ r.Version }</span></span>
 												}
-												<span>Dev status</span>
-												@Chip(DevChip(r.Dev))
+												@Chip(devChipLabeled(r.Dev))
 											</div>
 										</div>
 										<div class="col-start-2 md:col-start-auto">
