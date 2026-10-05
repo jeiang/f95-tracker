@@ -1,0 +1,119 @@
+package ui
+
+import "strconv"
+
+func reviewField(id int64) string { return "v-" + strconv.FormatInt(id, 10) }
+
+func gameHref(id int64) templ.SafeURL {
+	return templ.SafeURL("/games/" + strconv.FormatInt(id, 10))
+}
+
+func reviewAction(id int64, suffix string) string {
+	return "/games/" + strconv.FormatInt(id, 10) + "/review" + suffix
+}
+
+templ TagReviewPage(v ReviewView) {
+	<a href={ gameHref(v.GameID) } class="text-sm text-muted hover:text-ink">← { v.GameName }</a>
+	<h1 class="mt-2 text-2xl font-semibold">Tag review</h1>
+	<p class="mt-1 text-sm text-muted">
+		if v.Version != "" {
+			You played <strong class="font-mono text-ink">{ v.Version }</strong> of <strong class="text-ink">{ v.GameName }</strong>.
+		}
+		Mark each present tag as correct or wrong. Tags in both the Genre text and the F95 list start as correct.
+	</p>
+	<form id="review-form" method="post" action={ reviewAction(v.GameID, "") } hx-post={ reviewAction(v.GameID, "") } hx-target="#error-slot" hx-swap="innerHTML" class="mt-6 pb-24">
+		@templ.Fragment("tag-list") {
+			<div id="tag-list">
+				<section class="panel" aria-labelledby="h-present">
+					<div class="flex items-baseline justify-between border-b border-line px-4 py-3">
+						<h2 id="h-present" class="font-semibold">Present tags</h2>
+						<span class="text-xs text-muted">{ strconv.Itoa(v.MarkedCount()) } of { strconv.Itoa(len(v.Present)) } marked</span>
+					</div>
+					if len(v.Present) == 0 {
+						<p class="px-4 py-3 text-sm text-muted">No present tags need a verdict.</p>
+					} else {
+						<ul class="divide-y divide-line/60">
+							for _, t := range v.Present {
+								@reviewRow(t, "Correct", "correct", "Wrong", "wrong")
+							}
+						</ul>
+					}
+				</section>
+				if len(v.Reviewed) > 0 {
+					<details class="panel mt-6">
+						<summary class="cursor-pointer px-4 py-3">
+							<span class="font-semibold">Reviewed before</span>
+							<span class="ml-2 text-xs text-muted">({ strconv.Itoa(len(v.Reviewed)) }) unchanged since your last Tag review</span>
+						</summary>
+						<ul class="divide-y divide-line/60 border-t border-line">
+							for _, t := range v.Reviewed {
+								@reviewRow(t, "Correct", "correct", "Wrong", "wrong")
+							}
+						</ul>
+					</details>
+				}
+				if len(v.Other) > 0 {
+					<details id="other-tags" class="panel mt-6">
+						<summary class="cursor-pointer px-4 py-3">
+							<span class="font-semibold">Planned &amp; optional tags</span>
+							<span class="ml-2 text-xs text-muted">({ strconv.Itoa(len(v.Other)) }) optional, skip if you didn’t notice</span>
+						</summary>
+						<ul class="divide-y divide-line/60 border-t border-line">
+							for _, t := range v.Other {
+								@reviewRow(t, "Now present", "now_present", "Wrong", "wrong")
+							}
+						</ul>
+					</details>
+				}
+			</div>
+		}
+		<div class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-sm">
+			<div class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
+				<p class="text-xs text-muted">Tags without a verdict stay unverified.</p>
+				<div class="ml-auto flex gap-2">
+					<button type="submit" class="btn" formaction={ reviewAction(v.GameID, "/skip") } formnovalidate hx-post={ reviewAction(v.GameID, "/skip") } hx-target="#error-slot" hx-swap="innerHTML">Skip for now</button>
+					<button type="submit" class="btn btn-primary">Save review</button>
+				</div>
+			</div>
+		</div>
+	</form>
+}
+
+templ reviewRow(t ReviewItem, firstLabel, firstValue, secondLabel, secondValue string) {
+	<li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+		<div class="min-w-0 flex-1">
+			<div class="flex flex-wrap items-center gap-2">
+				<span class="font-medium">{ t.Label }</span>
+				if t.Custom {
+					@Chip(ChipProps{Tone: "muted", Text: "custom"})
+				}
+				if t.Qualifier != "present" {
+					@Chip(ChipProps{Tone: "info", Text: t.Qualifier})
+				}
+				if t.IsNew {
+					@Chip(ChipProps{Tone: "info", Text: "new"})
+				}
+				if t.Promoted {
+					@Chip(ChipProps{Tone: "accent", Text: "now present at source"})
+				}
+				if t.RemovedAtSource {
+					@Chip(ChipProps{Tone: "bad", Text: "removed at source"})
+				}
+			</div>
+			<div class="mt-0.5 text-xs text-muted">
+				{ t.Origin }
+				if t.Note != "" {
+					· { t.Note }
+				}
+			</div>
+		</div>
+		@Seg(SegProps{
+			Name: reviewField(t.ID),
+			Options: []SegOption{
+				{Value: firstValue, Label: firstLabel, Checked: t.Verdict == firstValue},
+				{Value: secondValue, Label: secondLabel, Checked: t.Verdict == secondValue},
+			},
+			Attrs: templ.Attributes{"aria-label": "Verdict for " + t.Label},
+		})
+	</li>
+}
