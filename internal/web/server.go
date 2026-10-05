@@ -42,6 +42,9 @@ type Server struct {
 }
 
 func New(d Deps) *Server {
+	if d.Games == nil { // handler tests that do not care about Games
+		d.Games = games.New(d.Store, d.Clock, games.Options{})
+	}
 	return &Server{
 		store: d.Store, clock: d.Clock, log: d.Log.With("component", "web"), cfg: d.Config,
 		auth: d.Auth, games: d.Games, notify: d.Notify, itch: d.Itch, f95: d.F95,
