@@ -223,6 +223,7 @@ func TestPrimarySwitching(t *testing.T) {
 	if _, err := e.svc.AddLinkSource(ctx, g.Game.ID, games.SourceSpec{Kind: domain.SourceItchio, ExternalID: "d/g", URL: "https://d.itch.io/g"}); !errors.Is(err, domain.ErrConflict) {
 		t.Fatalf("duplicate link: %v", err)
 	}
+	e.sql(`UPDATE source SET genre_text = 'Harem, Vore' WHERE id = ?`, g.Source.ID)
 	if err := e.svc.SetPrimary(ctx, link.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +240,7 @@ func TestPrimarySwitching(t *testing.T) {
 			}
 		} else if s.ID == g.Source.ID {
 			if s.LatestVersion.Valid || s.ChangeKey.Valid || s.DevStatus.Valid || s.ThreadUpdatedAt.Valid ||
-				s.MissCount != 0 || s.DetailsPending != 0 || s.LastCheckedAt.Valid {
+				s.MissCount != 0 || s.DetailsPending != 0 || s.LastCheckedAt.Valid || s.GenreText.Valid {
 				t.Fatalf("old primary kept check fields: %+v", s)
 			}
 		}
@@ -334,6 +335,23 @@ func TestApplySourceDetail(t *testing.T) {
 	if d.Game.Name != "New Title" || d.Primary.DevStatus.String != "completed" || d.Primary.LatestVersion.String != "v2" ||
 		d.Primary.LastDetailAt.String != "2026-03-02T00:00:00Z" {
 		t.Fatalf("not applied: %+v %+v", d.Game, d.Primary)
+	}
+	// Genre text is stored, then kept when a later detail has none.
+	if _, err := apply(fsrc.ID, games.Detail{GenreText: str("Harem, NTR"), DetailAt: at}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := apply(fsrc.ID, games.Detail{DetailAt: at}); err != nil {
+		t.Fatal(err)
+	}
+	if d, _ := e.svc.Detail(ctx, f95.ID); d.Primary.GenreText.String != "Harem, NTR" {
+		t.Fatalf("genre text = %q", d.Primary.GenreText.String)
+	}
+	// Only F95 Sources hold Genre text.
+	if _, err := apply(msrc.ID, games.Detail{GenreText: str("x"), DetailAt: at}); err != nil {
+		t.Fatal(err)
+	}
+	if d, _ := e.svc.Detail(ctx, man.ID); d.Primary.GenreText.Valid {
+		t.Fatal("manual Source stored Genre text")
 	}
 	// omitted fields keep their values
 	if _, err := apply(fsrc.ID, games.Detail{DetailAt: at}); err != nil {

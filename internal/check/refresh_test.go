@@ -203,6 +203,9 @@ func TestRefreshF95(t *testing.T) {
 	if s.DetailsPending != 0 || !s.LastDetailAt.Valid || !s.ThreadUpdatedAt.Valid {
 		t.Errorf("source = %+v", s)
 	}
+	if !strings.Contains(s.GenreText.String, "Harem") {
+		t.Errorf("genre text not stored: %q", s.GenreText.String)
+	}
 	if e.queued(src.ID) {
 		t.Error("queue row not removed")
 	}
@@ -305,6 +308,7 @@ func TestRefreshF95FetchErrors(t *testing.T) {
 			e.fake.SetThread("67494", fixture(t, "67494.html"), fixture(t, "59416.guest.html"))
 			c.setup(e)
 			g, src := e.f95Game()
+			e.exec(`UPDATE source SET genre_text = 'Earlier text' WHERE id = ?`, src.ID)
 			_, err := e.ref.Refresh(ctx, src.ID, e.run())
 			if !errors.Is(err, c.want) {
 				t.Fatalf("err = %v, want %v", err, c.want)
@@ -315,6 +319,9 @@ func TestRefreshF95FetchErrors(t *testing.T) {
 			}
 			if !e.queued(src.ID) || e.source(src.ID).DetailsPending != 1 {
 				t.Error("source and queue must be untouched")
+			}
+			if got := e.source(src.ID).GenreText.String; got != "Earlier text" {
+				t.Errorf("genre text = %q, a failed or guest fetch must keep it", got)
 			}
 			if rows, _ := e.tagsvc.GameTags(ctx, g.ID); len(rows) != 0 {
 				t.Errorf("tags written: %v", rows)

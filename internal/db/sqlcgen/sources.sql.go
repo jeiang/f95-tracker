@@ -16,9 +16,10 @@ UPDATE source SET
   change_key        = COALESCE(?2, change_key),
   dev_status        = COALESCE(?3, dev_status),
   thread_updated_at = COALESCE(?4, thread_updated_at),
-  last_detail_at    = ?5,
-  details_pending   = ?6
-WHERE id = ?7
+  genre_text        = COALESCE(?5, genre_text),
+  last_detail_at    = ?6,
+  details_pending   = ?7
+WHERE id = ?8
 `
 
 type ApplySourceDetailParams struct {
@@ -26,6 +27,7 @@ type ApplySourceDetailParams struct {
 	ChangeKey       sql.NullString
 	DevStatus       sql.NullString
 	ThreadUpdatedAt sql.NullString
+	GenreText       sql.NullString
 	DetailAt        sql.NullString
 	DetailsPending  int64
 	ID              int64
@@ -38,6 +40,7 @@ func (q *Queries) ApplySourceDetail(ctx context.Context, arg ApplySourceDetailPa
 		arg.ChangeKey,
 		arg.DevStatus,
 		arg.ThreadUpdatedAt,
+		arg.GenreText,
 		arg.DetailAt,
 		arg.DetailsPending,
 		arg.ID,
@@ -56,7 +59,7 @@ func (q *Queries) DeleteDetailFetchQueue(ctx context.Context, sourceID int64) er
 
 const demoteSource = `-- name: DemoteSource :exec
 UPDATE source SET is_primary = 0, latest_version = NULL, change_key = NULL, dev_status = NULL,
-  thread_updated_at = NULL, last_checked_at = NULL, last_detail_at = NULL, miss_count = 0,
+  thread_updated_at = NULL, genre_text = NULL, last_checked_at = NULL, last_detail_at = NULL, miss_count = 0,
   details_pending = 0, unavailable_at = NULL, unavailable_reason = NULL, checks_enabled = 1
 WHERE id = ?
 `
@@ -92,7 +95,7 @@ func (q *Queries) EnqueueDetailFetch(ctx context.Context, arg EnqueueDetailFetch
 }
 
 const findSourceByExternal = `-- name: FindSourceByExternal :one
-SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE kind = ? AND external_id = ?
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at, genre_text FROM source WHERE kind = ? AND external_id = ?
 `
 
 type FindSourceByExternalParams struct {
@@ -123,12 +126,13 @@ func (q *Queries) FindSourceByExternal(ctx context.Context, arg FindSourceByExte
 		&i.UnavailableReason,
 		&i.ChecksEnabled,
 		&i.CreatedAt,
+		&i.GenreText,
 	)
 	return i, err
 }
 
 const findSourceByURL = `-- name: FindSourceByURL :one
-SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE kind = ? AND url = ?
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at, genre_text FROM source WHERE kind = ? AND url = ?
 `
 
 type FindSourceByURLParams struct {
@@ -159,12 +163,13 @@ func (q *Queries) FindSourceByURL(ctx context.Context, arg FindSourceByURLParams
 		&i.UnavailableReason,
 		&i.ChecksEnabled,
 		&i.CreatedAt,
+		&i.GenreText,
 	)
 	return i, err
 }
 
 const getPrimarySource = `-- name: GetPrimarySource :one
-SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE game_id = ? AND is_primary = 1
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at, genre_text FROM source WHERE game_id = ? AND is_primary = 1
 `
 
 func (q *Queries) GetPrimarySource(ctx context.Context, gameID int64) (Source, error) {
@@ -190,12 +195,13 @@ func (q *Queries) GetPrimarySource(ctx context.Context, gameID int64) (Source, e
 		&i.UnavailableReason,
 		&i.ChecksEnabled,
 		&i.CreatedAt,
+		&i.GenreText,
 	)
 	return i, err
 }
 
 const getSource = `-- name: GetSource :one
-SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE id = ?
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at, genre_text FROM source WHERE id = ?
 `
 
 func (q *Queries) GetSource(ctx context.Context, id int64) (Source, error) {
@@ -221,15 +227,16 @@ func (q *Queries) GetSource(ctx context.Context, id int64) (Source, error) {
 		&i.UnavailableReason,
 		&i.ChecksEnabled,
 		&i.CreatedAt,
+		&i.GenreText,
 	)
 	return i, err
 }
 
 const insertSource = `-- name: InsertSource :one
 
-INSERT INTO source (game_id, kind, is_primary, external_id, url, latest_version, change_key, dev_status, thread_updated_at, created_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at
+INSERT INTO source (game_id, kind, is_primary, external_id, url, latest_version, change_key, dev_status, thread_updated_at, genre_text, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at, genre_text
 `
 
 type InsertSourceParams struct {
@@ -242,6 +249,7 @@ type InsertSourceParams struct {
 	ChangeKey       sql.NullString
 	DevStatus       sql.NullString
 	ThreadUpdatedAt sql.NullString
+	GenreText       sql.NullString
 	CreatedAt       string
 }
 
@@ -257,6 +265,7 @@ func (q *Queries) InsertSource(ctx context.Context, arg InsertSourceParams) (Sou
 		arg.ChangeKey,
 		arg.DevStatus,
 		arg.ThreadUpdatedAt,
+		arg.GenreText,
 		arg.CreatedAt,
 	)
 	var i Source
@@ -280,12 +289,13 @@ func (q *Queries) InsertSource(ctx context.Context, arg InsertSourceParams) (Sou
 		&i.UnavailableReason,
 		&i.ChecksEnabled,
 		&i.CreatedAt,
+		&i.GenreText,
 	)
 	return i, err
 }
 
 const listSourcesByGame = `-- name: ListSourcesByGame :many
-SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE game_id = ? ORDER BY is_primary DESC, id
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at, genre_text FROM source WHERE game_id = ? ORDER BY is_primary DESC, id
 `
 
 func (q *Queries) ListSourcesByGame(ctx context.Context, gameID int64) ([]Source, error) {
@@ -317,6 +327,7 @@ func (q *Queries) ListSourcesByGame(ctx context.Context, gameID int64) ([]Source
 			&i.UnavailableReason,
 			&i.ChecksEnabled,
 			&i.CreatedAt,
+			&i.GenreText,
 		); err != nil {
 			return nil, err
 		}

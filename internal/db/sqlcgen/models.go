@@ -209,6 +209,7 @@ type Source struct {
 	UnavailableReason sql.NullString
 	ChecksEnabled     int64
 	CreatedAt         string
+	GenreText         sql.NullString
 }
 
 type Synonym struct {

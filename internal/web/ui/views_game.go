@@ -44,10 +44,10 @@ type GameDetailView struct {
 	MarkDate    string
 	ReviewHref  string // pending / skipped Tag review link, "" = none
 
-	TagGroups   []TagGroup
-	TagSummary  string
-	KnownTags   []string
-	GenreTokens []string
+	TagGroups  []TagGroup
+	TagSummary string
+	KnownTags  []string
+	GenreText  string // raw Genre text of the primary F95 Source; "" if none
 }
 
 // SourceRow is one Source link of the Game.

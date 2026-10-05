@@ -75,7 +75,7 @@ func (s *Server) buildGameDetail(ctx context.Context, id int64, note detailNote)
 		Latest:        ui.VersionLabelProps{Version: p.LatestVersion.String, Date: datePart(p.ThreadUpdatedAt.String)},
 		SourceUpdated: datePart(p.ThreadUpdatedAt.String), LastChecked: minutePart(p.LastCheckedAt.String),
 		Update: d.HasUpdate, Behind: d.Behind, DetailsPending: p.DetailsPending == 1,
-		RefreshMsg: note.msg, RefreshFailed: note.failed,
+		GenreText: p.GenreText.String, RefreshMsg: note.msg, RefreshFailed: note.failed,
 		Play: domain.PlayStatus(d.Game.PlayStatus), PlayAlerts: d.Alerting, RatingX2: int(d.Game.RatingX2.Int64),
 		MarkVersion: p.LatestVersion.String, MarkDate: clock.Date(s.clock.Now()),
 	}
@@ -140,7 +140,6 @@ func (s *Server) buildGameDetail(ctx context.Context, id int64, note detailNote)
 		v.KnownTags = append(v.KnownTags, t.Label)
 	}
 	byQual := map[string][]ui.GameTagRow{}
-	seenPhrase := map[string]bool{}
 	var present, confirmed, wrong int
 	for _, r := range rows {
 		row := ui.GameTagRow{
@@ -161,10 +160,6 @@ func (s *Server) buildGameDetail(ctx context.Context, id int64, note detailNote)
 			case tags.Wrong:
 				wrong++
 			}
-		}
-		if row.CanMap && !seenPhrase[row.Phrase] {
-			seenPhrase[row.Phrase] = true
-			v.GenreTokens = append(v.GenreTokens, row.Phrase)
 		}
 	}
 	for _, g := range []struct{ q, title string }{{tags.QualPresent, "Present"}, {tags.QualPlanned, "Planned"}, {tags.QualOptional, "Optional"}} {

@@ -157,6 +157,9 @@ func (r *Refresher) refreshF95(ctx context.Context, src sqlcgen.Source, runID in
 		ts := th.ThreadUpdated + "T00:00:00Z"
 		detail.ThreadUpdatedAt = &ts
 	}
+	if th.HasGenre {
+		detail.GenreText = &th.GenreText
+	}
 	if !src.ChangeKey.Valid {
 		detail.LatestVersion, detail.ChangeKey = &th.Version, &th.Version
 	}
