@@ -1,0 +1,266 @@
+package ui
+
+import "strconv"
+
+templ SettingsPage(v SettingsView) {
+	<h1 class="text-2xl font-semibold">Settings</h1>
+	<nav aria-label="Settings sections" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+		<a href="#cookie" class="hover:text-ink">F95 cookie</a>
+		<a href="#alerts" class="hover:text-ink">Alerts</a>
+		<a href="#synonyms" class="hover:text-ink">Synonyms</a>
+		<a href="#ntfy" class="hover:text-ink">ntfy</a>
+	</nav>
+	<div class="max-w-3xl">
+		@cookieSection(v.Cookie)
+		@alertSection(v.Alert)
+		@synonymSection(v.Synonyms)
+		@ntfySection(v.Ntfy)
+	</div>
+}
+
+func validityTone(v string) string {
+	switch v {
+	case "valid":
+		return "ok"
+	case "invalid":
+		return "bad"
+	}
+	return "muted"
+}
+
+templ cookieSection(c CookieView) {
+	<section id="cookie" class="panel mt-6 scroll-mt-4 px-4 py-4" aria-labelledby="h-cookie">
+		<div class="flex flex-wrap items-center gap-2">
+			<h2 id="h-cookie" class="text-lg font-semibold">F95 cookie</h2>
+			@templ.Fragment("cookie-status") {
+				<div id="cookie-status" class="flex flex-wrap items-center gap-2 sm:ml-auto" aria-live="polite">
+					if c.Stored {
+						@Chip(ChipProps{Tone: validityTone(c.Validity), Text: c.Validity})
+						if c.CheckedAt != "" {
+							<span class="text-xs text-muted">last checked <span class="font-mono">{ c.CheckedAt }</span></span>
+						}
+						if c.TfaExpires != "" {
+							<span class="text-xs text-muted">two-step trust expires <span class="font-mono">{ c.TfaExpires }</span></span>
+						}
+					} else {
+						@Chip(ChipProps{Tone: "muted", Text: "not set"})
+					}
+					if c.Message != "" {
+						<span class={ "w-full text-sm", templ.KV("text-ok", c.MessageTone == "ok"), templ.KV("text-warn", c.MessageTone == "warn"), templ.KV("text-bad", c.MessageTone == "bad") } role="status">{ c.Message }</span>
+					}
+				</div>
+			}
+		</div>
+		<p class="mt-1 text-sm text-muted">Needed to read thread details. While it is invalid, new Games are added with <strong class="text-ink">details pending</strong> and detail fetches stay queued.</p>
+		<form
+			class="mt-4 grid gap-3"
+			method="post"
+			action="/settings/cookie"
+			hx-post="/settings/cookie"
+			hx-target="#cookie-status"
+			hx-swap="outerHTML"
+			hx-on::after-request="if (event.detail.successful) this.elements.cookie.value = ''"
+		>
+			@Field(FieldProps{
+				ID: "ck", Name: "cookie", Label: "Raw Cookie header", Multiline: true, Rows: 4, Required: true,
+				Placeholder: "xf_csrf=…; xf_user=…; xf_session=…",
+				Hint:        "Browser devtools → Network → any f95zone.to request → Request Headers → copy the whole Cookie value. Stored on your server only; never shown again after saving.",
+				Attrs:       templ.Attributes{"autocomplete": "off", "spellcheck": "false"},
+			})
+			@Field(FieldProps{
+				ID: "tfa", Name: "tfa_expires", Label: "Two-step trust expiry (optional)", Type: "date", Value: c.TfaExpires,
+				Hint: "The xf_tfa_trust cookie's expiry date; a pasted header does not carry it. You get a warning 14 days before.",
+			})
+			<div class="flex items-center gap-2">
+				@Button(ButtonProps{Variant: "primary", Type: "submit"}) {
+					Save &amp; check
+				}
+				<span class="htmx-indicator text-xs text-muted">Checking…</span>
+			</div>
+		</form>
+	</section>
+}
+
+templ alertSection(a AlertView) {
+	@templ.Fragment("alert-set") {
+		<section id="alert-set" class="panel mt-6 scroll-mt-4 px-4 py-4" aria-labelledby="h-alerts">
+			<span id="alerts" class="sr-only"></span>
+			<h2 id="h-alerts" class="text-lg font-semibold">Update alerts</h2>
+			<p class="mt-1 text-sm text-muted">Send an alert when a Game has an Update and its Play status is one of these.</p>
+			<form method="post" action="/settings/alert-set" hx-post="/settings/alert-set" hx-target="#alert-set" hx-swap="outerHTML">
+				<fieldset class="mt-3">
+					<legend class="sr-only">Play statuses that alert on Update</legend>
+					<div class="flex flex-wrap gap-x-5 gap-y-2">
+						for _, r := range a.Rows {
+							<label class="flex items-center gap-2 text-sm">
+								<input type="checkbox" name="status" value={ string(r.Status) } checked?={ r.Checked } class="h-4 w-4 accent-[rgb(var(--accent))]"/>
+								{ PlayStatusLabel(r.Status) }
+								<span class="text-xs text-muted">{ strconv.FormatInt(r.Count, 10) } { gameNoun(r.Count) }</span>
+							</label>
+						}
+					</div>
+				</fieldset>
+				<p class="mt-2 text-xs text-muted">{ strconv.FormatInt(a.Affected, 10) } of { strconv.FormatInt(a.Total, 10) } Games currently alert on Update.</p>
+				<div class="mt-3 flex items-center gap-3">
+					@Button(ButtonProps{Small: true, Type: "submit"}) {
+						Save alert set
+					}
+					if a.Saved {
+						<span class="text-xs text-ok" role="status">Saved</span>
+					}
+				</div>
+			</form>
+		</section>
+	}
+}
+
+func gameNoun(n int64) string {
+	if n == 1 {
+		return "Game"
+	}
+	return "Games"
+}
+
+func synonymKindOptions(kind string) []SegOption {
+	return []SegOption{{Value: "f95", Label: "F95 tag", Checked: kind != "custom"}, {Value: "custom", Label: "Custom tag", Checked: kind == "custom"}}
+}
+
+templ synonymSection(s SynonymsView) {
+	<section id="synonyms" class="panel mt-6 scroll-mt-4" aria-labelledby="h-syn">
+		<div class="px-4 pt-4">
+			<h2 id="h-syn" class="text-lg font-semibold">Synonyms</h2>
+			<p class="mt-1 text-sm text-muted">Map a Genre phrase to an F95 tag or a Custom tag. Adding or editing one re-applies it to existing Games' unverified tags.</p>
+		</div>
+		<datalist id="synonym-targets">
+			for _, o := range s.Options {
+				<option value={ o.Value }>{ o.Label }</option>
+			}
+		</datalist>
+		@templ.Fragment("synonym-list") {
+			<div id="synonym-list">
+				if s.Message != "" {
+					<p class="mx-4 mt-3 text-sm text-ok" role="status">{ s.Message }</p>
+				}
+				<form
+					class="mt-4 grid gap-2 border-y border-line bg-raised/30 px-4 py-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end"
+					method="post"
+					action="/settings/synonyms"
+					hx-post="/settings/synonyms"
+					hx-target="#synonym-list"
+					hx-swap="outerHTML"
+				>
+					<div>
+						<label for="sp" class="label mb-1">Genre phrase</label>
+						<input id="sp" name="phrase" class="field" placeholder="Yuri" required/>
+					</div>
+					<div>
+						<label for="st" class="label mb-1">Maps to</label>
+						<input id="st" name="target" class="field font-mono" placeholder="lesbian" list="synonym-targets" required/>
+					</div>
+					<div>
+						<label for="sk" class="label mb-1">Tag kind</label>
+						<select id="sk" name="kind" class="field">
+							<option value="f95">F95 tag</option>
+							<option value="custom">Custom tag</option>
+						</select>
+					</div>
+					@Button(ButtonProps{Type: "submit"}) {
+						Add
+					}
+				</form>
+				<form
+					class="px-4 py-3"
+					method="get"
+					action="/settings"
+					hx-get="/settings"
+					hx-target="#synonym-list"
+					hx-swap="outerHTML"
+					hx-trigger="submit, input delay:300ms from:#sf"
+				>
+					<label for="sf" class="sr-only">Filter Synonyms</label>
+					<input id="sf" name="syn" type="search" class="field" placeholder="Filter Synonyms" value={ s.Filter }/>
+				</form>
+				if len(s.Rows) == 0 {
+					<p class="border-t border-line px-4 py-4 text-sm text-muted">
+						if s.Filter != "" {
+							No Synonyms match “{ s.Filter }”.
+						} else {
+							No Synonyms yet.
+						}
+					</p>
+				} else {
+					<ul class="border-t border-line">
+						for _, r := range s.Rows {
+							<li class="border-b border-line/50 last:border-0">
+								<form
+									class="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-2 sm:grid-cols-[1fr_auto_1fr_8rem_auto_auto]"
+									method="post"
+									action={ "/settings/synonyms/" + strconv.FormatInt(r.ID, 10) }
+									hx-post={ "/settings/synonyms/" + strconv.FormatInt(r.ID, 10) }
+									hx-target="#synonym-list"
+									hx-swap="outerHTML"
+								>
+									<input name="phrase" value={ r.Phrase } class="field h-8 min-h-0 py-1 text-sm" aria-label={ "Phrase " + r.Phrase } required/>
+									<span class="text-muted" aria-hidden="true">→</span>
+									<input name="target" value={ r.Target } list="synonym-targets" class="field h-8 min-h-0 py-1 font-mono text-sm" aria-label={ "Tag for " + r.Phrase } required/>
+									<select name="kind" class="field h-8 min-h-0 py-1 text-sm" aria-label={ "Tag kind for " + r.Phrase }>
+										for _, o := range synonymKindOptions(r.Kind) {
+											<option value={ o.Value } selected?={ o.Checked }>{ o.Label }</option>
+										}
+									</select>
+									@Button(ButtonProps{Small: true, Type: "submit"}) {
+										Save
+									}
+									@Button(ButtonProps{Variant: "ghost", Small: true, Type: "submit", Attrs: templ.Attributes{
+										"formaction": "/settings/synonyms/" + strconv.FormatInt(r.ID, 10) + "/delete",
+										"hx-delete":  "/settings/synonyms/" + strconv.FormatInt(r.ID, 10),
+										"hx-target":  "#synonym-list",
+										"hx-swap":    "outerHTML",
+										"aria-label": "Remove Synonym " + r.Phrase,
+									}}) {
+										Remove
+									}
+								</form>
+							</li>
+						}
+					</ul>
+				}
+			</div>
+		}
+	</section>
+}
+
+templ ntfySection(n NtfyView) {
+	<section id="ntfy" class="panel mt-6 scroll-mt-4 px-4 py-4" aria-labelledby="h-ntfy">
+		<h2 id="h-ntfy" class="text-lg font-semibold">ntfy</h2>
+		<p class="mt-1 text-sm text-muted">Where alerts and digests are sent. The server and topic are set in the deployment configuration.</p>
+		<form class="mt-3 grid gap-3 sm:grid-cols-2" method="post" action="/settings/ntfy/test" hx-post="/settings/ntfy/test" hx-target="#ntfy-status" hx-swap="outerHTML">
+			<div>
+				<label for="ns" class="label mb-1">Server</label>
+				<input id="ns" class="field font-mono" value={ n.URL } readonly/>
+			</div>
+			<div>
+				<label for="nt" class="label mb-1">Topic</label>
+				<input id="nt" class="field font-mono" value={ n.Topic } readonly/>
+			</div>
+			<div class="flex flex-wrap items-center gap-3 sm:col-span-2">
+				@Button(ButtonProps{Type: "submit", Disabled: !n.Enabled}) {
+					Send test notification
+				}
+				@templ.Fragment("ntfy-status") {
+					<span id="ntfy-status" class="text-sm" aria-live="polite">
+						if n.Tested && n.Err == "" {
+							@Chip(ChipProps{Tone: "ok", Text: "Sent"})
+							<span class="text-xs text-muted">ntfy accepted the message. Check your phone.</span>
+						} else if n.Tested {
+							@Chip(ChipProps{Tone: "bad", Text: "Failed"})
+							<span class="text-xs text-muted">{ n.Err }</span>
+						} else if !n.Enabled {
+							<span class="text-xs text-muted">ntfy is not configured.</span>
+						}
+					</span>
+				}
+			</div>
+		</form>
+	</section>
+}

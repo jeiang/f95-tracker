@@ -1,0 +1,124 @@
+package ui
+
+import "strconv"
+
+templ ImportReviewPage(v ImportReviewView) {
+	<h1 class="text-2xl font-semibold">Import review</h1>
+	<p class="mt-1 max-w-2xl text-sm text-muted">
+		These Games came from the CSV import. The sheet had no Play status, so one was derived from the Play log and the Dev status
+		(the Abandoned / Completed / On Hold columns became <strong class="text-ink">Dev status</strong>). Check it, change what is wrong, confirm.
+	</p>
+	@templ.Fragment("import-list") {
+		<div id="import-list" class="mt-6">
+			if v.Confirmed > 0 {
+				<div role="status" class="panel mb-4 px-4 py-3 text-sm">
+					<span class="text-ok" aria-hidden="true">✓</span> { strconv.Itoa(v.Confirmed) } { gameNoun(int64(v.Confirmed)) } confirmed and removed from this list.
+				</div>
+			}
+			if v.SetCount > 0 {
+				<div role="status" class="panel mb-4 px-4 py-3 text-sm">
+					<span class="text-ok" aria-hidden="true">✓</span> Play status changed on { strconv.Itoa(v.SetCount) } { gameNoun(int64(v.SetCount)) }.
+				</div>
+			}
+			if v.Total == 0 {
+				<div class="panel px-6 py-8">
+					<p class="font-medium">Every imported Game has a confirmed Play status.</p>
+					<p class="mt-1 text-sm text-muted">The review badge on the Game list is gone. Play logs from the CSV stay undated and labelled “imported”.</p>
+					<div class="mt-4">
+						@Button(ButtonProps{Href: "/games"}) {
+							Go to Games
+						}
+					</div>
+				</div>
+			} else {
+				<form method="post" action="/import-review" hx-post="/import-review" hx-target="#import-list" hx-swap="outerHTML">
+					<input type="hidden" name="derived" value={ v.Filter }/>
+					<div class="flex flex-wrap items-center gap-3">
+						<span class="label">Derived</span>
+						<div class="flex flex-wrap gap-2" role="group" aria-label="Show derived Play status">
+							for _, o := range v.Counts {
+								<a
+									href={ templ.SafeURL(importFilterHref(o.Value)) }
+									hx-get={ importFilterHref(o.Value) }
+									hx-target="#import-list"
+									hx-swap="outerHTML"
+									hx-push-url="true"
+									if o.Value == v.Filter {
+										aria-current="true"
+									}
+									class={ "chip", templ.KV("chip-accent", o.Value == v.Filter) }
+								>{ o.Label } <span class="ml-1 text-muted">{ strconv.Itoa(o.Count) }</span></a>
+							}
+						</div>
+						<span class="sm:ml-auto">
+							@Button(ButtonProps{Small: true, Type: "submit", Attrs: templ.Attributes{"name": "action", "value": "confirm-shown"}}) {
+								Confirm all { strconv.Itoa(len(v.Rows)) } shown
+							}
+						</span>
+					</div>
+					<div class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface px-3 py-2">
+						<label for="bulk" class="text-sm text-muted">Set Play status on selected</label>
+						@PlayStatusSelect(PlayStatusSelectProps{ID: "bulk", Name: "play", Selected: "playing"})
+						@Button(ButtonProps{Small: true, Type: "submit", Attrs: templ.Attributes{"name": "action", "value": "set"}}) {
+							Apply
+						}
+						<span class="ml-auto">
+							@Button(ButtonProps{Variant: "primary", Small: true, Type: "submit", Attrs: templ.Attributes{"name": "action", "value": "confirm"}}) {
+								Confirm selected
+							}
+						</span>
+					</div>
+					<div class="panel mt-3">
+						<div class="flex items-center gap-3 border-b border-line px-4 py-2">
+							<input
+								id="all"
+								type="checkbox"
+								class="h-4 w-4 accent-[rgb(var(--accent))]"
+								onclick="document.querySelectorAll('#import-list input[name=id]').forEach(function (c) { c.checked = this.checked }, this)"
+							/>
+							<label for="all" class="label">Select all shown</label>
+						</div>
+						if len(v.Rows) == 0 {
+							<p class="px-4 py-4 text-sm text-muted">No imported Games have this derived Play status.</p>
+						} else {
+							<ul class="divide-y divide-line/60">
+								for _, r := range v.Rows {
+									<li class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 px-4 py-3 md:grid-cols-[auto_1fr_14rem_auto] md:items-center">
+										<input type="hidden" name="shown" value={ strconv.FormatInt(r.ID, 10) }/>
+										<input type="checkbox" name="id" value={ strconv.FormatInt(r.ID, 10) } class="mt-1 h-4 w-4 accent-[rgb(var(--accent))] md:mt-0" aria-label={ "Select " + r.Name }/>
+										<div class="min-w-0">
+											<a href={ templ.SafeURL("/games/" + strconv.FormatInt(r.ID, 10)) } class="font-medium hover:text-accent">{ r.Name }</a>
+											<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+												if r.Version != "" {
+													<span>last played <span class="font-mono text-ink">{ r.Version }</span></span>
+												}
+												<span>Dev status</span>
+												@Chip(DevChip(r.Dev))
+											</div>
+										</div>
+										<div class="col-start-2 md:col-start-auto">
+											<p class="text-sm font-medium">{ PlayStatusLabel(r.Play) }</p>
+											<p class="mt-1 text-xs text-muted">{ r.Rule }</p>
+										</div>
+										<div class="col-start-2 md:col-start-auto md:text-right">
+											@Button(ButtonProps{Small: true, Type: "submit", Attrs: templ.Attributes{"name": "confirm_one", "value": strconv.FormatInt(r.ID, 10), "formnovalidate": true}}) {
+												Confirm
+											}
+										</div>
+									</li>
+								}
+							</ul>
+						}
+					</div>
+				</form>
+			}
+		</div>
+	}
+}
+
+func importFilterHref(value string) string {
+	if value == "" {
+		return "/import-review"
+	}
+	return "/import-review?derived=" + value
+}
