@@ -1,0 +1,101 @@
+package ui
+
+import "github.com/jeiang/f95-tracker/internal/web/static"
+
+// htmx swaps 4xx/5xx bodies too: the server answers errors with a fragment and
+// HX-Retarget #error-slot (R-UI-12), so they must not be dropped.
+const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true}]}`
+
+const themeScript = `(function () {
+  var key = 'f95-theme';
+  var saved = null;
+  try { saved = localStorage.getItem(key); } catch (e) {}
+  document.documentElement.dataset.theme = saved === 'light' ? 'light' : 'dark';
+  window.toggleTheme = function () {
+    var next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem(key, next); } catch (e) {}
+  };
+})();`
+
+templ Layout(page PageMeta, body templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="dark">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>
+				if page.Title != "" {
+					{ page.Title } · F95 Tracker
+				} else {
+					F95 Tracker
+				}
+			</title>
+			<meta name="htmx-config" content={ htmxConfig }/>
+			@templ.Raw("<script>" + themeScript + "</script>")
+			<link rel="stylesheet" href={ static.URL("app.css") }/>
+			<script defer src={ static.URL("htmx.min.js") }></script>
+			<script defer src={ static.URL("alpine.min.js") }></script>
+		</head>
+		<body class="min-h-screen pb-20 sm:pb-0">
+			<header class="border-b border-line bg-surface">
+				<div class="mx-auto flex max-w-6xl items-center gap-x-4 px-4 py-2">
+					<a href="/games" class="mr-auto flex items-baseline gap-1 py-2 font-semibold sm:mr-0">
+						<span class="font-mono text-accent">f95</span><span>tracker</span>
+					</a>
+					<nav aria-label="Primary" class="hidden flex-1 gap-1 sm:flex">
+						for _, it := range page.navItems() {
+							<a
+								href={ templ.SafeURL(it.Href) }
+								if it.Tab == page.ActiveTab {
+									aria-current="page"
+								}
+								class={ "inline-flex shrink-0 items-center rounded-md px-3 py-2 text-sm font-medium", templ.KV("bg-raised text-ink", it.Tab == page.ActiveTab), templ.KV("text-muted hover:text-ink", it.Tab != page.ActiveTab) }
+							>{ it.Label }</a>
+						}
+					</nav>
+					<button type="button" onclick="toggleTheme()" class="btn btn-ghost btn-sm" aria-label="Toggle light or dark theme">
+						<span aria-hidden="true">◐</span><span class="hidden sm:inline">Theme</span>
+					</button>
+				</div>
+			</header>
+			<div id="banners">
+				for _, b := range page.Banners {
+					<div class={ "border-b px-4 py-2 text-sm", bannerTone(b.Tone) }>
+						<div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3">
+							<span>{ b.Text }</span>
+							if b.LinkHref != "" {
+								<a href={ templ.SafeURL(b.LinkHref) } class="font-medium underline">{ b.LinkText }</a>
+							}
+						</div>
+					</div>
+				}
+			</div>
+			<main class="mx-auto max-w-6xl px-4 py-6">
+				<div id="error-slot" role="alert" aria-live="polite" class="mb-4 empty:hidden"></div>
+				@body
+			</main>
+			<nav aria-label="Primary" class="fixed inset-x-0 bottom-0 z-40 grid grid-flow-col auto-cols-fr border-t border-line bg-surface sm:hidden">
+				for _, it := range page.navItems() {
+					<a
+						href={ templ.SafeURL(it.Href) }
+						if it.Tab == page.ActiveTab {
+							aria-current="page"
+						}
+						class={ "flex min-h-14 items-center justify-center px-1 text-center text-xs font-medium", templ.KV("text-accent", it.Tab == page.ActiveTab), templ.KV("text-muted", it.Tab != page.ActiveTab) }
+					>{ it.Label }</a>
+				}
+			</nav>
+		</body>
+	</html>
+}
+
+func bannerTone(tone string) string {
+	switch tone {
+	case "bad":
+		return "border-bad/40 bg-bad/10 text-bad"
+	case "info":
+		return "border-info/40 bg-info/10 text-info"
+	}
+	return "border-warn/40 bg-warn/10 text-warn"
+}

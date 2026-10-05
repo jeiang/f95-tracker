@@ -1,0 +1,326 @@
+package ui
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/jeiang/f95-tracker/internal/domain"
+)
+
+// Chip is a small status pill. Tone: ok, bad, warn, info, accent, muted or "".
+type ChipProps struct {
+	Tone  string
+	Text  string
+	Title string
+}
+
+templ Chip(p ChipProps) {
+	<span
+		class={ "chip", templ.KV("chip-"+p.Tone, p.Tone != "") }
+		if p.Title != "" {
+			title={ p.Title }
+		}
+	>{ p.Text }</span>
+}
+
+// Badge is a count pill for navigation entries and entry strips.
+type BadgeProps struct {
+	Count int
+	Label string // accessible name, e.g. "waiting"
+}
+
+templ Badge(p BadgeProps) {
+	<span class="rounded-full bg-accent px-1.5 text-[11px] font-semibold leading-4 text-accent-ink" aria-label={ strconv.Itoa(p.Count) + " " + p.Label }>{ strconv.Itoa(p.Count) }</span>
+}
+
+// Seg is a segmented radio control.
+type SegOption struct {
+	Value   string
+	Label   string
+	Checked bool
+}
+
+type SegProps struct {
+	Name    string
+	Options []SegOption
+	Attrs   templ.Attributes
+}
+
+templ Seg(p SegProps) {
+	<div class="seg" role="radiogroup" { p.Attrs... }>
+		for _, o := range p.Options {
+			<label>
+				<input type="radio" class="sr-only" name={ p.Name } value={ o.Value } checked?={ o.Checked }/>
+				{ o.Label }
+			</label>
+		}
+	</div>
+}
+
+// Panel is a bordered surface with an optional heading; the body is the children.
+type PanelProps struct {
+	ID    string
+	Title string
+	Class string
+}
+
+templ Panel(p PanelProps) {
+	<section
+		class={ "panel", p.Class }
+		if p.ID != "" {
+			id={ p.ID }
+		}
+	>
+		if p.Title != "" {
+			<h2 class="border-b border-line px-4 py-3 text-base font-semibold">{ p.Title }</h2>
+		}
+		{ children... }
+	</section>
+}
+
+// Button renders <a> when Href is set, otherwise <button>. Variant: primary, ghost or "".
+type ButtonProps struct {
+	Variant  string
+	Small    bool
+	Type     string // button (default), submit, reset
+	Href     string
+	Disabled bool
+	Attrs    templ.Attributes // hx-*, x-*, name/value...
+}
+
+func buttonClass(p ButtonProps) templ.CSSClasses {
+	return templ.Classes("btn", templ.KV("btn-primary", p.Variant == "primary"), templ.KV("btn-ghost", p.Variant == "ghost"), templ.KV("btn-sm", p.Small))
+}
+
+func buttonType(t string) string {
+	if t == "" {
+		return "button"
+	}
+	return t
+}
+
+templ Button(p ButtonProps) {
+	if p.Href != "" {
+		<a class={ buttonClass(p) } href={ templ.SafeURL(p.Href) } { p.Attrs... }>{ children... }</a>
+	} else {
+		<button class={ buttonClass(p) } type={ buttonType(p.Type) } disabled?={ p.Disabled } { p.Attrs... }>{ children... }</button>
+	}
+}
+
+// Field is a labelled input or textarea with optional hint and inline error.
+type FieldProps struct {
+	ID          string
+	Name        string
+	Label       string
+	Type        string // text (default), url, date, ...
+	Value       string
+	Placeholder string
+	Hint        string
+	Error       string
+	Required    bool
+	Multiline   bool
+	Rows        int
+	Attrs       templ.Attributes
+}
+
+func fieldType(t string) string {
+	if t == "" {
+		return "text"
+	}
+	return t
+}
+
+func fieldRows(n int) string {
+	if n <= 0 {
+		n = 4
+	}
+	return strconv.Itoa(n)
+}
+
+templ Field(p FieldProps) {
+	<div class="flex flex-col gap-1">
+		<label class="label" for={ p.ID }>{ p.Label }</label>
+		if p.Multiline {
+			<textarea id={ p.ID } name={ p.Name } rows={ fieldRows(p.Rows) } class="field" placeholder={ p.Placeholder } required?={ p.Required } { p.Attrs... }>{ p.Value }</textarea>
+		} else {
+			<input id={ p.ID } name={ p.Name } type={ fieldType(p.Type) } value={ p.Value } class="field" placeholder={ p.Placeholder } required?={ p.Required } { p.Attrs... }/>
+		}
+		if p.Hint != "" {
+			<p class="text-xs text-muted">{ p.Hint }</p>
+		}
+		if p.Error != "" {
+			<p class="text-xs text-bad" role="alert">{ p.Error }</p>
+		}
+	</div>
+}
+
+// HalfStars is the 0.5 to 5 rating control (RatingX2 is rating times two; 0 = no rating).
+// With an Action it is a plain form posting rating_x2 (0 clears), enhanced by Alpine
+// hover state; without one it is read-only.
+type HalfStarsProps struct {
+	RatingX2 int
+	Action   string
+	Attrs    templ.Attributes // e.g. hx-post/hx-target on the form
+}
+
+func starFill(rating, star int) int {
+	switch {
+	case rating >= 2*star:
+		return 100
+	case rating == 2*star-1:
+		return 50
+	}
+	return 0
+}
+
+func ratingText(x2 int) string {
+	if x2 <= 0 {
+		return "no rating"
+	}
+	return strconv.FormatFloat(float64(x2)/2, 'f', -1, 64) + " of 5"
+}
+
+templ HalfStars(p HalfStarsProps) {
+	<form
+		method="post"
+		if p.Action != "" {
+			action={ templ.SafeURL(p.Action) }
+		}
+		class="inline-flex items-center gap-2"
+		x-data={ fmt.Sprintf("{ h: 0, v: %d }", p.RatingX2) }
+		{ p.Attrs... }
+	>
+		<span class="inline-flex" role="img" aria-label={ ratingText(p.RatingX2) } @mouseleave="h = 0">
+			for i := 1; i <= 5; i++ {
+				<span class="relative inline-block h-8 w-8 text-center text-3xl leading-8 text-line" aria-hidden="true">
+					★
+					<span
+						class="absolute inset-y-0 left-0 overflow-hidden text-accent"
+						style={ fmt.Sprintf("width:%d%%", starFill(p.RatingX2, i)) }
+						:style={ fmt.Sprintf("{ width: ((h || v) >= %d ? 100 : (h || v) === %d ? 50 : 0) + '%%' }", 2*i, 2*i-1) }
+					><span class="inline-block w-8">★</span></span>
+					if p.Action != "" {
+						<button type="submit" name="rating_x2" value={ strconv.Itoa(2*i - 1) } class="absolute inset-y-0 left-0 w-1/2" aria-label={ ratingText(2*i - 1) } @mouseenter={ fmt.Sprintf("h = %d", 2*i-1) }></button>
+						<button type="submit" name="rating_x2" value={ strconv.Itoa(2 * i) } class="absolute inset-y-0 right-0 w-1/2" aria-label={ ratingText(2 * i) } @mouseenter={ fmt.Sprintf("h = %d", 2*i) }></button>
+					}
+				</span>
+			}
+		</span>
+		<span class="mono text-xs text-muted">{ ratingText(p.RatingX2) }</span>
+		if p.Action != "" && p.RatingX2 > 0 {
+			<button type="submit" name="rating_x2" value="0" class="btn btn-ghost btn-sm">Clear</button>
+		}
+	</form>
+}
+
+// TagRow shows one Game tag with its verification and flags; the children are the row actions.
+type TagRowProps struct {
+	Label           string
+	Verification    domain.Verification
+	Origin          string // display text: "Genre + F95", "F95 only", "by hand"...
+	ModifierNote    string
+	New             bool
+	Promoted        bool
+	RemovedAtSource bool
+}
+
+func verificationGlyph(v domain.Verification) string {
+	switch v {
+	case domain.VerConfirmed:
+		return "✓"
+	case domain.VerWrong:
+		return "✗"
+	}
+	return "○"
+}
+
+func verificationText(v domain.Verification) string {
+	switch v {
+	case domain.VerConfirmed:
+		return "confirmed"
+	case domain.VerWrong:
+		return "wrong"
+	}
+	return "unverified"
+}
+
+func verificationClass(v domain.Verification) string {
+	switch v {
+	case domain.VerConfirmed:
+		return "text-ok"
+	case domain.VerWrong:
+		return "text-bad"
+	}
+	return "text-muted"
+}
+
+templ TagRow(p TagRowProps) {
+	<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2">
+		<span class={ "w-4 text-center", verificationClass(p.Verification) } title={ verificationText(p.Verification) } role="img" aria-label={ verificationText(p.Verification) }>{ verificationGlyph(p.Verification) }</span>
+		<span class={ "text-sm font-medium", templ.KV("line-through opacity-60", p.Verification == domain.VerWrong) }>{ p.Label }</span>
+		if p.ModifierNote != "" {
+			<span class="text-xs text-muted">({ p.ModifierNote })</span>
+		}
+		if p.Origin != "" {
+			<span class="text-xs text-muted">{ p.Origin }</span>
+		}
+		if p.New {
+			@Chip(ChipProps{Tone: "info", Text: "new"})
+		}
+		if p.Promoted {
+			@Chip(ChipProps{Tone: "accent", Text: "now present?"})
+		}
+		if p.RemovedAtSource {
+			@Chip(ChipProps{Tone: "warn", Text: "removed at source"})
+		}
+		<span class="ml-auto flex items-center gap-1">{ children... }</span>
+	</li>
+}
+
+// VersionLabel shows a version in mono; a date-only Source shows its date, and
+// neither shows an em dash.
+type VersionLabelProps struct {
+	Version string
+	Date    string // YYYY-MM-DD fallback for date-only Sources
+}
+
+templ VersionLabel(p VersionLabelProps) {
+	switch {
+		case p.Version != "":
+			<span class="mono text-sm">{ p.Version }</span>
+		case p.Date != "":
+			<span class="mono text-sm text-muted" title="Source reports only a date">{ p.Date }</span>
+		default:
+			<span class="mono text-sm text-muted">—</span>
+	}
+}
+
+// PlayStatusSelect is the Play status <select>.
+type PlayStatusSelectProps struct {
+	ID       string
+	Name     string
+	Selected domain.PlayStatus
+	Attrs    templ.Attributes
+}
+
+templ PlayStatusSelect(p PlayStatusSelectProps) {
+	<select id={ p.ID } name={ p.Name } class="field w-auto" { p.Attrs... }>
+		for _, s := range PlayStatuses {
+			<option value={ string(s) } selected?={ s == p.Selected }>{ PlayStatusLabel(s) }</option>
+		}
+	</select>
+}
+
+// FormError is the inline error box. The error responder swaps it into #error-slot
+// (see Layout); pages may also render it next to a form.
+templ FormError(msg string) {
+	if msg != "" {
+		<div class="panel border-bad/50 px-3 py-2 text-sm text-bad">{ msg }</div>
+	}
+}
+
+// ErrorPage is the full-page body for non-htmx errors.
+templ ErrorPage(heading, msg string) {
+	<h1 class="mb-4 text-2xl font-semibold">{ heading }</h1>
+	@FormError(msg)
+}

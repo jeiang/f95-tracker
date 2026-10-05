@@ -1,0 +1,29 @@
+{
+  "normalize": [
+    {"name": "plain", "in": "1.0", "want": "1.0"},
+    {"name": "leading v", "in": "v1.0", "want": "1.0"},
+    {"name": "leading V", "in": "V1.0", "want": "1.0"},
+    {"name": "whitespace around v", "in": " \tv1.0\r\n", "want": "1.0"},
+    {"name": "only one v stripped", "in": "vv1", "want": "v1"},
+    {"name": "lone v", "in": "v", "want": ""},
+    {"name": "empty", "in": "", "want": ""},
+    {"name": "only whitespace", "in": " \t\n\r ", "want": ""},
+    {"name": "no re-trim after v", "in": "v 1.0", "want": " 1.0"},
+    {"name": "ascii lower", "in": "Ep.2 FINAL", "want": "ep.2 final"},
+    {"name": "word starting with v", "in": "Version 2", "want": "ersion 2"},
+    {"name": "non-ascii untouched", "in": "\u00c0B\u00c9", "want": "\u00c0b\u00c9"},
+    {"name": "nbsp not trimmed", "in": "\u00a0v1", "want": "\u00a0v1"},
+    {"name": "inner whitespace kept", "in": "0.5 beta 2", "want": "0.5 beta 2"}
+  ],
+  "behind": [
+    {"name": "identical", "latest": "1.0", "played": "1.0", "behind": false},
+    {"name": "v prefix ignored", "latest": "v1.0", "played": "1.0", "behind": false},
+    {"name": "case and v ignored", "latest": "V1.0-BETA", "played": "1.0-beta", "behind": false},
+    {"name": "whitespace ignored", "latest": " 1.0\n", "played": "v1.0", "behind": false},
+    {"name": "different", "latest": "1.1", "played": "1.0", "behind": true},
+    {"name": "no ordering: older latest is still behind", "latest": "0.9", "played": "1.0", "behind": true},
+    {"name": "suffix differs", "latest": "1.0a", "played": "1.0", "behind": true},
+    {"name": "double v differs", "latest": "vv1", "played": "1", "behind": true},
+    {"name": "inner whitespace matters", "latest": "1 0", "played": "10", "behind": true}
+  ]
+}
