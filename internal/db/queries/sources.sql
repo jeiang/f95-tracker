@@ -55,3 +55,9 @@ UPDATE source SET checks_enabled = 1, unavailable_at = NULL, unavailable_reason 
 
 -- name: SetSourceDetailsPending :exec
 UPDATE source SET details_pending = ? WHERE id = ?;
+
+-- name: EnqueueDetailFetch :exec
+-- At most one pending fetch per Source; an existing row keeps its original reason and budget.
+INSERT INTO detail_fetch_queue (source_id, reason, budget, enqueued_at)
+VALUES (?, ?, ?, ?)
+ON CONFLICT (source_id) DO NOTHING;

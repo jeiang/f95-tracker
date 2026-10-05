@@ -67,6 +67,30 @@ func (q *Queries) DemoteSource(ctx context.Context, id int64) error {
 	return err
 }
 
+const enqueueDetailFetch = `-- name: EnqueueDetailFetch :exec
+INSERT INTO detail_fetch_queue (source_id, reason, budget, enqueued_at)
+VALUES (?, ?, ?, ?)
+ON CONFLICT (source_id) DO NOTHING
+`
+
+type EnqueueDetailFetchParams struct {
+	SourceID   int64
+	Reason     string
+	Budget     string
+	EnqueuedAt string
+}
+
+// At most one pending fetch per Source; an existing row keeps its original reason and budget.
+func (q *Queries) EnqueueDetailFetch(ctx context.Context, arg EnqueueDetailFetchParams) error {
+	_, err := q.db.ExecContext(ctx, enqueueDetailFetch,
+		arg.SourceID,
+		arg.Reason,
+		arg.Budget,
+		arg.EnqueuedAt,
+	)
+	return err
+}
+
 const findSourceByExternal = `-- name: FindSourceByExternal :one
 SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE kind = ? AND external_id = ?
 `
