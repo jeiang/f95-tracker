@@ -15,6 +15,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
+	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/domain"
 	"github.com/jeiang/f95-tracker/internal/testutil"
 	"github.com/jeiang/f95-tracker/internal/web/static"
@@ -37,7 +38,8 @@ func newServerWithConfig(t *testing.T, store *db.Store, cfg config.Config) *Serv
 	t.Helper()
 	clk := clock.NewFake(time.Unix(0, 0))
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return New(Deps{Store: store, Clock: clk, Log: log, Config: cfg, Auth: auth.New(cfg, store, clk, log)})
+	return New(Deps{Store: store, Clock: clk, Log: log, Config: cfg, Auth: auth.New(cfg, store, clk, log),
+		Games: games.New(store, clk, games.Options{StateDir: t.TempDir()})})
 }
 
 // signedIn returns a handler and a session cookie for it.

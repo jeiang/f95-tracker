@@ -50,7 +50,7 @@ func (s *Server) respondError(w http.ResponseWriter, r *http.Request, err error)
 		w.Header().Set("HX-Reswap", "innerHTML")
 		s.renderStatus(w, r, status, ui.FormError(msg), "")
 	default:
-		meta := ui.PageMeta{Title: http.StatusText(status)}
+		meta := s.pageMeta(r, ui.TabNone, http.StatusText(status))
 		s.renderStatus(w, r, status, ui.Layout(meta, ui.ErrorPage(http.StatusText(status), msg)), "")
 	}
 }
