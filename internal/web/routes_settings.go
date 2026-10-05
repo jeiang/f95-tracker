@@ -39,8 +39,18 @@ func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, st setti
 	s.render(w, r, ui.Layout(s.pageMeta(r, ui.TabSettings, "Settings"), ui.SettingsPage(v)), fragment)
 }
 
+// done answers a successful POST: the fragment for htmx, otherwise a 303 back to
+// the page with the result code (R-UI-12).
+func (s *Server) settingsDone(w http.ResponseWriter, r *http.Request, st settingsState, fragment, anchor string) {
+	if r.Header.Get("HX-Request") == "true" {
+		s.renderSettings(w, r, st, fragment)
+		return
+	}
+	http.Redirect(w, r, "/settings?"+st.query().Encode()+"#"+anchor, http.StatusSeeOther)
+}
+
 func (s *Server) settingsPage(w http.ResponseWriter, r *http.Request) {
-	st := settingsState{synFilter: strings.TrimSpace(r.URL.Query().Get("syn"))}
+	st := decodeState(r.URL.Query())
 	frag := ""
 	if r.Header.Get("HX-Target") == "synonym-list" {
 		frag = "synonym-list"
@@ -90,18 +100,18 @@ func (s *Server) saveCookie(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	case errors.Is(err, f95.ErrBusy):
-		st.cookieMsg, st.cookieTone = "F95 busy, try again.", "warn"
+		st.code = "cookie-busy"
 	case errors.Is(err, f95.ErrBlocked):
-		st.cookieMsg, st.cookieTone = "F95 is blocking requests right now. The cookie was saved; try the check again later.", "warn"
+		st.code = "cookie-blocked"
 	case err != nil:
 		s.log.Error("cookie check", "err", err)
-		st.cookieMsg, st.cookieTone = "Could not reach F95. The cookie was saved; try the check again.", "warn"
+		st.code = "cookie-failed"
 	case ok:
-		st.cookieMsg, st.cookieTone = "Cookie saved and logged in to F95.", "ok"
+		st.code = "cookie-ok"
 	default:
-		st.cookieMsg, st.cookieTone = "F95 did not accept this cookie. It is saved but marked invalid; paste a fresh one.", "bad"
+		st.code = "cookie-invalid"
 	}
-	s.renderSettings(w, r, st, "cookie-status")
+	s.settingsDone(w, r, st, "cookie-status", "cookie")
 }
 
 func (s *Server) saveAlertSet(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +127,7 @@ func (s *Server) saveAlertSet(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	}
-	s.renderSettings(w, r, settingsState{alertSaved: true}, "alert-set")
+	s.settingsDone(w, r, settingsState{code: "alert-saved"}, "alert-set", "alerts")
 }
 
 // synonymTarget resolves the form's target text and kind to a tag. An F95 target
@@ -172,7 +182,7 @@ func (s *Server) createSynonym(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	}
-	s.renderSettings(w, r, settingsState{synMsg: reapplyMessage("added", res)}, "synonym-list")
+	s.settingsDone(w, r, settingsState{code: "syn-added", n: res.Repointed, c: res.Collapsed}, "synonym-list", "synonyms")
 }
 
 func pathID(r *http.Request) (int64, error) {
@@ -200,7 +210,7 @@ func (s *Server) updateSynonym(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	}
-	s.renderSettings(w, r, settingsState{synMsg: reapplyMessage("updated", res)}, "synonym-list")
+	s.settingsDone(w, r, settingsState{code: "syn-updated", n: res.Repointed, c: res.Collapsed}, "synonym-list", "synonyms")
 }
 
 func (s *Server) deleteSynonym(w http.ResponseWriter, r *http.Request) {
@@ -212,16 +222,16 @@ func (s *Server) deleteSynonym(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	}
-	s.renderSettings(w, r, settingsState{synMsg: "Synonym removed. Existing Game tags are unchanged."}, "synonym-list")
+	s.settingsDone(w, r, settingsState{code: "syn-removed"}, "synonym-list", "synonyms")
 }
 
 func (s *Server) ntfyTest(w http.ResponseWriter, r *http.Request) {
-	st := settingsState{ntfyTested: true}
+	st := settingsState{code: "ntfy-ok"}
 	if s.notify == nil {
-		st.ntfyErr = "ntfy is not configured."
+		st.code, st.ntfyErr = "ntfy-failed", "ntfy is not configured."
 	} else if err := s.notify.Test(r.Context()); err != nil {
 		s.log.Warn("ntfy test failed", "err", err)
-		st.ntfyErr = err.Error()
+		st.code, st.ntfyErr = "ntfy-failed", err.Error()
 	}
-	s.renderSettings(w, r, st, "ntfy-status")
+	s.settingsDone(w, r, st, "ntfy-status", "ntfy")
 }

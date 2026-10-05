@@ -136,3 +136,16 @@ func TestImportReview(t *testing.T) {
 		t.Error("empty state missing")
 	}
 }
+
+func TestImportReviewNoJSRedirects(t *testing.T) {
+	e := newSetEnv(t)
+	g, _ := testutil.InsertGame(t, e.store, testutil.GameSpec{Name: "Solo", ImportReview: true})
+	rec := e.req("POST", "/import-review", url.Values{"confirm_one": {i64s(g.ID)}, "derived": {"planned"}}, false)
+	loc := rec.Header().Get("Location")
+	if rec.Code != http.StatusSeeOther || loc != "/import-review?confirmed=1&derived=planned" {
+		t.Fatalf("%d %q", rec.Code, loc)
+	}
+	if body := e.req("GET", loc, nil, false).Body.String(); !strings.Contains(body, "1 Game confirmed") {
+		t.Error("redirected page lacks the result note")
+	}
+}

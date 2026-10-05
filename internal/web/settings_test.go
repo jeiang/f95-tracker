@@ -41,14 +41,18 @@ const (
 	guestHTML    = `<html data-logged-in="false"><body>login</body></html>`
 )
 
-func newSetEnv(t *testing.T) *setEnv {
+func newSetEnv(t *testing.T, mods ...func(*f95.Options)) *setEnv {
 	t.Helper()
 	store := testutil.NewStore(t)
 	oidc := testutil.NewOIDCFake(t)
 	e := &setEnv{t: t, store: store, f95: testutil.NewF95Fake(t), ntfy: testutil.NewNtfyFake(t)}
 	clk := clock.NewFake(time.Date(2026, 10, 5, 8, 0, 0, 0, time.UTC))
 	e.creds = f95.NewCredStore(store, clk)
-	client, err := f95.New(f95.Options{BaseURL: e.f95.URL(), Creds: e.creds, Version: "test", Interactive: true})
+	opts := f95.Options{BaseURL: e.f95.URL(), Creds: e.creds, Version: "test", Interactive: true}
+	for _, m := range mods {
+		m(&opts)
+	}
+	client, err := f95.New(opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,12 +136,13 @@ func TestSaveCookie(t *testing.T) {
 		e.f95.SetValidUser("someone-else")
 		e.f95.SetThread("67494", []byte(loggedInHTML), []byte(guestHTML))
 		rec := e.req("POST", "/settings/cookie", url.Values{"cookie": {"xf_user=" + secret + "; xf_session=s1"}}, false)
-		body := rec.Body.String()
-		if rec.Code != 200 || !strings.Contains(body, "chip-bad") || !strings.Contains(body, "<html") {
-			t.Fatalf("plain save: %d %s", rec.Code, body)
+		loc := rec.Header().Get("Location")
+		if rec.Code != http.StatusSeeOther || !strings.HasPrefix(loc, "/settings?r=cookie-invalid") || strings.Contains(loc+rec.Body.String(), secret) {
+			t.Fatalf("plain save: %d %q %s", rec.Code, loc, rec.Body)
 		}
-		if strings.Contains(body, secret) {
-			t.Fatal("cookie value echoed in the response")
+		body := e.req("GET", noFragment(loc), nil, false).Body.String()
+		if !strings.Contains(body, "chip-bad") || !strings.Contains(body, "marked invalid") || strings.Contains(body, secret) {
+			t.Fatalf("redirected page: %s", body)
 		}
 		if row, _ := e.creds.Get(context.Background()); row.Validity != "invalid" {
 			t.Errorf("validity = %q", row.Validity)
@@ -161,6 +166,29 @@ func TestSaveCookie(t *testing.T) {
 		}
 		if _, ok, _ := e.creds.Load(context.Background()); ok || len(e.f95.Requests()) != 0 {
 			t.Error("rejected input stored a cookie or hit F95")
+		}
+	})
+
+	t.Run("busy F95 asks to try again", func(t *testing.T) {
+		lock := t.TempDir() + "/f95.lock"
+		e := newSetEnv(t, func(o *f95.Options) {
+			o.Pacer = &f95.Pacer{LockPath: lock, Spacing: 0, MaxWait: 50 * time.Millisecond}
+		})
+		e.f95.SetThread("67494", []byte(loggedInHTML), []byte(guestHTML))
+		e.f95.SetVersion("1", "v1")
+		// another process (a second client on the same lock) is mid-request
+		holder, err := f95.New(f95.Options{BaseURL: e.f95.URL(), Creds: e.creds, Version: "test",
+			Pacer: &f95.Pacer{LockPath: lock, Spacing: 2 * time.Second}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer holder.Close()
+		if _, err := holder.CheckVersions(context.Background(), []string{"1"}); err != nil {
+			t.Fatal(err)
+		}
+		rec := e.req("POST", "/settings/cookie", url.Values{"cookie": {"xf_user=u1; xf_session=s1"}}, true)
+		if rec.Code != 200 || !strings.Contains(rec.Body.String(), "F95 busy, try again.") {
+			t.Fatalf("%d %s", rec.Code, rec.Body)
 		}
 	})
 
@@ -202,7 +230,13 @@ func TestAlertSet(t *testing.T) {
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Errorf("invalid status: %d", rec.Code)
 	}
-	e.req("POST", "/settings/alert-set", url.Values{}, false)
+	rec = e.req("POST", "/settings/alert-set", url.Values{}, false)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings?r=alert-saved#alerts" {
+		t.Errorf("no-JS save: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if body := e.req("GET", noFragment(rec.Header().Get("Location")), nil, false).Body.String(); !strings.Contains(body, "Saved") {
+		t.Error("redirected page lacks the saved note")
+	}
 	if set, _ := e.games.AlertSet(context.Background()); len(set) != 0 {
 		t.Errorf("empty set must be allowed, got %v", set)
 	}
@@ -289,8 +323,12 @@ func TestSynonymEditor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec := e.req("POST", "/settings/synonyms/"+i64s(row.ID)+"/delete", url.Values{}, false); rec.Code != 200 {
-		t.Fatalf("post delete: %d", rec.Code)
+	rec = e.req("POST", "/settings/synonyms/"+i64s(row.ID)+"/delete", url.Values{}, false)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/settings?r=syn-removed#synonyms" {
+		t.Fatalf("post delete: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if body := e.req("GET", noFragment(rec.Header().Get("Location")), nil, false).Body.String(); !strings.Contains(body, "Synonym removed") {
+		t.Error("redirected page lacks the result note")
 	}
 	if rec := e.req("DELETE", "/settings/synonyms/"+id, nil, true); rec.Code != 404 {
 		t.Errorf("delete twice: %d", rec.Code)
@@ -318,3 +356,5 @@ func TestNtfyTest(t *testing.T) {
 }
 
 func i64s(n int64) string { return strconv.FormatInt(n, 10) }
+
+func noFragment(u string) string { u, _, _ = strings.Cut(u, "#"); return u }

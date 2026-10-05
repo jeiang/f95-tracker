@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 
@@ -26,7 +27,11 @@ func (s *Server) importReviewPage(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	}
-	s.renderImportReview(w, r, buildImportReview(all, r.URL.Query().Get("derived")))
+	q := r.URL.Query()
+	v := buildImportReview(all, q.Get("derived"))
+	v.Confirmed, _ = strconv.Atoi(q.Get("confirmed"))
+	v.SetCount, _ = strconv.Atoi(q.Get("set"))
+	s.renderImportReview(w, r, v)
 }
 
 // importReviewAct handles the list form. action is "set" (bulk Play status on the
@@ -99,9 +104,23 @@ func (s *Server) importReviewAct(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, r, err)
 		return
 	}
+	if r.Header.Get("HX-Request") != "true" { // no-JS: POST/redirect/GET (R-UI-12)
+		q := url.Values{}
+		if filter != "" {
+			q.Set("derived", filter)
+		}
+		if confirmed > 0 {
+			q.Set("confirmed", strconv.Itoa(confirmed))
+		}
+		if set > 0 {
+			q.Set("set", strconv.Itoa(set))
+		}
+		http.Redirect(w, r, "/import-review?"+q.Encode(), http.StatusSeeOther)
+		return
+	}
 	v := buildImportReview(all, filter)
 	v.Confirmed, v.SetCount = confirmed, set
-	if v.Total == 0 && r.Header.Get("HX-Request") == "true" {
+	if v.Total == 0 {
 		w.Header().Set("HX-Refresh", "true") // the Import review tab goes away with the last row
 	}
 	s.renderImportReview(w, r, v)
