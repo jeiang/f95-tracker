@@ -1,0 +1,318 @@
+{
+  "f95_only": [
+    "ahegao",
+    "footjob",
+    "prostitution",
+    "sci-fi",
+    "vaginal-sex",
+    "virgin"
+  ],
+  "items": [
+    {
+      "raw": "2DCG",
+      "phrase": "2DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Visual Novel",
+      "phrase": "Visual Novel",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Prostitution",
+      "phrase": "Male Prostitution",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Femdom",
+      "phrase": "Femdom",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Reverse Rape",
+      "phrase": "Reverse Rape",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "phrase": "Romance",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "phrase": "Groping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Light Humiliation",
+      "phrase": "Light Humiliation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "phrase": "Lesbian",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "phrase": "Humor",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sexual Harassment",
+      "phrase": "Sexual Harassment",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sleep Sex",
+      "phrase": "Sleep Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "phrase": "Stripping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "phrase": "Teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Face Sitting",
+      "phrase": "Face Sitting",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Exhibitionism",
+      "phrase": "Exhibitionism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "phrase": "Mobile Game",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2DCG",
+      "kind": "exact",
+      "target": {
+        "name": "2dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Visual Novel",
+      "kind": "no_match",
+      "target": {
+        "name": "Visual Novel",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Prostitution",
+      "kind": "no_match",
+      "target": {
+        "name": "Male Prostitution",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Femdom",
+      "kind": "synonym",
+      "target": {
+        "name": "femaledomination"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Reverse Rape",
+      "kind": "no_match",
+      "target": {
+        "name": "Reverse Rape",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "kind": "exact",
+      "target": {
+        "name": "romance"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Light Humiliation",
+      "kind": "synonym",
+      "target": {
+        "name": "humiliation"
+      },
+      "qualifier": "present",
+      "modifier": "light"
+    },
+    {
+      "raw": "Lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "kind": "exact",
+      "target": {
+        "name": "humor"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sexual Harassment",
+      "kind": "exact",
+      "target": {
+        "name": "sexual-harassment"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sleep Sex",
+      "kind": "exact",
+      "target": {
+        "name": "sleep-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "kind": "exact",
+      "target": {
+        "name": "stripping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "kind": "exact",
+      "target": {
+        "name": "voyeurism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Face Sitting",
+      "kind": "no_match",
+      "target": {
+        "name": "Face Sitting",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Exhibitionism",
+      "kind": "exact",
+      "target": {
+        "name": "exhibitionism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

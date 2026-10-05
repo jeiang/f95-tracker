@@ -1,0 +1,172 @@
+{
+  "f95_only": [
+    "anal-sex",
+    "femaledomination",
+    "futa-trans",
+    "gay",
+    "male-protagonist",
+    "ntr",
+    "sandbox",
+    "sissification"
+  ],
+  "items": [
+    {
+      "raw": "2dcg",
+      "phrase": "2dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "futa protagonist",
+      "phrase": "futa protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "phrase": "big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "phrase": "big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "teasing",
+      "phrase": "teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "masturbation",
+      "phrase": "masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "trap",
+      "phrase": "trap",
+      "qualifier": "present"
+    },
+    {
+      "raw": "sci-fi",
+      "phrase": "sci-fi",
+      "qualifier": "present"
+    },
+    {
+      "raw": "incest",
+      "phrase": "incest",
+      "qualifier": "present"
+    },
+    {
+      "raw": "oral sex",
+      "phrase": "oral sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "handjob",
+      "phrase": "handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "titfuck",
+      "phrase": "titfuck",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2dcg",
+      "kind": "exact",
+      "target": {
+        "name": "2dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "futa protagonist",
+      "kind": "synonym",
+      "target": {
+        "name": "futa-trans-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "trap",
+      "kind": "exact",
+      "target": {
+        "name": "trap"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "sci-fi",
+      "kind": "exact",
+      "target": {
+        "name": "sci-fi"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "incest",
+      "kind": "exact",
+      "target": {
+        "name": "incest"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "oral sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "titfuck",
+      "kind": "exact",
+      "target": {
+        "name": "titfuck"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

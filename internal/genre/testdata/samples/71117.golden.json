@@ -1,0 +1,519 @@
+{
+  "f95_only": [
+    "group-sex",
+    "harem",
+    "pregnancy",
+    "virgin"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Adventure",
+      "phrase": "Adventure",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Turn based combat",
+      "phrase": "Turn based combat",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Trainer",
+      "phrase": "Trainer",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "phrase": "Superpowers",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "phrase": "Sandbox",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Rpg",
+      "phrase": "Rpg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "phrase": "Romance",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Religion",
+      "phrase": "Religion",
+      "qualifier": "present"
+    },
+    {
+      "raw": "PoV",
+      "phrase": "PoV",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Possesion",
+      "phrase": "Possesion",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Paranormal",
+      "phrase": "Paranormal",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster",
+      "phrase": "Monster",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mind Control",
+      "phrase": "Mind Control",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Horror",
+      "phrase": "Horror",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Graphic violence",
+      "phrase": "Graphic violence",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "phrase": "Fantasy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "phrase": "Dating Sim",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Cosplay",
+      "phrase": "Cosplay",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Ahegao",
+      "phrase": "Ahegao",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "phrase": "Creampie",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Corruption",
+      "phrase": "Corruption",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "phrase": "Groping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sleep Sex",
+      "phrase": "Sleep Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "phrase": "Stripping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "phrase": "Teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "phrase": "Vaginal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sex Toys",
+      "phrase": "Sex Toys",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Blackmail",
+      "phrase": "Blackmail",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Rape",
+      "phrase": "Rape",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sexual Harassment",
+      "phrase": "Sexual Harassment",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "phrase": "Anal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Footjob",
+      "phrase": "Footjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "phrase": "Mobile Game",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Adventure",
+      "kind": "exact",
+      "target": {
+        "name": "adventure"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Turn based combat",
+      "kind": "exact",
+      "target": {
+        "name": "turn-based-combat"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Trainer",
+      "kind": "exact",
+      "target": {
+        "name": "trainer"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "kind": "exact",
+      "target": {
+        "name": "superpowers"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "kind": "exact",
+      "target": {
+        "name": "sandbox"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Rpg",
+      "kind": "exact",
+      "target": {
+        "name": "rpg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "kind": "exact",
+      "target": {
+        "name": "romance"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Religion",
+      "kind": "exact",
+      "target": {
+        "name": "religion"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "PoV",
+      "kind": "exact",
+      "target": {
+        "name": "pov"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Possesion",
+      "kind": "synonym",
+      "target": {
+        "name": "possession"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Paranormal",
+      "kind": "exact",
+      "target": {
+        "name": "paranormal"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster",
+      "kind": "exact",
+      "target": {
+        "name": "monster"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mind Control",
+      "kind": "exact",
+      "target": {
+        "name": "mind-control"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Horror",
+      "kind": "exact",
+      "target": {
+        "name": "horror"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Graphic violence",
+      "kind": "exact",
+      "target": {
+        "name": "graphic-violence"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "kind": "exact",
+      "target": {
+        "name": "fantasy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "kind": "exact",
+      "target": {
+        "name": "dating-sim"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Cosplay",
+      "kind": "exact",
+      "target": {
+        "name": "cosplay"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Ahegao",
+      "kind": "exact",
+      "target": {
+        "name": "ahegao"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Corruption",
+      "kind": "exact",
+      "target": {
+        "name": "corruption"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sleep Sex",
+      "kind": "exact",
+      "target": {
+        "name": "sleep-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "kind": "exact",
+      "target": {
+        "name": "stripping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "kind": "exact",
+      "target": {
+        "name": "voyeurism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sex Toys",
+      "kind": "exact",
+      "target": {
+        "name": "sex-toys"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Blackmail",
+      "kind": "exact",
+      "target": {
+        "name": "blackmail"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Rape",
+      "kind": "exact",
+      "target": {
+        "name": "rape"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sexual Harassment",
+      "kind": "exact",
+      "target": {
+        "name": "sexual-harassment"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Footjob",
+      "kind": "exact",
+      "target": {
+        "name": "footjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

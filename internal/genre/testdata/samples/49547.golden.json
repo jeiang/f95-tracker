@@ -1,0 +1,165 @@
+{
+  "f95_only": [
+    "kinetic-novel"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "phrase": "Harem",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Scifi",
+      "phrase": "Scifi",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Large breasts",
+      "phrase": "Large breasts",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "phrase": "Vaginal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "phrase": "Anal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "phrase": "Lesbian",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "pregnancy",
+      "phrase": "pregnancy",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "kind": "exact",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Scifi",
+      "kind": "exact",
+      "target": {
+        "name": "sci-fi"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Large breasts",
+      "kind": "synonym",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "kind": "exact",
+      "target": {
+        "name": "voyeurism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "pregnancy",
+      "kind": "exact",
+      "target": {
+        "name": "pregnancy"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

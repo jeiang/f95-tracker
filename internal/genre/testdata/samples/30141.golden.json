@@ -1,0 +1,141 @@
+{
+  "f95_only": [
+    "ahegao",
+    "kinetic-novel",
+    "virgin"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Furry",
+      "phrase": "Furry",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Incest",
+      "phrase": "Incest",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "phrase": "Oral sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "phrase": "Creampie",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile game",
+      "phrase": "Mobile game",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Bestiality",
+      "phrase": "Bestiality",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Furry",
+      "kind": "exact",
+      "target": {
+        "name": "furry"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Incest",
+      "kind": "exact",
+      "target": {
+        "name": "incest"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Bestiality",
+      "kind": "exact",
+      "target": {
+        "name": "bestiality"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

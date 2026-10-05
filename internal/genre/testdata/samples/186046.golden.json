@@ -1,0 +1,412 @@
+{
+  "f95_only": [
+    "interracial"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Ahegao",
+      "phrase": "Ahegao",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "phrase": "Anal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Ass",
+      "phrase": "Big Ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "phrase": "Big Tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "phrase": "Dating Sim",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Exhibitionism",
+      "phrase": "Exhibitionism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "phrase": "Fantasy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "phrase": "Groping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group Sex",
+      "phrase": "Group Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "phrase": "Harem",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "phrase": "Lesbian",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Domination",
+      "phrase": "Male Domination",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "phrase": "Milf",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "phrase": "Mobile Game",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster Girl",
+      "phrase": "Monster Girl",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Pov",
+      "phrase": "Pov",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "phrase": "Romance",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "phrase": "Sandbox",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "phrase": "Teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Twins",
+      "phrase": "Twins",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "phrase": "Vaginal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Pregnancy(optional)",
+      "phrase": "Pregnancy",
+      "qualifier": "optional"
+    },
+    {
+      "raw": "Titfuck",
+      "phrase": "Titfuck",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Footjob(optional)",
+      "phrase": "Footjob",
+      "qualifier": "optional"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Ahegao",
+      "kind": "exact",
+      "target": {
+        "name": "ahegao"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "kind": "exact",
+      "target": {
+        "name": "dating-sim"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Exhibitionism",
+      "kind": "exact",
+      "target": {
+        "name": "exhibitionism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "kind": "exact",
+      "target": {
+        "name": "fantasy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group Sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "kind": "exact",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Domination",
+      "kind": "exact",
+      "target": {
+        "name": "maledomination"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster Girl",
+      "kind": "exact",
+      "target": {
+        "name": "monster-girl"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Pov",
+      "kind": "exact",
+      "target": {
+        "name": "pov"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "kind": "exact",
+      "target": {
+        "name": "romance"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "kind": "exact",
+      "target": {
+        "name": "sandbox"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Twins",
+      "kind": "exact",
+      "target": {
+        "name": "twins"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "kind": "exact",
+      "target": {
+        "name": "voyeurism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Pregnancy(optional)",
+      "kind": "exact",
+      "target": {
+        "name": "pregnancy"
+      },
+      "qualifier": "optional"
+    },
+    {
+      "raw": "Titfuck",
+      "kind": "exact",
+      "target": {
+        "name": "titfuck"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Footjob(optional)",
+      "kind": "exact",
+      "target": {
+        "name": "footjob"
+      },
+      "qualifier": "optional"
+    }
+  ]
+}

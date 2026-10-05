@@ -1,0 +1,229 @@
+{
+  "f95_only": [
+    "dating-sim",
+    "harem",
+    "interracial",
+    "lactation",
+    "milf",
+    "mobile-game",
+    "pov",
+    "romance",
+    "titfuck",
+    "virgin"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "phrase": "Anal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Ass",
+      "phrase": "Big Ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "phrase": "Big Tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "phrase": "Group sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "phrase": "Stripping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "phrase": "Teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Transformation",
+      "phrase": "Transformation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "phrase": "Sandbox",
+      "qualifier": "present"
+    },
+    {
+      "raw": "BBW",
+      "phrase": "BBW",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Weight Gain",
+      "phrase": "Weight Gain",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Breast Expansion",
+      "phrase": "Breast Expansion",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "kind": "exact",
+      "target": {
+        "name": "stripping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Transformation",
+      "kind": "exact",
+      "target": {
+        "name": "transformation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "kind": "exact",
+      "target": {
+        "name": "sandbox"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "BBW",
+      "kind": "no_match",
+      "target": {
+        "name": "BBW",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Weight Gain",
+      "kind": "no_match",
+      "target": {
+        "name": "Weight Gain",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Breast Expansion",
+      "kind": "no_match",
+      "target": {
+        "name": "Breast Expansion",
+        "custom": true
+      },
+      "qualifier": "present"
+    }
+  ]
+}

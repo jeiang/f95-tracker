@@ -1,0 +1,142 @@
+{
+  "f95_only": [
+    "harem",
+    "monster-girl",
+    "multiple-endings",
+    "vaginal-sex"
+  ],
+  "items": [
+    {
+      "raw": "2dcg",
+      "phrase": "2dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "3dcg",
+      "phrase": "3dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "phrase": "Big Tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "phrase": "Fantasy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Graphic Violence",
+      "phrase": "Graphic Violence",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "phrase": "Mobile Game",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "phrase": "Superpowers",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2dcg",
+      "kind": "exact",
+      "target": {
+        "name": "2dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "3dcg",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "kind": "exact",
+      "target": {
+        "name": "fantasy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Graphic Violence",
+      "kind": "exact",
+      "target": {
+        "name": "graphic-violence"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile Game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "kind": "exact",
+      "target": {
+        "name": "superpowers"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

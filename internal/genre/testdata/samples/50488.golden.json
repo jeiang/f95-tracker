@@ -1,0 +1,238 @@
+{
+  "f95_only": [
+    "2d-game",
+    "2dcg",
+    "big-ass",
+    "cheating",
+    "fantasy",
+    "femaledomination",
+    "male-protagonist",
+    "management",
+    "mobile-game",
+    "oral-sex",
+    "point-click",
+    "rpg",
+    "sandbox",
+    "turn-based-combat",
+    "vaginal-sex"
+  ],
+  "items": [
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal",
+      "phrase": "Anal",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Dick",
+      "phrase": "Big Dick",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "phrase": "Big Tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Elves",
+      "phrase": "Elves",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Defloration",
+      "phrase": "Defloration",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "phrase": "Group sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "phrase": "Harem",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "phrase": "Lesbian",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mild BDSM",
+      "phrase": "Mild BDSM",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster girl",
+      "phrase": "Monster girl",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Nuns",
+      "phrase": "Nuns",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Squirting",
+      "phrase": "Squirting",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Toys",
+      "phrase": "Toys",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Witches",
+      "phrase": "Witches",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal",
+      "kind": "synonym",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Dick",
+      "kind": "no_match",
+      "target": {
+        "name": "Big Dick",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Elves",
+      "kind": "no_match",
+      "target": {
+        "name": "Elves",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Defloration",
+      "kind": "no_match",
+      "target": {
+        "name": "Defloration",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "kind": "exact",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mild BDSM",
+      "kind": "synonym",
+      "target": {
+        "name": "bdsm"
+      },
+      "qualifier": "present",
+      "modifier": "mild"
+    },
+    {
+      "raw": "Monster girl",
+      "kind": "exact",
+      "target": {
+        "name": "monster-girl"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Nuns",
+      "kind": "no_match",
+      "target": {
+        "name": "Nuns",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Squirting",
+      "kind": "no_match",
+      "target": {
+        "name": "Squirting",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Toys",
+      "kind": "synonym",
+      "target": {
+        "name": "sex-toys"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Witches",
+      "kind": "no_match",
+      "target": {
+        "name": "Witches",
+        "custom": true
+      },
+      "qualifier": "present"
+    }
+  ]
+}

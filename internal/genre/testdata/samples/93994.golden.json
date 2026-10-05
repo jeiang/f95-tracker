@@ -1,0 +1,417 @@
+{
+  "f95_only": [
+    "combat",
+    "exhibitionism",
+    "prostitution",
+    "romance",
+    "rpg",
+    "voyeurism"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "phrase": "Creampie",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "phrase": "Teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating sim",
+      "phrase": "Dating sim",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "phrase": "Fantasy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "phrase": "Humor",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Management",
+      "phrase": "Management",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Puzzle",
+      "phrase": "Puzzle",
+      "qualifier": "present"
+    },
+    {
+      "raw": "School setting",
+      "phrase": "School setting",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "phrase": "Superpowers",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "phrase": "Sandbox",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Multiple Endings",
+      "phrase": "Multiple Endings",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Anal Sex",
+      "phrase": "Anal Sex",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Corruption",
+      "phrase": "Corruption",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Footjob",
+      "phrase": "Footjob",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Group sex",
+      "phrase": "Group sex",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Groping",
+      "phrase": "Groping",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Harem",
+      "phrase": "Harem",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Lesbian",
+      "phrase": "Lesbian",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Male Domination",
+      "phrase": "Male Domination",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Sex Toys",
+      "phrase": "Sex Toys",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Sleep Sex",
+      "phrase": "Sleep Sex",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Virgin",
+      "phrase": "Virgin",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Trainer",
+      "phrase": "Trainer",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Paranormal",
+      "phrase": "Paranormal",
+      "qualifier": "planned"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating sim",
+      "kind": "exact",
+      "target": {
+        "name": "dating-sim"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "kind": "exact",
+      "target": {
+        "name": "fantasy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "kind": "exact",
+      "target": {
+        "name": "humor"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Management",
+      "kind": "exact",
+      "target": {
+        "name": "management"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Puzzle",
+      "kind": "exact",
+      "target": {
+        "name": "puzzle"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "School setting",
+      "kind": "exact",
+      "target": {
+        "name": "school-setting"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "kind": "exact",
+      "target": {
+        "name": "superpowers"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "kind": "exact",
+      "target": {
+        "name": "sandbox"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Multiple Endings",
+      "kind": "exact",
+      "target": {
+        "name": "multiple-endings"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Anal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Corruption",
+      "kind": "exact",
+      "target": {
+        "name": "corruption"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Footjob",
+      "kind": "exact",
+      "target": {
+        "name": "footjob"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Group sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Harem",
+      "kind": "exact",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Male Domination",
+      "kind": "exact",
+      "target": {
+        "name": "maledomination"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Sex Toys",
+      "kind": "exact",
+      "target": {
+        "name": "sex-toys"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Sleep Sex",
+      "kind": "exact",
+      "target": {
+        "name": "sleep-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Virgin",
+      "kind": "exact",
+      "target": {
+        "name": "virgin"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Trainer",
+      "kind": "exact",
+      "target": {
+        "name": "trainer"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Paranormal",
+      "kind": "exact",
+      "target": {
+        "name": "paranormal"
+      },
+      "qualifier": "planned"
+    }
+  ]
+}

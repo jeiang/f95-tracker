@@ -1,0 +1,150 @@
+{
+  "f95_only": null,
+  "items": [
+    {
+      "raw": "3dcg",
+      "phrase": "3dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "female protagonist",
+      "phrase": "female protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "milf",
+      "phrase": "milf",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "phrase": "big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "phrase": "big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "trap",
+      "phrase": "trap",
+      "qualifier": "present"
+    },
+    {
+      "raw": "futa",
+      "phrase": "futa",
+      "qualifier": "present"
+    },
+    {
+      "raw": "lesbian",
+      "phrase": "lesbian",
+      "qualifier": "present"
+    },
+    {
+      "raw": "teasing",
+      "phrase": "teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "masturbation",
+      "phrase": "masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "groping",
+      "phrase": "groping",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3dcg",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "female protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "female-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "milf",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "trap",
+      "kind": "exact",
+      "target": {
+        "name": "trap"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "futa",
+      "kind": "synonym",
+      "target": {
+        "name": "futa-trans"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "present"
+    }
+  ]
+}
