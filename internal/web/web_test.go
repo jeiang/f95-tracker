@@ -15,8 +15,8 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
-	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/domain"
+	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/testutil"
 	"github.com/jeiang/f95-tracker/internal/web/static"
 )
