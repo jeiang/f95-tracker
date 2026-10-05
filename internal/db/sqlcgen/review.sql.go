@@ -7,7 +7,41 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
+
+const completeTagReview = `-- name: CompleteTagReview :exec
+INSERT INTO tag_review (game_id, state, last_reviewed_play_log_id, reviewed_at, updated_at)
+VALUES (?1, 'done', ?2, ?3, ?3)
+ON CONFLICT (game_id) DO UPDATE SET state = 'done', last_reviewed_play_log_id = excluded.last_reviewed_play_log_id,
+  reviewed_at = excluded.reviewed_at, updated_at = excluded.updated_at
+`
+
+type CompleteTagReviewParams struct {
+	GameID    int64
+	PlayLogID sql.NullInt64
+	At        sql.NullString
+}
+
+func (q *Queries) CompleteTagReview(ctx context.Context, arg CompleteTagReviewParams) error {
+	_, err := q.db.ExecContext(ctx, completeTagReview, arg.GameID, arg.PlayLogID, arg.At)
+	return err
+}
+
+const ensureTagReview = `-- name: EnsureTagReview :exec
+INSERT INTO tag_review (game_id, state, updated_at) VALUES (?, 'pending', ?)
+ON CONFLICT (game_id) DO NOTHING
+`
+
+type EnsureTagReviewParams struct {
+	GameID    int64
+	UpdatedAt string
+}
+
+func (q *Queries) EnsureTagReview(ctx context.Context, arg EnsureTagReviewParams) error {
+	_, err := q.db.ExecContext(ctx, ensureTagReview, arg.GameID, arg.UpdatedAt)
+	return err
+}
 
 const getTagReview = `-- name: GetTagReview :one
 
@@ -26,4 +60,76 @@ func (q *Queries) GetTagReview(ctx context.Context, gameID int64) (TagReview, er
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listReviewQueue = `-- name: ListReviewQueue :many
+SELECT tr.game_id, g.name, tr.state, tr.updated_at,
+       (SELECT COUNT(*) FROM game_tag gt WHERE gt.game_id = tr.game_id AND gt.qualifier = 'present'
+          AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL) AS present_count,
+       (SELECT COUNT(*) FROM game_tag gt WHERE gt.game_id = tr.game_id AND gt.qualifier = 'present'
+          AND gt.verification = 'unverified' AND gt.removed_at_source_at IS NULL) AS unverified_count,
+       lp.version AS last_played_version
+  FROM tag_review tr
+  JOIN game g ON g.id = tr.game_id
+  LEFT JOIN game_last_played lp ON lp.game_id = tr.game_id
+ WHERE tr.state IN ('pending', 'skipped')
+ ORDER BY tr.updated_at, g.name COLLATE NOCASE, g.id
+`
+
+type ListReviewQueueRow struct {
+	GameID            int64
+	Name              string
+	State             string
+	UpdatedAt         string
+	PresentCount      int64
+	UnverifiedCount   int64
+	LastPlayedVersion sql.NullString
+}
+
+func (q *Queries) ListReviewQueue(ctx context.Context) ([]ListReviewQueueRow, error) {
+	rows, err := q.db.QueryContext(ctx, listReviewQueue)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListReviewQueueRow
+	for rows.Next() {
+		var i ListReviewQueueRow
+		if err := rows.Scan(
+			&i.GameID,
+			&i.Name,
+			&i.State,
+			&i.UpdatedAt,
+			&i.PresentCount,
+			&i.UnverifiedCount,
+			&i.LastPlayedVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setTagReviewState = `-- name: SetTagReviewState :exec
+INSERT INTO tag_review (game_id, state, updated_at) VALUES (?, ?, ?)
+ON CONFLICT (game_id) DO UPDATE SET state = excluded.state, updated_at = excluded.updated_at
+`
+
+type SetTagReviewStateParams struct {
+	GameID    int64
+	State     string
+	UpdatedAt string
+}
+
+// Moves the review to pending or skipped, keeping the last completed review's markers.
+func (q *Queries) SetTagReviewState(ctx context.Context, arg SetTagReviewStateParams) error {
+	_, err := q.db.ExecContext(ctx, setTagReviewState, arg.GameID, arg.State, arg.UpdatedAt)
+	return err
 }
