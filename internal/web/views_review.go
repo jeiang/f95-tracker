@@ -7,7 +7,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/web/ui"
 )
 
-func originText(t tags.ReviewTag) string {
+func reviewOriginText(t tags.ReviewTag) string {
 	switch {
 	case t.Origin == tags.OriginBoth:
 		return "In the Genre text and the F95 list"
@@ -24,7 +24,7 @@ func originText(t tags.ReviewTag) string {
 func reviewItem(t tags.ReviewTag) ui.ReviewItem {
 	return ui.ReviewItem{
 		ID: t.GameTagID, Label: t.Tag.Label, Custom: t.Tag.Kind == tags.KindCustom, Qualifier: t.Qualifier,
-		Origin: originText(t), Note: t.Note, Verdict: t.Verdict,
+		Origin: reviewOriginText(t), Note: t.Note, Verdict: t.Verdict,
 		IsNew: t.IsNew, Promoted: t.Promoted, RemovedAtSource: t.RemovedAtSource,
 	}
 }
