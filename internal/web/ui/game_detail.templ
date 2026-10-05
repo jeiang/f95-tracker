@@ -1,0 +1,306 @@
+package ui
+
+
+templ GameDetailPage(v GameDetailView) {
+	<a href="/games" class="text-sm text-muted hover:text-ink">← Games</a>
+	@templ.Fragment("game-detail") {
+		<div id="game-detail">
+			<header class="mt-4 flex gap-4">
+				if v.Cover != "" {
+					<img src={ v.Cover } alt={ "Cover for " + v.Name } class="h-32 w-24 shrink-0 rounded-md object-cover sm:h-40 sm:w-28"/>
+				} else {
+					<div class="cover cover-1 h-32 w-24 shrink-0 text-lg sm:h-40 sm:w-28" role="img" aria-label={ "No cover for " + v.Name }>{ v.Initials }</div>
+				}
+				<div class="min-w-0 flex-1">
+					<h1 class="text-2xl font-semibold leading-tight sm:text-3xl">{ v.Name }</h1>
+					<div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+						for _, s := range v.Sources {
+							<a href={ templ.SafeURL(s.URL) } target="_blank" rel="noopener noreferrer" class="text-accent underline-offset-2 hover:underline">{ s.Label } ↗</a>
+							if s.Primary && len(v.Sources) > 1 {
+								@Chip(ChipProps{Tone: "accent", Text: "primary", Title: "Only the primary Source is checked"})
+							}
+						}
+						if v.DevEditable {
+							<form method="post" action={ templ.SafeURL(sourceURL(v.ID, v.PrimaryID)) } class="flex items-center gap-1" { hxChange(sourceURL(v.ID, v.PrimaryID))... }>
+								<input type="hidden" name="action" value="dev_status"/>
+								<label class="sr-only" for="dev-status">Dev status</label>
+								<select id="dev-status" name="dev_status" class="field w-auto">
+									<option value="" selected?={ v.Dev == "" }>no Dev status</option>
+									for _, d := range DevStatuses {
+										<option value={ string(d) } selected?={ string(d) == v.Dev }>{ DevStatusLabel(string(d)) }</option>
+									}
+								</select>
+								<noscript><button class="btn btn-sm" type="submit">Save</button></noscript>
+							</form>
+						} else {
+							@Chip(DevChip(v.Dev))
+						}
+						if v.Update {
+							@Chip(ChipProps{Tone: "info", Text: "Update", Title: "Latest version changed since the last check"})
+						}
+						if v.Behind {
+							@Chip(ChipProps{Tone: "warn", Text: "Behind"})
+						}
+					</div>
+					<dl class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:flex sm:flex-wrap">
+						<div><dt class="label">Latest</dt><dd>@VersionLabel(v.Latest)</dd></div>
+						<div>
+							<dt class="label">Last played</dt>
+							<dd class={ templ.KV("text-warn", v.Behind) }>
+								if v.LastPlayed.Version == "" && v.LastPlayed.Date == "" {
+									<span class="text-sm text-muted">not played</span>
+								} else {
+									@VersionLabel(v.LastPlayed)
+									if v.LastPlayedOn != "" {
+										<span class="mono text-xs text-muted">{ v.LastPlayedOn }</span>
+									}
+								}
+							</dd>
+						</div>
+						<div><dt class="label">Updated at Source</dt><dd class="mono text-sm">{ orDash(v.SourceUpdated) }</dd></div>
+						<div><dt class="label">Last checked</dt><dd class="mono text-sm">{ orNever(v.LastChecked) }</dd></div>
+					</dl>
+					if v.CanRefresh {
+						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/refresh")) } class="mt-3 flex flex-wrap items-center gap-2" { hxDetail(gameURL(v.ID, "/refresh"))... } hx-disabled-elt="find button">
+							<button type="submit" class="btn btn-sm">↻ Refresh from Source</button>
+							<span id="refresh-status" class="text-xs text-muted" aria-live="polite">
+								if v.RefreshMsg != "" {
+									<span class={ templ.KV("text-bad", v.RefreshFailed) }>{ v.RefreshMsg }</span>
+								}
+								<span class="htmx-indicator">Checking…</span>
+							</span>
+						</form>
+					}
+				</div>
+			</header>
+			if v.DetailsPending {
+				<div class="panel mt-4 border-warn/50 px-4 py-3 text-sm">
+					<strong class="text-warn">Details pending.</strong>
+					Version, Dev status and tags are missing until the F95 details are fetched.
+					<a href="/settings" class="underline">Update the cookie</a>, then Refresh from Source.
+				</div>
+			}
+			if v.Unavailable != "" || v.ChecksOff {
+				<div class="panel mt-4 border-bad/50 px-4 py-3 text-sm">
+					if v.Unavailable != "" {
+						<p><strong class="text-bad">Source unavailable.</strong> { v.Unavailable } Your Play log and tags are kept.</p>
+					} else {
+						<p><strong class="text-warn">Checks off.</strong> This Source is not trackable or its checks are disabled; update by hand.</p>
+					}
+					<form method="post" action={ templ.SafeURL(sourceURL(v.ID, v.PrimaryID)) } class="mt-2" { hxDetail(sourceURL(v.ID, v.PrimaryID))... }>
+						<input type="hidden" name="action" value="reenable"/>
+						<button type="submit" class="btn btn-sm">Re-enable checks</button>
+					</form>
+				</div>
+			}
+			<div class="mt-6 grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
+				<div class="grid gap-6">
+					<section class="panel px-4 py-4" aria-labelledby="h-play">
+						<h2 id="h-play" class="label mb-3">Play status</h2>
+						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/play-status")) } class="flex items-center gap-2" { hxChange(gameURL(v.ID, "/play-status"))... }>
+							@PlayStatusSelect(PlayStatusSelectProps{ID: "play-status", Name: "play_status", Selected: v.Play})
+							<noscript><button class="btn btn-sm" type="submit">Save</button></noscript>
+						</form>
+						<p class="mt-2 text-xs text-muted">{ alertHint(v.PlayAlerts) } <a href="/settings" class="underline">Alert set</a></p>
+						<h2 class="label mb-2 mt-5">Rating</h2>
+						@HalfStars(HalfStarsProps{RatingX2: v.RatingX2, Action: gameURL(v.ID, "/rating"), Attrs: hxDetail(gameURL(v.ID, "/rating"))})
+					</section>
+					@templ.Fragment("play-log") {
+						<section id="play-log" class="panel px-4 py-4" aria-labelledby="h-log">
+							<h2 id="h-log" class="label">Play log</h2>
+							<details class="mt-3">
+								<summary class="btn btn-primary btn-sm inline-flex cursor-pointer">Mark version played</summary>
+								<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/play-log")) } class="mt-3 grid gap-3 rounded-md border border-accent/50 bg-accent/5 p-3" { hxDetail(gameURL(v.ID, "/play-log"))... }>
+									<div class="grid grid-cols-2 gap-2">
+										<div>
+											<label for="mark-version" class="label mb-1">Version</label>
+											<input id="mark-version" name="version" class="field mono" value={ v.MarkVersion } required/>
+										</div>
+										<div>
+											<label for="mark-date" class="label mb-1">Date</label>
+											<input id="mark-date" name="played_on" type="date" class="field" value={ v.MarkDate } required/>
+										</div>
+									</div>
+									<p class="text-xs text-muted">Appends to the Play log. You may then review this Game’s tags.</p>
+									<button type="submit" class="btn btn-primary btn-sm justify-self-start">Mark played</button>
+								</form>
+							</details>
+							if len(v.Log) > 0 {
+								<ol class="mt-3 divide-y divide-line/60">
+									for _, e := range v.Log {
+										<li class="py-2 text-sm">
+											<div class="flex items-center gap-3">
+												<span class={ "w-24 shrink-0 font-mono text-xs", templ.KV("text-muted", e.Date == "") }>
+													if e.Date == "" {
+														undated
+													} else {
+														{ e.Date }
+													}
+												</span>
+												<span class="font-mono">{ e.Version }</span>
+												if e.Imported {
+													@Chip(ChipProps{Tone: "muted", Text: "imported"})
+												}
+												if e.Last {
+													<span class="text-xs text-muted">last played</span>
+												}
+												<form method="post" action={ templ.SafeURL(logURL(v.ID, e.ID, "/delete")) } class="ml-auto" { hxDetail(logURL(v.ID, e.ID, "/delete"))... }>
+													<button type="submit" class="btn btn-ghost btn-sm" aria-label={ "Delete entry " + e.Version }>Delete</button>
+												</form>
+											</div>
+											<details class="mt-1">
+												<summary class="cursor-pointer text-xs text-muted hover:text-ink">Edit</summary>
+												<form method="post" action={ templ.SafeURL(logURL(v.ID, e.ID, "")) } class="mt-2 flex flex-wrap items-end gap-2" { hxDetail(logURL(v.ID, e.ID, ""))... }>
+													<input name="version" class="field mono w-32" value={ e.Version } required aria-label="Version"/>
+													<input name="played_on" type="date" class="field w-auto" value={ e.Date } required?={ !e.Imported } aria-label="Date"/>
+													<button type="submit" class="btn btn-sm">Save</button>
+												</form>
+											</details>
+										</li>
+									}
+								</ol>
+							} else {
+								<p class="mt-3 text-sm text-muted">Not played yet. Mark a version once you’ve played it.</p>
+							}
+						</section>
+					}
+					<section class="panel px-4 py-4" aria-labelledby="h-src">
+						<h2 id="h-src" class="label mb-3">Sources</h2>
+						<ul class="grid gap-2 text-sm">
+							for _, s := range v.Sources {
+								<li class="flex flex-wrap items-center gap-2">
+									<a href={ templ.SafeURL(s.URL) } target="_blank" rel="noopener noreferrer" class="min-w-0 break-all text-accent hover:underline">{ s.Label }</a>
+									if s.Primary {
+										@Chip(ChipProps{Tone: "accent", Text: "primary"})
+									} else {
+										<form method="post" action={ templ.SafeURL(sourceURL(v.ID, s.ID)) } class="ml-auto" { hxDetail(sourceURL(v.ID, s.ID))... }>
+											<input type="hidden" name="action" value="primary"/>
+											<button type="submit" class="btn btn-ghost btn-sm">Make primary</button>
+										</form>
+									}
+								</li>
+							}
+						</ul>
+						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/sources")) } class="mt-3 flex gap-2" { hxDetail(gameURL(v.ID, "/sources"))... }>
+							<label for="source-url" class="sr-only">Add a Source link</label>
+							<input id="source-url" name="url" type="url" class="field" placeholder="Add a Source link (F95 thread or itch.io page)" required/>
+							<button type="submit" class="btn">Add</button>
+						</form>
+					</section>
+				</div>
+				@templ.Fragment("tag-list") {
+					<section id="tag-list" class="panel px-4 py-4" aria-labelledby="h-tags">
+						<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+							<h2 id="h-tags" class="label">Game tags</h2>
+							<span class="text-xs text-muted">{ v.TagSummary }</span>
+							if v.ReviewHref != "" {
+								<a href={ templ.SafeURL(v.ReviewHref) } class="chip chip-accent ml-auto">Tag review →</a>
+							}
+						</div>
+						<p class="mt-1 text-xs text-muted">Tags are confirmed or marked wrong in a Tag review after play; you can also set them by hand.</p>
+						for _, g := range v.TagGroups {
+							<div class="mt-4" id={ tagGroupID(g.Qualifier) }>
+								<h3 class="mb-1 text-sm font-semibold">{ g.Title } <span class="font-normal text-muted">{ itoa(int64(len(g.Rows))) }</span></h3>
+								<ul class="divide-y divide-line/50 rounded-md border border-line">
+									for _, r := range g.Rows {
+										@TagRow(TagRowProps{Label: r.Label, Verification: r.Verification, Origin: r.Origin, ModifierNote: r.Note, New: r.New, Promoted: r.Promoted, RemovedAtSource: r.Removed}) {
+											if r.Custom {
+												@Chip(ChipProps{Tone: "muted", Text: "custom", Title: "Custom tag: no F95 equivalent"})
+											}
+											<form method="post" action={ templ.SafeURL(tagURL(v.ID, r.ID)) } class="flex gap-1" { hxTags(tagURL(v.ID, r.ID))... }>
+												<button type="submit" name="verification" value="confirmed" class="btn btn-ghost btn-sm" title="Confirm" aria-label={ "Confirm " + r.Label }>✓</button>
+												<button type="submit" name="verification" value="wrong" class="btn btn-ghost btn-sm" title="Mark wrong" aria-label={ "Mark " + r.Label + " wrong" }>✗</button>
+												<button type="submit" name="verification" value="unverified" class="btn btn-ghost btn-sm" title="Unverified" aria-label={ "Mark " + r.Label + " unverified" }>○</button>
+											</form>
+											if r.Removed {
+												<form method="post" action={ templ.SafeURL(tagURL(v.ID, r.ID)) } { hxTags(tagURL(v.ID, r.ID))... }>
+													<button type="submit" name="dismiss" value="1" class="btn btn-ghost btn-sm">Dismiss</button>
+												</form>
+											}
+											<details class="relative">
+												<summary class="btn btn-ghost btn-sm cursor-pointer" aria-label={ "More for " + r.Label }>⋯</summary>
+												<div class="absolute right-0 z-10 mt-1 grid w-64 gap-2 rounded-md border border-line bg-surface p-3 shadow">
+													<form method="post" action={ templ.SafeURL(tagURL(v.ID, r.ID)) } class="flex gap-1" { hxTags(tagURL(v.ID, r.ID))... }>
+														<select name="qualifier" class="field" aria-label="Qualifier">
+															for _, q := range []string{"present", "planned", "optional"} {
+																<option value={ q } selected?={ q == r.Qualifier }>{ q }</option>
+															}
+														</select>
+														<button type="submit" class="btn btn-sm">Set</button>
+													</form>
+													if r.CanMap {
+														<form method="post" action={ templ.SafeURL(tagURL(v.ID, r.ID)) } class="grid gap-1" { hxTags(tagURL(v.ID, r.ID))... }>
+															<label class="label" for={ "map-" + itoa(r.ID) }>Map “{ r.Phrase }” to</label>
+															<div class="flex gap-1">
+																<input id={ "map-" + itoa(r.ID) } name="mapping" class="field" list="known-tags" required/>
+																<button type="submit" class="btn btn-sm">Map</button>
+															</div>
+														</form>
+													}
+												</div>
+											</details>
+										}
+									}
+								</ul>
+							</div>
+						}
+						if len(v.TagGroups) == 0 {
+							<p class="mt-4 text-sm text-muted">
+								No tags yet
+								if v.DetailsPending {
+									— they arrive with the details
+								}
+								.
+							</p>
+						}
+						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/tags")) } class="mt-4 flex gap-2" { hxTags(gameURL(v.ID, "/tags"))... }>
+							<label for="new-tag" class="sr-only">Add a tag by hand</label>
+							<input id="new-tag" name="tag" class="field" placeholder="Add a tag by hand (F95 tag or Custom tag)" list="known-tags" required/>
+							<button class="btn" type="submit">Add</button>
+						</form>
+						<datalist id="known-tags">
+							for _, l := range v.KnownTags {
+								<option value={ l }></option>
+							}
+						</datalist>
+						if len(v.GenreTokens) > 0 {
+							<details class="mt-4 border-t border-line pt-3">
+								<summary class="cursor-pointer text-sm text-muted hover:text-ink">Genre text from the thread</summary>
+								<p class="mt-2 text-sm leading-relaxed">
+									for i, t := range v.GenreTokens {
+										if i > 0 {
+											,&nbsp;
+										}
+										{ t }
+									}
+								</p>
+							</details>
+						}
+					</section>
+				}
+			</div>
+			<details class="mt-8 border-t border-line pt-3">
+				<summary class="cursor-pointer text-sm text-muted hover:text-ink">Remove this Game</summary>
+				<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/delete")) } class="mt-2 flex flex-wrap items-center gap-3">
+					<p class="text-sm">Removes the Game with its Sources, Play log and tags. This cannot be undone.</p>
+					<button type="submit" name="confirm" value="yes" class="btn btn-sm text-bad">Remove permanently</button>
+				</form>
+			</details>
+		</div>
+	}
+}
+
+func orDash(s string) string {
+	if s == "" {
+		return "—"
+	}
+	return s
+}
+
+func orNever(s string) string {
+	if s == "" {
+		return "never"
+	}
+	return s
+}
+
