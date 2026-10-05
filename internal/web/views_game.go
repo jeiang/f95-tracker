@@ -121,8 +121,12 @@ func (s *Server) buildGameDetail(ctx context.Context, id int64, note detailNote)
 		return a.ID > b.ID
 	})
 
+	presentTags, err := s.store.Queries().CountPresentTags(ctx, id)
+	if err != nil {
+		return v, err
+	}
 	switch tr, err := s.store.Queries().GetTagReview(ctx, id); {
-	case err == nil && (tr.State == tags.ReviewPending || tr.State == tags.ReviewSkipped):
+	case err == nil && presentTags > 0 && (tr.State == tags.ReviewPending || tr.State == tags.ReviewSkipped):
 		v.ReviewHref = fmt.Sprintf("/games/%d/review?version=%s", id, url.QueryEscape(v.LastPlayed.Version))
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
 		return v, err

@@ -224,6 +224,11 @@ func TestGameListStripsBadgesAndImportTab(t *testing.T) {
 	e.sql(`UPDATE game SET import_review = 1 WHERE id = ?`, g.ID)
 	e.sql(`INSERT INTO tag_review(game_id, state, updated_at) VALUES (?, 'skipped', '2026-01-01T00:00:00Z')`, g.ID)
 	_, body = e.get("/games", false)
+	if strings.Contains(body, `id="strip-tag-queue"`) {
+		t.Error("review row of a Game without tags must not be surfaced")
+	}
+	e.sql(`INSERT INTO game_tag(game_id, tag_id, origin, source_phrase) VALUES (?, (SELECT id FROM tag WHERE slug = 'harem'), 'genre', 'Harem')`, g.ID)
+	_, body = e.get("/games", false)
 	for _, present := range []string{`id="strip-import-review"`, `id="strip-tag-queue"`, `href="/import-review"`, `href="/queue"`, "check Play status", "tags to review"} {
 		if !strings.Contains(body, present) {
 			t.Errorf("%q missing", present)
