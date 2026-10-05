@@ -64,6 +64,7 @@
             ./sqlc.yaml
             ./cmd
             ./internal
+            ./testdata
           ]) (fs.maybeMissing ./internal/web/static/app.css);
         };
 
