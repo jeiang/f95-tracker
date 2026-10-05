@@ -10,12 +10,172 @@ import (
 	"database/sql"
 )
 
+const applySourceDetail = `-- name: ApplySourceDetail :exec
+UPDATE source SET
+  latest_version    = COALESCE(?1, latest_version),
+  change_key        = COALESCE(?2, change_key),
+  dev_status        = COALESCE(?3, dev_status),
+  thread_updated_at = COALESCE(?4, thread_updated_at),
+  last_detail_at    = ?5,
+  details_pending   = ?6
+WHERE id = ?7
+`
+
+type ApplySourceDetailParams struct {
+	LatestVersion   sql.NullString
+	ChangeKey       sql.NullString
+	DevStatus       sql.NullString
+	ThreadUpdatedAt sql.NullString
+	DetailAt        sql.NullString
+	DetailsPending  int64
+	ID              int64
+}
+
+// Detail-fetch writer; NULL arguments keep the stored value. dev_status is only passed for F95 Sources.
+func (q *Queries) ApplySourceDetail(ctx context.Context, arg ApplySourceDetailParams) error {
+	_, err := q.db.ExecContext(ctx, applySourceDetail,
+		arg.LatestVersion,
+		arg.ChangeKey,
+		arg.DevStatus,
+		arg.ThreadUpdatedAt,
+		arg.DetailAt,
+		arg.DetailsPending,
+		arg.ID,
+	)
+	return err
+}
+
+const deleteDetailFetchQueue = `-- name: DeleteDetailFetchQueue :exec
+DELETE FROM detail_fetch_queue WHERE source_id = ?
+`
+
+func (q *Queries) DeleteDetailFetchQueue(ctx context.Context, sourceID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteDetailFetchQueue, sourceID)
+	return err
+}
+
+const demoteSource = `-- name: DemoteSource :exec
+UPDATE source SET is_primary = 0, latest_version = NULL, change_key = NULL, dev_status = NULL,
+  thread_updated_at = NULL, last_checked_at = NULL, last_detail_at = NULL, miss_count = 0,
+  details_pending = 0, unavailable_at = NULL, unavailable_reason = NULL, checks_enabled = 1
+WHERE id = ?
+`
+
+// Link-only form required by the non-primary CHECK.
+func (q *Queries) DemoteSource(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, demoteSource, id)
+	return err
+}
+
+const findSourceByExternal = `-- name: FindSourceByExternal :one
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE kind = ? AND external_id = ?
+`
+
+type FindSourceByExternalParams struct {
+	Kind       string
+	ExternalID sql.NullString
+}
+
+func (q *Queries) FindSourceByExternal(ctx context.Context, arg FindSourceByExternalParams) (Source, error) {
+	row := q.db.QueryRowContext(ctx, findSourceByExternal, arg.Kind, arg.ExternalID)
+	var i Source
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.Kind,
+		&i.IsPrimary,
+		&i.ExternalID,
+		&i.Url,
+		&i.LatestVersion,
+		&i.ChangeKey,
+		&i.LatestVersionNorm,
+		&i.DevStatus,
+		&i.ThreadUpdatedAt,
+		&i.LastCheckedAt,
+		&i.LastDetailAt,
+		&i.MissCount,
+		&i.DetailsPending,
+		&i.UnavailableAt,
+		&i.UnavailableReason,
+		&i.ChecksEnabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const findSourceByURL = `-- name: FindSourceByURL :one
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE kind = ? AND url = ?
+`
+
+type FindSourceByURLParams struct {
+	Kind string
+	Url  string
+}
+
+func (q *Queries) FindSourceByURL(ctx context.Context, arg FindSourceByURLParams) (Source, error) {
+	row := q.db.QueryRowContext(ctx, findSourceByURL, arg.Kind, arg.Url)
+	var i Source
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.Kind,
+		&i.IsPrimary,
+		&i.ExternalID,
+		&i.Url,
+		&i.LatestVersion,
+		&i.ChangeKey,
+		&i.LatestVersionNorm,
+		&i.DevStatus,
+		&i.ThreadUpdatedAt,
+		&i.LastCheckedAt,
+		&i.LastDetailAt,
+		&i.MissCount,
+		&i.DetailsPending,
+		&i.UnavailableAt,
+		&i.UnavailableReason,
+		&i.ChecksEnabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getPrimarySource = `-- name: GetPrimarySource :one
 SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE game_id = ? AND is_primary = 1
 `
 
 func (q *Queries) GetPrimarySource(ctx context.Context, gameID int64) (Source, error) {
 	row := q.db.QueryRowContext(ctx, getPrimarySource, gameID)
+	var i Source
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.Kind,
+		&i.IsPrimary,
+		&i.ExternalID,
+		&i.Url,
+		&i.LatestVersion,
+		&i.ChangeKey,
+		&i.LatestVersionNorm,
+		&i.DevStatus,
+		&i.ThreadUpdatedAt,
+		&i.LastCheckedAt,
+		&i.LastDetailAt,
+		&i.MissCount,
+		&i.DetailsPending,
+		&i.UnavailableAt,
+		&i.UnavailableReason,
+		&i.ChecksEnabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getSource = `-- name: GetSource :one
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE id = ?
+`
+
+func (q *Queries) GetSource(ctx context.Context, id int64) (Source, error) {
+	row := q.db.QueryRowContext(ctx, getSource, id)
 	var i Source
 	err := row.Scan(
 		&i.ID,
@@ -98,4 +258,112 @@ func (q *Queries) InsertSource(ctx context.Context, arg InsertSourceParams) (Sou
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listSourcesByGame = `-- name: ListSourcesByGame :many
+SELECT id, game_id, kind, is_primary, external_id, url, latest_version, change_key, latest_version_norm, dev_status, thread_updated_at, last_checked_at, last_detail_at, miss_count, details_pending, unavailable_at, unavailable_reason, checks_enabled, created_at FROM source WHERE game_id = ? ORDER BY is_primary DESC, id
+`
+
+func (q *Queries) ListSourcesByGame(ctx context.Context, gameID int64) ([]Source, error) {
+	rows, err := q.db.QueryContext(ctx, listSourcesByGame, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Source
+	for rows.Next() {
+		var i Source
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.Kind,
+			&i.IsPrimary,
+			&i.ExternalID,
+			&i.Url,
+			&i.LatestVersion,
+			&i.ChangeKey,
+			&i.LatestVersionNorm,
+			&i.DevStatus,
+			&i.ThreadUpdatedAt,
+			&i.LastCheckedAt,
+			&i.LastDetailAt,
+			&i.MissCount,
+			&i.DetailsPending,
+			&i.UnavailableAt,
+			&i.UnavailableReason,
+			&i.ChecksEnabled,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const promoteSource = `-- name: PromoteSource :exec
+UPDATE source SET is_primary = 1 WHERE id = ?
+`
+
+func (q *Queries) PromoteSource(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, promoteSource, id)
+	return err
+}
+
+const reenableSource = `-- name: ReenableSource :exec
+UPDATE source SET checks_enabled = 1, unavailable_at = NULL, unavailable_reason = NULL, miss_count = 0 WHERE id = ?
+`
+
+func (q *Queries) ReenableSource(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, reenableSource, id)
+	return err
+}
+
+const setSourceBaseline = `-- name: SetSourceBaseline :exec
+UPDATE source SET latest_version = ?, change_key = ? WHERE id = ?
+`
+
+type SetSourceBaselineParams struct {
+	LatestVersion sql.NullString
+	ChangeKey     sql.NullString
+	ID            int64
+}
+
+func (q *Queries) SetSourceBaseline(ctx context.Context, arg SetSourceBaselineParams) error {
+	_, err := q.db.ExecContext(ctx, setSourceBaseline, arg.LatestVersion, arg.ChangeKey, arg.ID)
+	return err
+}
+
+const setSourceDetailsPending = `-- name: SetSourceDetailsPending :exec
+UPDATE source SET details_pending = ? WHERE id = ?
+`
+
+type SetSourceDetailsPendingParams struct {
+	DetailsPending int64
+	ID             int64
+}
+
+func (q *Queries) SetSourceDetailsPending(ctx context.Context, arg SetSourceDetailsPendingParams) error {
+	_, err := q.db.ExecContext(ctx, setSourceDetailsPending, arg.DetailsPending, arg.ID)
+	return err
+}
+
+const setSourceDevStatus = `-- name: SetSourceDevStatus :exec
+UPDATE source SET dev_status = ? WHERE id = ?
+`
+
+type SetSourceDevStatusParams struct {
+	DevStatus sql.NullString
+	ID        int64
+}
+
+func (q *Queries) SetSourceDevStatus(ctx context.Context, arg SetSourceDevStatusParams) error {
+	_, err := q.db.ExecContext(ctx, setSourceDevStatus, arg.DevStatus, arg.ID)
+	return err
 }
