@@ -1,8 +1,8 @@
 -- sources queries. The owning backlog item adds its queries to this file (see docs/spec/backlog.md).
 
 -- name: InsertSource :one
-INSERT INTO source (game_id, kind, is_primary, external_id, url, latest_version, change_key, dev_status, thread_updated_at, created_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO source (game_id, kind, is_primary, external_id, url, latest_version, change_key, dev_status, thread_updated_at, genre_text, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetPrimarySource :one
@@ -27,6 +27,7 @@ UPDATE source SET
   change_key        = COALESCE(sqlc.narg(change_key), change_key),
   dev_status        = COALESCE(sqlc.narg(dev_status), dev_status),
   thread_updated_at = COALESCE(sqlc.narg(thread_updated_at), thread_updated_at),
+  genre_text        = COALESCE(sqlc.narg(genre_text), genre_text),
   last_detail_at    = sqlc.arg(detail_at),
   details_pending   = sqlc.arg(details_pending)
 WHERE id = sqlc.arg(id);
@@ -40,7 +41,7 @@ UPDATE source SET dev_status = ? WHERE id = ?;
 -- Link-only form required by the non-primary CHECK.
 -- name: DemoteSource :exec
 UPDATE source SET is_primary = 0, latest_version = NULL, change_key = NULL, dev_status = NULL,
-  thread_updated_at = NULL, last_checked_at = NULL, last_detail_at = NULL, miss_count = 0,
+  thread_updated_at = NULL, genre_text = NULL, last_checked_at = NULL, last_detail_at = NULL, miss_count = 0,
   details_pending = 0, unavailable_at = NULL, unavailable_reason = NULL, checks_enabled = 1
 WHERE id = ?;
 

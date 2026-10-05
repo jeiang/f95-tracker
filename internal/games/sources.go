@@ -107,6 +107,7 @@ type Detail struct {
 	ChangeKey       *string
 	DevStatus       *domain.DevStatus
 	ThreadUpdatedAt *string
+	GenreText       *string // raw Genre text of a logged-in F95 fetch; ignored for other kinds
 	CoverURL        string
 	DetailAt        time.Time
 	DetailsPending  bool
@@ -145,6 +146,9 @@ func (s *Service) ApplySourceDetail(ctx context.Context, q *sqlcgen.Queries, sou
 			return DetailResult{}, invalid("dev status %q", *d.DevStatus)
 		}
 		p.DevStatus = nullStr(string(*d.DevStatus))
+	}
+	if f95 {
+		p.GenreText = nullPtr(d.GenreText)
 	}
 	if src.Kind == string(domain.SourceManual) && d.ChangeKey != nil {
 		return DetailResult{}, invalid("manual source has no change key")

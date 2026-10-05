@@ -262,6 +262,9 @@ func TestAddConfirmCreatesGameWithUnverifiedTags(t *testing.T) {
 	if name != "Out of Touch!" || play != "playing" || ver.String != "v4.34.1 Public" || key.String != "v4.34.1 Public" || pending != 0 {
 		t.Errorf("game = %q %q %v %v pending=%d", name, play, ver, key, pending)
 	}
+	if got := e.count(`SELECT COUNT(*) FROM source WHERE genre_text = ?`, th.GenreText); got != 1 {
+		t.Error("confirmed add did not store the raw Genre text")
+	}
 	if n := e.count(`SELECT COUNT(*) FROM check_result WHERE outcome = 'update'`); n != 0 {
 		t.Errorf("baseline raised %d Updates", n)
 	}

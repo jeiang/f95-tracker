@@ -521,7 +521,7 @@ func (s *Server) addConfirm(w http.ResponseWriter, r *http.Request) {
 		Name: name, PlayStatus: domain.PlayStatus(form.Get("play")), Source: spec,
 		LatestVersion: form.Get("version"), ChangeKey: form.Get("change_key"),
 		DevStatus: domain.DevStatus(form.Get("dev_status")), ThreadUpdatedAt: form.Get("thread_updated"),
-		DetailsPending: pending,
+		GenreText: form.Get("genre_text"), DetailsPending: pending,
 	}
 
 	var runID int64

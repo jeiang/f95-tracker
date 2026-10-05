@@ -263,17 +263,10 @@ templ GameDetailPage(v GameDetailView) {
 								<option value={ l }></option>
 							}
 						</datalist>
-						if len(v.GenreTokens) > 0 {
+						if v.GenreText != "" {
 							<details class="mt-4 border-t border-line pt-3">
 								<summary class="cursor-pointer text-sm text-muted hover:text-ink">Genre text from the thread</summary>
-								<p class="mt-2 text-sm leading-relaxed">
-									for i, t := range v.GenreTokens {
-										if i > 0 {
-											,&nbsp;
-										}
-										{ t }
-									}
-								</p>
+								<p class="mt-2 whitespace-pre-line text-sm leading-relaxed">{ v.GenreText }</p>
 							</details>
 						}
 					</section>

@@ -181,6 +181,23 @@ func TestGameDetailPageContents(t *testing.T) {
 	}
 }
 
+func TestGameDetailShowsRawGenreText(t *testing.T) {
+	e := newDetailEnv(t)
+	c := e.f95game("Eternum", "67494")
+	if body := e.get(path(c.Game.ID, "")).Body.String(); strings.Contains(body, "Genre text from the thread") {
+		t.Error("no Genre text stored: collapsible must be absent")
+	}
+	if _, err := e.raw.Exec(`UPDATE source SET genre_text = ? WHERE id = ?`, "Harem, <b>Vore</b>\nNTR", c.Source.ID); err != nil {
+		t.Fatal(err)
+	}
+	body := e.get(path(c.Game.ID, "")).Body.String()
+	for _, want := range []string{"Genre text from the thread", "Harem, &lt;b&gt;Vore&lt;/b&gt;\nNTR"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page lacks %q", want)
+		}
+	}
+}
+
 func TestPlayStatusAndRating(t *testing.T) {
 	e := newDetailEnv(t)
 	id := e.manual("G").Game.ID

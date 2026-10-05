@@ -24,6 +24,7 @@ type CreateParams struct {
 	ChangeKey       string // must be empty for manual Sources
 	DevStatus       domain.DevStatus
 	ThreadUpdatedAt string
+	GenreText       string // raw Genre text; stored for F95 Sources only
 	DetailsPending  bool
 }
 
@@ -80,10 +81,15 @@ func (s *Service) CreateTx(ctx context.Context, q *sqlcgen.Queries, p CreatePara
 	if err != nil {
 		return Created{}, err
 	}
+	genreText := ""
+	if p.Source.Kind == domain.SourceF95Thread {
+		genreText = p.GenreText
+	}
 	src, err := q.InsertSource(ctx, sqlcgen.InsertSourceParams{
 		GameID: g.ID, Kind: string(p.Source.Kind), IsPrimary: 1, ExternalID: nullStr(p.Source.ExternalID),
 		Url: p.Source.URL, LatestVersion: nullStr(p.LatestVersion), ChangeKey: nullStr(p.ChangeKey),
-		DevStatus: nullStr(string(p.DevStatus)), ThreadUpdatedAt: nullStr(p.ThreadUpdatedAt), CreatedAt: now,
+		DevStatus: nullStr(string(p.DevStatus)), ThreadUpdatedAt: nullStr(p.ThreadUpdatedAt),
+		GenreText: nullStr(strings.TrimSpace(genreText)), CreatedAt: now,
 	})
 	if err != nil {
 		return Created{}, err
