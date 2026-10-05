@@ -119,3 +119,20 @@ func (s *CredStore) MarkAlerted(ctx context.Context) error {
 	now := sql.NullString{String: clock.Timestamp(s.clock.Now()), Valid: true}
 	return s.store.WithTx(ctx, func(q *sqlcgen.Queries) error { return q.MarkF95CredentialAlerted(ctx, now) })
 }
+
+// fallbackProbeThread is a long-lived public thread (Out of Touch!, in the CSV
+// and readable logged in) used when no tracked Source is available.
+const fallbackProbeThread = "67494"
+
+// ProbeThread picks the thread for a cookie probe: the oldest tracked readable
+// F95 primary Source, else a fixed public thread.
+func (s *CredStore) ProbeThread(ctx context.Context) (string, error) {
+	id, err := s.store.Queries().OldestReadableF95Thread(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fallbackProbeThread, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return id.String, nil
+}

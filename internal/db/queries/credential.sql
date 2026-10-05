@@ -28,3 +28,8 @@ WHERE id = 1 AND validity <> 'invalid';
 
 -- name: MarkF95CredentialAlerted :exec
 UPDATE f95_credential SET invalid_alerted_at = ?1, updated_at = ?1 WHERE id = 1;
+
+-- name: OldestReadableF95Thread :one
+SELECT external_id FROM source
+WHERE kind = 'f95_thread' AND is_primary = 1 AND unavailable_at IS NULL AND external_id IS NOT NULL
+ORDER BY created_at, id LIMIT 1;

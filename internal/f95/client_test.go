@@ -340,7 +340,7 @@ func TestProbeAndSaveAndValidate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("no credential makes no request", func(t *testing.T) {
 		e := newEnv(t, false)
-		ok, err := e.client(t, nil).Probe(ctx)
+		ok, err := e.client(t, nil).Probe(ctx, "67494")
 		if ok || err != nil || len(e.fake.Requests()) != 0 {
 			t.Fatalf("ok=%v err=%v requests=%d", ok, err, len(e.fake.Requests()))
 		}
@@ -348,9 +348,10 @@ func TestProbeAndSaveAndValidate(t *testing.T) {
 	t.Run("save and validate", func(t *testing.T) {
 		e := newEnv(t, false)
 		e.fake.SetValidUser("abc")
+		e.loadThread(t, "67494", "67494.html", "59416.guest.html")
 		c := e.client(t, nil)
 		raw := "Cookie: xf_user=abc; cf_clearance=zzz; xf_session=s1; other=1"
-		ok, err := c.SaveAndValidate(ctx, raw, browserUA, time.Date(2026, 10, 26, 0, 0, 0, 0, time.UTC))
+		ok, err := c.SaveAndValidate(ctx, raw, browserUA, time.Date(2026, 10, 26, 0, 0, 0, 0, time.UTC), "67494")
 		if err != nil || !ok {
 			t.Fatalf("ok=%v err=%v", ok, err)
 		}
@@ -358,11 +359,14 @@ func TestProbeAndSaveAndValidate(t *testing.T) {
 		if row.Validity != "valid" || row.TfaTrustExpiresAt.String != "2026-10-26" || row.UserAgent != browserUA {
 			t.Errorf("row = %+v", row)
 		}
+		if r := e.fake.Requests()[0]; r.Path != "/threads/67494/" {
+			t.Errorf("probe hit %s, want the thread page", r.Path)
+		}
 		if c := e.fake.Requests()[0].Cookie; c != "xf_user=abc; xf_session=s1" {
 			t.Errorf("cookie sent = %q (only kept names)", c)
 		}
 		// pasting a stale cookie reports invalid without an error
-		ok, err = c.SaveAndValidate(ctx, "xf_user=stale; xf_tfa_trust=t", browserUA, time.Time{})
+		ok, err = c.SaveAndValidate(ctx, "xf_user=stale; xf_tfa_trust=t", browserUA, time.Time{}, "67494")
 		if ok || err != nil {
 			t.Fatalf("stale: ok=%v err=%v", ok, err)
 		}
@@ -372,7 +376,7 @@ func TestProbeAndSaveAndValidate(t *testing.T) {
 	})
 	t.Run("unusable paste is rejected before saving", func(t *testing.T) {
 		e := newEnv(t, false)
-		_, err := e.client(t, nil).SaveAndValidate(ctx, "xf_user=only", browserUA, time.Time{})
+		_, err := e.client(t, nil).SaveAndValidate(ctx, "xf_user=only", browserUA, time.Time{}, "67494")
 		if !errors.Is(err, domain.ErrValidation) {
 			t.Fatalf("err = %v", err)
 		}
@@ -478,5 +482,20 @@ func sortTimes(ts []time.Time) {
 				ts[i], ts[j] = ts[j], ts[i]
 			}
 		}
+	}
+}
+
+func TestProbeThreadChoice(t *testing.T) {
+	e := newEnv(t, false)
+	ctx := context.Background()
+	if id, err := e.creds.ProbeThread(ctx); err != nil || id != fallbackProbeThread {
+		t.Fatalf("empty db: %q, %v", id, err)
+	}
+	store := testutil.NewStore(t)
+	cs := NewCredStore(store, e.clk)
+	testutil.InsertGame(t, store, testutil.GameSpec{Name: "A", ExternalID: "111"})
+	testutil.InsertGame(t, store, testutil.GameSpec{Name: "B", ExternalID: "222"})
+	if id, err := cs.ProbeThread(ctx); err != nil || id != "111" {
+		t.Fatalf("oldest source: %q, %v", id, err)
 	}
 }

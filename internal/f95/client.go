@@ -352,10 +352,14 @@ func (c *Client) FetchThread(ctx context.Context, threadID string) (*Thread, err
 	return ParseThread(pg.body, threadID, pg.url, loggedIn)
 }
 
-// Probe loads one cheap logged-in page and reports whether F95 sees a logged-in
-// user. A stored cookie that gets the logged-out page is marked invalid and
-// reported as false, not as an error. With no stored cookie it returns false.
-func (c *Client) Probe(ctx context.Context) (bool, error) {
+// Probe loads thread threadID with the stored cookie (R-F95-1 allows no other
+// page) and reports whether F95 sees a logged-in user. A stored cookie that gets
+// the logged-out page is marked invalid and reported as false, not as an error.
+// With no stored cookie it returns false without a request.
+func (c *Client) Probe(ctx context.Context, threadID string) (bool, error) {
+	if !validThreadID(threadID) {
+		return false, fmt.Errorf("f95: bad thread id %q", threadID)
+	}
 	if c.creds == nil {
 		return false, nil
 	}
@@ -364,7 +368,7 @@ func (c *Client) Probe(ctx context.Context) (bool, error) {
 	}
 	var ok bool
 	err := c.withRetry(ctx, func() error {
-		pg, _, err := c.get(ctx, "/", true)
+		pg, _, err := c.get(ctx, "/threads/"+threadID+"/", true)
 		if err != nil {
 			return err
 		}
@@ -381,8 +385,8 @@ func (c *Client) Probe(ctx context.Context) (bool, error) {
 }
 
 // SaveAndValidate stores a pasted Cookie header with the pasting request's UA,
-// then runs one validation load (R-SET-1). tfaExpires is optional (zero = none).
-func (c *Client) SaveAndValidate(ctx context.Context, raw, ua string, tfaExpires time.Time) (bool, error) {
+// then runs one validation load of threadID (R-SET-1, see CredStore.ProbeThread). tfaExpires is optional (zero = none).
+func (c *Client) SaveAndValidate(ctx context.Context, raw, ua string, tfaExpires time.Time, threadID string) (bool, error) {
 	jar, err := ParseCookieHeader(raw)
 	if err != nil {
 		return false, err
@@ -390,5 +394,5 @@ func (c *Client) SaveAndValidate(ctx context.Context, raw, ua string, tfaExpires
 	if err := c.creds.Replace(ctx, jar, ua, tfaExpires); err != nil {
 		return false, err
 	}
-	return c.Probe(ctx)
+	return c.Probe(ctx, threadID)
 }
