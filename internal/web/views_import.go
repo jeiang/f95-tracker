@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/jeiang/f95-tracker/internal/db/sqlcgen"
 	"github.com/jeiang/f95-tracker/internal/domain"
@@ -69,14 +68,4 @@ func buildImportReview(all []ui.ImportRow, filter string) ui.ImportReviewView {
 		}
 	}
 	return v
-}
-
-func rowIDs(rows []ui.ImportRow) []int64 {
-	return slices.Collect(func(yield func(int64) bool) {
-		for _, r := range rows {
-			if !yield(r.ID) {
-				return
-			}
-		}
-	})
 }
