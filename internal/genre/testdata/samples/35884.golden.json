@@ -1,0 +1,179 @@
+{
+  "f95_only": [
+    "big-tits",
+    "sandbox"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "phrase": "Milf",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "phrase": "Oral sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Incest",
+      "phrase": "Incest",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mind control",
+      "phrase": "Mind control",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "phrase": "Humor",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "phrase": "Group sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "School setting",
+      "phrase": "School setting",
+      "qualifier": "present"
+    },
+    {
+      "raw": "mobile game",
+      "phrase": "mobile game",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Incest",
+      "kind": "exact",
+      "target": {
+        "name": "incest"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mind control",
+      "kind": "exact",
+      "target": {
+        "name": "mind-control"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "kind": "exact",
+      "target": {
+        "name": "humor"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "School setting",
+      "kind": "exact",
+      "target": {
+        "name": "school-setting"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "mobile game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

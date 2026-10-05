@@ -1,0 +1,128 @@
+{
+  "f95_only": [
+    "3dcg",
+    "ahegao",
+    "animated",
+    "big-ass",
+    "big-tits",
+    "creampie",
+    "exhibitionism",
+    "groping",
+    "handjob",
+    "humor",
+    "kinetic-novel",
+    "lactation",
+    "masturbation",
+    "mobile-game",
+    "oral-sex",
+    "paranormal",
+    "pregnancy",
+    "romance",
+    "stripping",
+    "superpowers",
+    "teasing",
+    "titfuck",
+    "vaginal-sex",
+    "virgin",
+    "voiced",
+    "voyeurism"
+  ],
+  "items": [
+    {
+      "raw": "Psychedelic",
+      "phrase": "Psychedelic",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "phrase": "Harem",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vanilla",
+      "phrase": "Vanilla",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group",
+      "phrase": "Group",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Yuri",
+      "phrase": "Yuri",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Hand-Holding",
+      "phrase": "Hand-Holding",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "Psychedelic",
+      "kind": "no_match",
+      "target": {
+        "name": "Psychedelic",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Harem",
+      "kind": "exact",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vanilla",
+      "kind": "no_match",
+      "target": {
+        "name": "Vanilla",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group",
+      "kind": "synonym",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Yuri",
+      "kind": "synonym",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Hand-Holding",
+      "kind": "no_match",
+      "target": {
+        "name": "Hand-Holding",
+        "custom": true
+      },
+      "qualifier": "present"
+    }
+  ]
+}

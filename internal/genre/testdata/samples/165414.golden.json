@@ -1,0 +1,166 @@
+{
+  "f95_only": [
+    "kinetic-novel",
+    "parody"
+  ],
+  "items": [
+    {
+      "raw": "3dcg",
+      "phrase": "3dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "male protagonist",
+      "phrase": "male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "phrase": "big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "phrase": "big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "vaginal sex",
+      "phrase": "vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "anal sex",
+      "phrase": "anal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "handjob",
+      "phrase": "handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "titfuck",
+      "phrase": "titfuck",
+      "qualifier": "present"
+    },
+    {
+      "raw": "teasing",
+      "phrase": "teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "groping",
+      "phrase": "groping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "stripping",
+      "phrase": "stripping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "creampie",
+      "phrase": "creampie",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3dcg",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "anal sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "titfuck",
+      "kind": "exact",
+      "target": {
+        "name": "titfuck"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "stripping",
+      "kind": "exact",
+      "target": {
+        "name": "stripping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

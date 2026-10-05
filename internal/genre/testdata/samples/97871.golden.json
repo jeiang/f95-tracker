@@ -1,0 +1,175 @@
+{
+  "f95_only": [
+    "adventure",
+    "ahegao",
+    "animated",
+    "corruption",
+    "creampie",
+    "exhibitionism",
+    "femaledomination",
+    "graphic-violence",
+    "harem",
+    "humor",
+    "masturbation",
+    "mobile-game",
+    "monster-girl",
+    "oral-sex",
+    "paranormal",
+    "parody",
+    "pregnancy",
+    "religion",
+    "romance",
+    "teasing",
+    "transformation",
+    "vaginal-sex",
+    "virgin",
+    "voyeurism"
+  ],
+  "items": [
+    {
+      "raw": "Futanari",
+      "phrase": "Futanari",
+      "qualifier": "present"
+    },
+    {
+      "raw": "3DGC",
+      "phrase": "3DGC",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Kinetic novel",
+      "phrase": "Kinetic novel",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "phrase": "Big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "phrase": "Big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "phrase": "Milf",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sci-fi",
+      "phrase": "Sci-fi",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mind control",
+      "phrase": "Mind control",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Drugs",
+      "phrase": "Drugs",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lactation",
+      "phrase": "Lactation",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "Futanari",
+      "kind": "synonym",
+      "target": {
+        "name": "futa-trans"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "3DGC",
+      "kind": "synonym",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Kinetic novel",
+      "kind": "exact",
+      "target": {
+        "name": "kinetic-novel"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sci-fi",
+      "kind": "exact",
+      "target": {
+        "name": "sci-fi"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mind control",
+      "kind": "exact",
+      "target": {
+        "name": "mind-control"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Drugs",
+      "kind": "exact",
+      "target": {
+        "name": "drugs"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lactation",
+      "kind": "exact",
+      "target": {
+        "name": "lactation"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

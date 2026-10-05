@@ -1,0 +1,246 @@
+{
+  "f95_only": [
+    "2dcg",
+    "anal-sex",
+    "creampie",
+    "dilf",
+    "exhibitionism",
+    "futa-trans",
+    "gay",
+    "graphic-violence",
+    "group-sex",
+    "harem",
+    "humor",
+    "interracial",
+    "lactation",
+    "lesbian",
+    "maledomination",
+    "multiple-penetration",
+    "romance",
+    "sex-toys",
+    "tentacles",
+    "trap",
+    "virgin",
+    "voyeurism"
+  ],
+  "items": [
+    {
+      "raw": "2D",
+      "phrase": "2D",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster",
+      "phrase": "Monster",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Transformation",
+      "phrase": "Transformation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Tentacle Sex",
+      "phrase": "Tentacle Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "phrase": "Vaginal Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "phrase": "Oral Sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Titjob",
+      "phrase": "Titjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Bukkake",
+      "phrase": "Bukkake",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "phrase": "Big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "phrase": "Big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "'Soft' Horror",
+      "phrase": "'Soft' Horror",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Superpowers",
+      "phrase": "Superpowers",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Gender Bender(transform into a woman, transform other people into women, etc as the MC desires. Sex as woman or with genderbent women is optional)",
+      "phrase": "Gender Bender",
+      "qualifier": "present",
+      "notes": [
+        "transform into a woman, transform other people into women, etc as the MC desires. Sex as woman or with genderbent women is optional"
+      ],
+      "prose": true
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2D",
+      "kind": "no_match",
+      "target": {
+        "name": "2D",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster",
+      "kind": "exact",
+      "target": {
+        "name": "monster"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Transformation",
+      "kind": "exact",
+      "target": {
+        "name": "transformation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Tentacle Sex",
+      "kind": "no_match",
+      "target": {
+        "name": "Tentacle Sex",
+        "custom": true
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral Sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Titjob",
+      "kind": "synonym",
+      "target": {
+        "name": "titfuck"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Bukkake",
+      "kind": "exact",
+      "target": {
+        "name": "bukkake"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "'Soft' Horror",
+      "kind": "synonym",
+      "target": {
+        "name": "horror"
+      },
+      "qualifier": "present",
+      "modifier": "soft"
+    },
+    {
+      "raw": "Superpowers",
+      "kind": "exact",
+      "target": {
+        "name": "superpowers"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Gender Bender(transform into a woman, transform other people into women, etc as the MC desires. Sex as woman or with genderbent women is optional)",
+      "kind": "prose",
+      "target": {
+        "name": ""
+      },
+      "qualifier": "present",
+      "note": "transform into a woman, transform other people into women, etc as the MC desires. Sex as woman or with genderbent women is optional"
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "f95_only": [
+    "anal-sex",
+    "bdsm",
+    "cheating",
+    "interracial",
+    "lactation",
+    "lesbian",
+    "masturbation",
+    "multiple-penetration",
+    "prostitution",
+    "sex-toys",
+    "stripping",
+    "virgin",
+    "voyeurism"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "phrase": "Romance",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "phrase": "Oral sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "phrase": "Group sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "phrase": "Big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "phrase": "Big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "phrase": "Creampie",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile game",
+      "phrase": "Mobile game",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox (Optional)",
+      "phrase": "Sandbox",
+      "qualifier": "optional"
+    },
+    {
+      "raw": "Harem (Optional)",
+      "phrase": "Harem",
+      "qualifier": "optional"
+    },
+    {
+      "raw": "Pregnancy (Optional)",
+      "phrase": "Pregnancy",
+      "qualifier": "optional"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "kind": "exact",
+      "target": {
+        "name": "romance"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox (Optional)",
+      "kind": "exact",
+      "target": {
+        "name": "sandbox"
+      },
+      "qualifier": "optional"
+    },
+    {
+      "raw": "Harem (Optional)",
+      "kind": "exact",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "optional"
+    },
+    {
+      "raw": "Pregnancy (Optional)",
+      "kind": "exact",
+      "target": {
+        "name": "pregnancy"
+      },
+      "qualifier": "optional"
+    }
+  ]
+}

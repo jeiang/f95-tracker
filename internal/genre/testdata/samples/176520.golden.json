@@ -1,0 +1,158 @@
+{
+  "f95_only": [
+    "mobile-game"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Paranormal",
+      "phrase": "Paranormal",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Oral",
+      "phrase": "Oral",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Exhibitionism",
+      "phrase": "Exhibitionism",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Group/Harem",
+      "phrase": "Group/Harem",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Dom/Sub",
+      "phrase": "Dom/Sub",
+      "qualifier": "planned"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Paranormal",
+      "kind": "exact",
+      "target": {
+        "name": "paranormal"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "kind": "exact",
+      "target": {
+        "name": "voyeurism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral",
+      "kind": "synonym",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Exhibitionism",
+      "kind": "exact",
+      "target": {
+        "name": "exhibitionism"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Group/Harem",
+      "kind": "synonym",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Group/Harem",
+      "kind": "synonym",
+      "target": {
+        "name": "harem"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Dom/Sub",
+      "kind": "no_match",
+      "target": {
+        "name": "Dom/Sub",
+        "custom": true
+      },
+      "qualifier": "planned"
+    }
+  ]
+}

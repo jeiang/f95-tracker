@@ -1,0 +1,179 @@
+{
+  "f95_only": [
+    "creampie",
+    "mobile-game"
+  ],
+  "items": [
+    {
+      "raw": "3DCG",
+      "phrase": "3DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "phrase": "Big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "phrase": "Dating Sim",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "phrase": "Groping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "phrase": "Humor",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "phrase": "Romance",
+      "qualifier": "present"
+    },
+    {
+      "raw": "School setting",
+      "phrase": "School setting",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "phrase": "Teasing",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Virgin",
+      "phrase": "Virgin",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "phrase": "Vaginal Sex",
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Boobs Job",
+      "phrase": "Boobs Job",
+      "qualifier": "planned"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "3DCG",
+      "kind": "exact",
+      "target": {
+        "name": "3dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "kind": "exact",
+      "target": {
+        "name": "dating-sim"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Groping",
+      "kind": "exact",
+      "target": {
+        "name": "groping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Humor",
+      "kind": "exact",
+      "target": {
+        "name": "humor"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "kind": "exact",
+      "target": {
+        "name": "romance"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "School setting",
+      "kind": "exact",
+      "target": {
+        "name": "school-setting"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Teasing",
+      "kind": "exact",
+      "target": {
+        "name": "teasing"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Virgin",
+      "kind": "exact",
+      "target": {
+        "name": "virgin"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "planned"
+    },
+    {
+      "raw": "Boobs Job",
+      "kind": "synonym",
+      "target": {
+        "name": "titfuck"
+      },
+      "qualifier": "planned"
+    }
+  ]
+}

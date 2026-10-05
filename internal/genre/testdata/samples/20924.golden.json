@@ -1,0 +1,386 @@
+{
+  "f95_only": [
+    "maledomination"
+  ],
+  "items": [
+    {
+      "raw": "2dcg",
+      "phrase": "2dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "phrase": "Male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal sex",
+      "phrase": "Anal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "phrase": "Animated",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "phrase": "Big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "phrase": "Big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Cosplay",
+      "phrase": "Cosplay",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "phrase": "Creampie",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Female domination",
+      "phrase": "Female domination",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Incest",
+      "phrase": "Incest",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Interracial",
+      "phrase": "Interracial",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lactation",
+      "phrase": "Lactation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "phrase": "Lesbian",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "phrase": "Masturbation",
+      "qualifier": "present"
+    },
+    {
+      "raw": "MILF",
+      "phrase": "MILF",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile game",
+      "phrase": "Mobile game",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Multiple penetration",
+      "phrase": "Multiple penetration",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Netorare",
+      "phrase": "Netorare",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "phrase": "Oral sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Pregnancy",
+      "phrase": "Pregnancy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "phrase": "Sandbox",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "phrase": "Stripping",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Titfuck",
+      "phrase": "Titfuck",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "phrase": "Vaginal sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Virgin",
+      "phrase": "Virgin",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "phrase": "Voyeurism",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "phrase": "Group sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Bukkake",
+      "phrase": "Bukkake",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2dcg",
+      "kind": "exact",
+      "target": {
+        "name": "2dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Anal sex",
+      "kind": "exact",
+      "target": {
+        "name": "anal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Animated",
+      "kind": "exact",
+      "target": {
+        "name": "animated"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Cosplay",
+      "kind": "exact",
+      "target": {
+        "name": "cosplay"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Female domination",
+      "kind": "exact",
+      "target": {
+        "name": "femaledomination"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Incest",
+      "kind": "exact",
+      "target": {
+        "name": "incest"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Interracial",
+      "kind": "exact",
+      "target": {
+        "name": "interracial"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lactation",
+      "kind": "exact",
+      "target": {
+        "name": "lactation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Lesbian",
+      "kind": "exact",
+      "target": {
+        "name": "lesbian"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Masturbation",
+      "kind": "exact",
+      "target": {
+        "name": "masturbation"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "MILF",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Mobile game",
+      "kind": "exact",
+      "target": {
+        "name": "mobile-game"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Multiple penetration",
+      "kind": "exact",
+      "target": {
+        "name": "multiple-penetration"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Netorare",
+      "kind": "synonym",
+      "target": {
+        "name": "ntr"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Oral sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Pregnancy",
+      "kind": "exact",
+      "target": {
+        "name": "pregnancy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Sandbox",
+      "kind": "exact",
+      "target": {
+        "name": "sandbox"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Stripping",
+      "kind": "exact",
+      "target": {
+        "name": "stripping"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Titfuck",
+      "kind": "exact",
+      "target": {
+        "name": "titfuck"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Virgin",
+      "kind": "exact",
+      "target": {
+        "name": "virgin"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Voyeurism",
+      "kind": "exact",
+      "target": {
+        "name": "voyeurism"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Group sex",
+      "kind": "exact",
+      "target": {
+        "name": "group-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Bukkake",
+      "kind": "exact",
+      "target": {
+        "name": "bukkake"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

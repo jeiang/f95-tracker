@@ -1,0 +1,180 @@
+{
+  "f95_only": [
+    "character-creation",
+    "futa-trans",
+    "mobile-game"
+  ],
+  "items": [
+    {
+      "raw": "2DCG",
+      "phrase": "2DCG",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Ahegao",
+      "phrase": "Ahegao",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Ass",
+      "phrase": "Big Ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "phrase": "Big Tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "phrase": "Creampie",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "phrase": "Dating Sim",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "phrase": "Fantasy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "phrase": "Handjob",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "phrase": "Male Protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "phrase": "Milf",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster Girl",
+      "phrase": "Monster Girl",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "phrase": "Romance",
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "phrase": "Vaginal Sex",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2DCG",
+      "kind": "exact",
+      "target": {
+        "name": "2dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Ahegao",
+      "kind": "exact",
+      "target": {
+        "name": "ahegao"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Big Tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Creampie",
+      "kind": "exact",
+      "target": {
+        "name": "creampie"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Dating Sim",
+      "kind": "exact",
+      "target": {
+        "name": "dating-sim"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Fantasy",
+      "kind": "exact",
+      "target": {
+        "name": "fantasy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Handjob",
+      "kind": "exact",
+      "target": {
+        "name": "handjob"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Male Protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Milf",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Monster Girl",
+      "kind": "exact",
+      "target": {
+        "name": "monster-girl"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Romance",
+      "kind": "exact",
+      "target": {
+        "name": "romance"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "Vaginal Sex",
+      "kind": "exact",
+      "target": {
+        "name": "vaginal-sex"
+      },
+      "qualifier": "present"
+    }
+  ]
+}

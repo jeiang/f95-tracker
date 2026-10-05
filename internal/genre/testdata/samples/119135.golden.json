@@ -1,0 +1,167 @@
+{
+  "f95_only": [
+    "anal-sex",
+    "animated",
+    "sissification"
+  ],
+  "items": [
+    {
+      "raw": "2dcg",
+      "phrase": "2dcg",
+      "qualifier": "present"
+    },
+    {
+      "raw": "male protagonist",
+      "phrase": "male protagonist",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "phrase": "big ass",
+      "qualifier": "present"
+    },
+    {
+      "raw": "futa",
+      "phrase": "futa",
+      "qualifier": "present"
+    },
+    {
+      "raw": "monster girl",
+      "phrase": "monster girl",
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "phrase": "big tits",
+      "qualifier": "present"
+    },
+    {
+      "raw": "oral sex",
+      "phrase": "oral sex",
+      "qualifier": "present"
+    },
+    {
+      "raw": "milf",
+      "phrase": "milf",
+      "qualifier": "present"
+    },
+    {
+      "raw": "school setting",
+      "phrase": "school setting",
+      "qualifier": "present"
+    },
+    {
+      "raw": "fantasy",
+      "phrase": "fantasy",
+      "qualifier": "present"
+    },
+    {
+      "raw": "adventure",
+      "phrase": "adventure",
+      "qualifier": "present"
+    },
+    {
+      "raw": "female domination",
+      "phrase": "female domination",
+      "qualifier": "present"
+    }
+  ],
+  "matches": [
+    {
+      "raw": "2dcg",
+      "kind": "exact",
+      "target": {
+        "name": "2dcg"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "male protagonist",
+      "kind": "exact",
+      "target": {
+        "name": "male-protagonist"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big ass",
+      "kind": "exact",
+      "target": {
+        "name": "big-ass"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "futa",
+      "kind": "synonym",
+      "target": {
+        "name": "futa-trans"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "monster girl",
+      "kind": "exact",
+      "target": {
+        "name": "monster-girl"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "big tits",
+      "kind": "exact",
+      "target": {
+        "name": "big-tits"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "oral sex",
+      "kind": "exact",
+      "target": {
+        "name": "oral-sex"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "milf",
+      "kind": "exact",
+      "target": {
+        "name": "milf"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "school setting",
+      "kind": "exact",
+      "target": {
+        "name": "school-setting"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "fantasy",
+      "kind": "exact",
+      "target": {
+        "name": "fantasy"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "adventure",
+      "kind": "exact",
+      "target": {
+        "name": "adventure"
+      },
+      "qualifier": "present"
+    },
+    {
+      "raw": "female domination",
+      "kind": "exact",
+      "target": {
+        "name": "femaledomination"
+      },
+      "qualifier": "present"
+    }
+  ]
+}
