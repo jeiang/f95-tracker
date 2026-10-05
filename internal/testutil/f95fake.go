@@ -181,8 +181,6 @@ func (f *F95Fake) serve(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "msg": msg})
-	case r.URL.Path == "/":
-		f.thread(w, r, "home", fakeThread{loggedIn: `<html data-logged-in="true"><body>home</body></html>`, guest: `<html data-logged-in="false"><body>home</body></html>`})
 	case threadPath.MatchString(r.URL.Path):
 		id := threadPath.FindStringSubmatch(r.URL.Path)[1]
 		if !strings.Contains(strings.TrimSuffix(r.URL.Path, "/"), ".") { // bare /threads/<id>/ redirects to the slug URL

@@ -65,6 +65,19 @@ func (q *Queries) MarkF95CredentialValid(ctx context.Context, validatedAt sql.Nu
 	return err
 }
 
+const oldestReadableF95Thread = `-- name: OldestReadableF95Thread :one
+SELECT external_id FROM source
+WHERE kind = 'f95_thread' AND is_primary = 1 AND unavailable_at IS NULL AND external_id IS NOT NULL
+ORDER BY created_at, id LIMIT 1
+`
+
+func (q *Queries) OldestReadableF95Thread(ctx context.Context) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, oldestReadableF95Thread)
+	var external_id sql.NullString
+	err := row.Scan(&external_id)
+	return external_id, err
+}
+
 const replaceF95Credential = `-- name: ReplaceF95Credential :exec
 INSERT INTO f95_credential (id, cookie_jar, user_agent, validity, tfa_trust_expires_at, updated_at)
 VALUES (1, ?, ?, 'unknown', ?, ?)
