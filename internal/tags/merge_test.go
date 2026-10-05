@@ -108,3 +108,27 @@ func TestMergeDoesNotDemoteOrDuplicate(t *testing.T) {
 		t.Errorf("duplicates not collapsed: %d", n)
 	}
 }
+
+func TestMergeKeepsSiblingOfRemappedSplitPhrase(t *testing.T) {
+	e := newEnv(t)
+	g := e.game(t)
+	e.add(t, g, "Incest/NTR", nil)
+	rows := e.tags(t, g)
+	if len(rows) != 2 {
+		t.Fatalf("split phrase rows = %v", rows)
+	}
+	if _, err := e.svc.SetMapping(ctx, rows["incest"].ID, TagRef{Kind: KindF95, Slug: "corruption"}); err != nil {
+		t.Fatal(err)
+	}
+	e.merge(t, g, "Incest/NTR", true, nil)
+	got := e.tags(t, g)
+	if r := got["ntr"]; r.RemovedAtSourceAt.Valid {
+		t.Errorf("sibling ntr removed: %+v", r)
+	}
+	if r := got["corruption"]; r.RemovedAtSourceAt.Valid || r.MappingOverride != 1 {
+		t.Errorf("corruption = %+v", r)
+	}
+	if _, ok := got["incest"]; ok {
+		t.Errorf("override re-created incest")
+	}
+}

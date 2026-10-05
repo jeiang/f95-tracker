@@ -42,8 +42,16 @@ func (s *Service) MergeRefreshTx(ctx context.Context, q *sqlcgen.Queries, gameID
 	}
 	existing := make(map[int64]sqlcgen.GameTag, len(rows))
 	overrides := map[string]int64{} // source phrase → tag id of a user-remapped row
+	type phraseTag struct {
+		phrase string
+		tag    int64
+	}
+	phraseRow := map[phraseTag]bool{} // rows already carrying a phrase: siblings of a split phrase
 	for _, r := range rows {
 		existing[r.TagID] = gameTagOf(r)
+		if r.SourcePhrase.Valid {
+			phraseRow[phraseTag{r.SourcePhrase.String, r.TagID}] = true
+		}
 		if r.MappingOverride == 1 && r.SourcePhrase.Valid {
 			overrides[r.SourcePhrase.String] = r.TagID
 		}
@@ -84,7 +92,7 @@ func (s *Service) MergeRefreshTx(ctx context.Context, q *sqlcgen.Queries, gameID
 			if err != nil {
 				return res, err
 			}
-			if id, ok := overrides[m.Raw]; ok && id != tag.ID {
+			if id, ok := overrides[m.Raw]; ok && id != tag.ID && !phraseRow[phraseTag{m.Raw, tag.ID}] {
 				continue
 			}
 			o := get(tag.ID)
