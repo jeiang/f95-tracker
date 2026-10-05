@@ -10,6 +10,71 @@ import (
 	"database/sql"
 )
 
+const clearTagReviewPlayLogRef = `-- name: ClearTagReviewPlayLogRef :exec
+UPDATE tag_review SET last_reviewed_play_log_id = NULL WHERE last_reviewed_play_log_id = ?
+`
+
+func (q *Queries) ClearTagReviewPlayLogRef(ctx context.Context, lastReviewedPlayLogID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, clearTagReviewPlayLogRef, lastReviewedPlayLogID)
+	return err
+}
+
+const countUserPlayLog = `-- name: CountUserPlayLog :one
+SELECT COUNT(*) FROM play_log WHERE game_id = ? AND origin = 'user'
+`
+
+func (q *Queries) CountUserPlayLog(ctx context.Context, gameID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUserPlayLog, gameID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deletePlayLog = `-- name: DeletePlayLog :exec
+DELETE FROM play_log WHERE id = ?
+`
+
+func (q *Queries) DeletePlayLog(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deletePlayLog, id)
+	return err
+}
+
+const getGameLastPlayed = `-- name: GetGameLastPlayed :one
+SELECT game_id, play_log_id, version, version_norm, played_on FROM game_last_played WHERE game_id = ?
+`
+
+func (q *Queries) GetGameLastPlayed(ctx context.Context, gameID int64) (GameLastPlayed, error) {
+	row := q.db.QueryRowContext(ctx, getGameLastPlayed, gameID)
+	var i GameLastPlayed
+	err := row.Scan(
+		&i.GameID,
+		&i.PlayLogID,
+		&i.Version,
+		&i.VersionNorm,
+		&i.PlayedOn,
+	)
+	return i, err
+}
+
+const getPlayLog = `-- name: GetPlayLog :one
+SELECT id, game_id, version, version_norm, played_on, origin, created_at FROM play_log WHERE id = ?
+`
+
+func (q *Queries) GetPlayLog(ctx context.Context, id int64) (PlayLog, error) {
+	row := q.db.QueryRowContext(ctx, getPlayLog, id)
+	var i PlayLog
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.Version,
+		&i.VersionNorm,
+		&i.PlayedOn,
+		&i.Origin,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const insertPlayLog = `-- name: InsertPlayLog :one
 
 INSERT INTO play_log (game_id, version, played_on, origin, created_at)
@@ -34,6 +99,66 @@ func (q *Queries) InsertPlayLog(ctx context.Context, arg InsertPlayLogParams) (P
 		arg.Origin,
 		arg.CreatedAt,
 	)
+	var i PlayLog
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.Version,
+		&i.VersionNorm,
+		&i.PlayedOn,
+		&i.Origin,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listPlayLog = `-- name: ListPlayLog :many
+SELECT id, game_id, version, version_norm, played_on, origin, created_at FROM play_log WHERE game_id = ? ORDER BY played_on IS NULL, played_on DESC, id DESC
+`
+
+func (q *Queries) ListPlayLog(ctx context.Context, gameID int64) ([]PlayLog, error) {
+	rows, err := q.db.QueryContext(ctx, listPlayLog, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlayLog
+	for rows.Next() {
+		var i PlayLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.Version,
+			&i.VersionNorm,
+			&i.PlayedOn,
+			&i.Origin,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updatePlayLog = `-- name: UpdatePlayLog :one
+UPDATE play_log SET version = ?, played_on = ? WHERE id = ? RETURNING id, game_id, version, version_norm, played_on, origin, created_at
+`
+
+type UpdatePlayLogParams struct {
+	Version  string
+	PlayedOn sql.NullString
+	ID       int64
+}
+
+func (q *Queries) UpdatePlayLog(ctx context.Context, arg UpdatePlayLogParams) (PlayLog, error) {
+	row := q.db.QueryRowContext(ctx, updatePlayLog, arg.Version, arg.PlayedOn, arg.ID)
 	var i PlayLog
 	err := row.Scan(
 		&i.ID,

@@ -10,6 +10,61 @@ import (
 	"database/sql"
 )
 
+const clearGameImportReview = `-- name: ClearGameImportReview :exec
+UPDATE game SET import_review = 0, updated_at = ? WHERE id = ?
+`
+
+type ClearGameImportReviewParams struct {
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) ClearGameImportReview(ctx context.Context, arg ClearGameImportReviewParams) error {
+	_, err := q.db.ExecContext(ctx, clearGameImportReview, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const countGamesByPlayStatus = `-- name: CountGamesByPlayStatus :many
+SELECT play_status, COUNT(*) AS n FROM game GROUP BY play_status
+`
+
+type CountGamesByPlayStatusRow struct {
+	PlayStatus string
+	N          int64
+}
+
+func (q *Queries) CountGamesByPlayStatus(ctx context.Context) ([]CountGamesByPlayStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, countGamesByPlayStatus)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountGamesByPlayStatusRow
+	for rows.Next() {
+		var i CountGamesByPlayStatusRow
+		if err := rows.Scan(&i.PlayStatus, &i.N); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const deleteGame = `-- name: DeleteGame :exec
+DELETE FROM game WHERE id = ?
+`
+
+func (q *Queries) DeleteGame(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGame, id)
+	return err
+}
+
 const getGame = `-- name: GetGame :one
 
 SELECT id, name, play_status, rating_x2, cover_path, cover_source_url, cover_fetched_at, platform_pref, import_review, added_at, updated_at FROM game WHERE id = ?
@@ -32,6 +87,33 @@ func (q *Queries) GetGame(ctx context.Context, id int64) (Game, error) {
 		&i.AddedAt,
 		&i.UpdatedAt,
 	)
+	return i, err
+}
+
+const getGameFlags = `-- name: GetGameFlags :one
+SELECT
+  CAST(g.play_status IN (SELECT play_status FROM alert_play_status) AS INTEGER) AS alerting,
+  CAST(g.play_status IN (SELECT play_status FROM alert_play_status)
+       AND EXISTS (SELECT 1 FROM game_behind b WHERE b.game_id = g.id) AS INTEGER) AS behind,
+  CAST(g.play_status IN (SELECT play_status FROM alert_play_status)
+       AND EXISTS (SELECT 1 FROM check_result cr JOIN source s ON s.id = cr.source_id
+                   WHERE s.game_id = g.id AND s.is_primary = 1 AND cr.outcome = 'update'
+                     AND cr.at > COALESCE((SELECT MAX(p.created_at) FROM play_log p WHERE p.game_id = g.id), '')) AS INTEGER) AS has_update
+FROM game g WHERE g.id = ?
+`
+
+type GetGameFlagsRow struct {
+	Alerting  int64
+	Behind    int64
+	HasUpdate int64
+}
+
+// Behind and Update badges: alert-set Games only (R-UPD-9). Update = an 'update' check_result on the
+// primary Source newer than the newest Play log entry was created.
+func (q *Queries) GetGameFlags(ctx context.Context, id int64) (GetGameFlagsRow, error) {
+	row := q.db.QueryRowContext(ctx, getGameFlags, id)
+	var i GetGameFlagsRow
+	err := row.Scan(&i.Alerting, &i.Behind, &i.HasUpdate)
 	return i, err
 }
 
@@ -101,4 +183,247 @@ func (q *Queries) ListBehindGameIDs(ctx context.Context) ([]int64, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const listGames = `-- name: ListGames :many
+WITH base AS (
+  SELECT g.id, g.name, g.play_status, g.rating_x2, g.cover_path, g.platform_pref, g.import_review,
+         g.added_at, g.updated_at,
+         s.id AS source_id, s.kind AS source_kind, s.url AS source_url, s.latest_version, s.dev_status,
+         s.thread_updated_at, s.last_checked_at, s.details_pending, s.unavailable_at,
+         lp.version AS last_played_version, lp.played_on AS last_played_on,
+         tr.state AS review_state,
+         CAST(?10 AS TEXT) AS sort_mode, CAST(?11 AS TEXT) AS sort_dir,
+         CAST(g.play_status IN (SELECT play_status FROM alert_play_status)
+              AND EXISTS (SELECT 1 FROM game_behind b WHERE b.game_id = g.id) AS INTEGER) AS behind,
+         CAST(g.play_status IN (SELECT play_status FROM alert_play_status)
+              AND EXISTS (SELECT 1 FROM check_result cr
+                          WHERE cr.source_id = s.id AND cr.outcome = 'update'
+                            AND cr.at > COALESCE((SELECT MAX(p.created_at) FROM play_log p WHERE p.game_id = g.id), '')) AS INTEGER) AS has_update
+  FROM game g
+  JOIN source s ON s.game_id = g.id AND s.is_primary = 1
+  LEFT JOIN game_last_played lp ON lp.game_id = g.id
+  LEFT JOIN tag_review tr ON tr.game_id = g.id
+)
+SELECT id, name, play_status, rating_x2, cover_path, platform_pref, import_review, added_at, updated_at, source_id, source_kind, source_url, latest_version, dev_status, thread_updated_at, last_checked_at, details_pending, unavailable_at, last_played_version, last_played_on, review_state, sort_mode, sort_dir, behind, has_update FROM base
+WHERE instr(lower(name), lower(?1)) > 0
+  AND (CAST(?2 AS TEXT) IS NULL OR play_status = CAST(?2 AS TEXT))
+  AND (CAST(?3 AS TEXT) IS NULL OR dev_status = CAST(?3 AS TEXT))
+  AND (CAST(?4 AS INTEGER) IS NULL OR rating_x2 >= CAST(?4 AS INTEGER))
+  AND (CAST(?5 AS INTEGER) = 0 OR behind = 1)
+  AND (CAST(?6 AS INTEGER) = 0 OR has_update = 1)
+  AND NOT EXISTS (SELECT 1 FROM json_each(CAST(?7 AS TEXT)) j
+                  WHERE NOT EXISTS (SELECT 1 FROM game_tag gt
+                                    WHERE gt.game_id = base.id AND gt.tag_id = j.value
+                                      AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL
+                                      AND (CAST(?8 AS INTEGER) = 1 OR gt.qualifier = 'present')))
+  AND NOT EXISTS (SELECT 1 FROM json_each(CAST(?9 AS TEXT)) j
+                  WHERE EXISTS (SELECT 1 FROM game_tag gt
+                                WHERE gt.game_id = base.id AND gt.tag_id = j.value
+                                  AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL
+                                  AND (CAST(?8 AS INTEGER) = 1 OR gt.qualifier = 'present')))
+ORDER BY
+  CASE WHEN sort_mode = 'default' THEN behind OR has_update END DESC,
+  CASE WHEN sort_mode = 'default' THEN thread_updated_at END DESC,
+  CASE WHEN sort_mode = 'name' AND sort_dir = 'asc' THEN lower(name) END ASC,
+  CASE WHEN sort_mode = 'name' AND sort_dir = 'desc' THEN lower(name) END DESC,
+  CASE WHEN sort_mode = 'rating' THEN rating_x2 IS NULL END ASC,
+  CASE WHEN sort_mode = 'rating' AND sort_dir = 'asc' THEN rating_x2 END ASC,
+  CASE WHEN sort_mode = 'rating' AND sort_dir = 'desc' THEN rating_x2 END DESC,
+  CASE WHEN sort_mode = 'play_status' AND sort_dir = 'asc' THEN
+    CASE play_status WHEN 'playing' THEN 0 WHEN 'on_hold' THEN 1 WHEN 'planned' THEN 2 WHEN 'finished' THEN 3 ELSE 4 END END ASC,
+  CASE WHEN sort_mode = 'play_status' AND sort_dir = 'desc' THEN
+    CASE play_status WHEN 'playing' THEN 0 WHEN 'on_hold' THEN 1 WHEN 'planned' THEN 2 WHEN 'finished' THEN 3 ELSE 4 END END DESC,
+  CASE WHEN sort_mode = 'last_played' THEN last_played_on IS NULL END ASC,
+  CASE WHEN sort_mode = 'last_played' AND sort_dir = 'asc' THEN last_played_on END ASC,
+  CASE WHEN sort_mode = 'last_played' AND sort_dir = 'desc' THEN last_played_on END DESC,
+  CASE WHEN sort_mode = 'added' AND sort_dir = 'asc' THEN added_at END ASC,
+  CASE WHEN sort_mode = 'added' AND sort_dir = 'desc' THEN added_at END DESC,
+  id DESC
+`
+
+type ListGamesParams struct {
+	NameText      string
+	PlayStatus    sql.NullString
+	DevStatus     sql.NullString
+	MinRatingX2   sql.NullInt64
+	BehindOnly    int64
+	UpdatesOnly   int64
+	IncludeTags   string
+	AllQualifiers int64
+	ExcludeTags   string
+	Sort          string
+	Dir           string
+}
+
+type ListGamesRow struct {
+	ID                int64
+	Name              string
+	PlayStatus        string
+	RatingX2          sql.NullInt64
+	CoverPath         sql.NullString
+	PlatformPref      sql.NullString
+	ImportReview      int64
+	AddedAt           string
+	UpdatedAt         string
+	SourceID          int64
+	SourceKind        string
+	SourceUrl         string
+	LatestVersion     sql.NullString
+	DevStatus         sql.NullString
+	ThreadUpdatedAt   sql.NullString
+	LastCheckedAt     sql.NullString
+	DetailsPending    int64
+	UnavailableAt     sql.NullString
+	LastPlayedVersion sql.NullString
+	LastPlayedOn      sql.NullString
+	ReviewState       sql.NullString
+	SortMode          string
+	SortDir           string
+	Behind            int64
+	HasUpdate         int64
+}
+
+func (q *Queries) ListGames(ctx context.Context, arg ListGamesParams) ([]ListGamesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGames,
+		arg.NameText,
+		arg.PlayStatus,
+		arg.DevStatus,
+		arg.MinRatingX2,
+		arg.BehindOnly,
+		arg.UpdatesOnly,
+		arg.IncludeTags,
+		arg.AllQualifiers,
+		arg.ExcludeTags,
+		arg.Sort,
+		arg.Dir,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGamesRow
+	for rows.Next() {
+		var i ListGamesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.PlayStatus,
+			&i.RatingX2,
+			&i.CoverPath,
+			&i.PlatformPref,
+			&i.ImportReview,
+			&i.AddedAt,
+			&i.UpdatedAt,
+			&i.SourceID,
+			&i.SourceKind,
+			&i.SourceUrl,
+			&i.LatestVersion,
+			&i.DevStatus,
+			&i.ThreadUpdatedAt,
+			&i.LastCheckedAt,
+			&i.DetailsPending,
+			&i.UnavailableAt,
+			&i.LastPlayedVersion,
+			&i.LastPlayedOn,
+			&i.ReviewState,
+			&i.SortMode,
+			&i.SortDir,
+			&i.Behind,
+			&i.HasUpdate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateGameCover = `-- name: UpdateGameCover :exec
+UPDATE game SET cover_path = ?, cover_source_url = ?, cover_fetched_at = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdateGameCoverParams struct {
+	CoverPath      sql.NullString
+	CoverSourceUrl sql.NullString
+	CoverFetchedAt sql.NullString
+	UpdatedAt      string
+	ID             int64
+}
+
+func (q *Queries) UpdateGameCover(ctx context.Context, arg UpdateGameCoverParams) error {
+	_, err := q.db.ExecContext(ctx, updateGameCover,
+		arg.CoverPath,
+		arg.CoverSourceUrl,
+		arg.CoverFetchedAt,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	return err
+}
+
+const updateGameName = `-- name: UpdateGameName :exec
+UPDATE game SET name = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdateGameNameParams struct {
+	Name      string
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UpdateGameName(ctx context.Context, arg UpdateGameNameParams) error {
+	_, err := q.db.ExecContext(ctx, updateGameName, arg.Name, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateGamePlatformPref = `-- name: UpdateGamePlatformPref :exec
+UPDATE game SET platform_pref = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdateGamePlatformPrefParams struct {
+	PlatformPref sql.NullString
+	UpdatedAt    string
+	ID           int64
+}
+
+func (q *Queries) UpdateGamePlatformPref(ctx context.Context, arg UpdateGamePlatformPrefParams) error {
+	_, err := q.db.ExecContext(ctx, updateGamePlatformPref, arg.PlatformPref, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateGamePlayStatus = `-- name: UpdateGamePlayStatus :exec
+UPDATE game SET play_status = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdateGamePlayStatusParams struct {
+	PlayStatus string
+	UpdatedAt  string
+	ID         int64
+}
+
+func (q *Queries) UpdateGamePlayStatus(ctx context.Context, arg UpdateGamePlayStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateGamePlayStatus, arg.PlayStatus, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateGameRating = `-- name: UpdateGameRating :exec
+UPDATE game SET rating_x2 = ?, updated_at = ? WHERE id = ?
+`
+
+type UpdateGameRatingParams struct {
+	RatingX2  sql.NullInt64
+	UpdatedAt string
+	ID        int64
+}
+
+func (q *Queries) UpdateGameRating(ctx context.Context, arg UpdateGameRatingParams) error {
+	_, err := q.db.ExecContext(ctx, updateGameRating, arg.RatingX2, arg.UpdatedAt, arg.ID)
+	return err
 }

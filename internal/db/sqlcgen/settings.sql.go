@@ -9,6 +9,15 @@ import (
 	"context"
 )
 
+const deleteAlertPlayStatuses = `-- name: DeleteAlertPlayStatuses :exec
+DELETE FROM alert_play_status
+`
+
+func (q *Queries) DeleteAlertPlayStatuses(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAlertPlayStatuses)
+	return err
+}
+
 const getSettings = `-- name: GetSettings :one
 
 SELECT id, mirror_host_order, platform_pref, updated_at FROM settings WHERE id = 1
@@ -25,6 +34,15 @@ func (q *Queries) GetSettings(ctx context.Context) (Setting, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const insertAlertPlayStatus = `-- name: InsertAlertPlayStatus :exec
+INSERT INTO alert_play_status (play_status) VALUES (?)
+`
+
+func (q *Queries) InsertAlertPlayStatus(ctx context.Context, playStatus string) error {
+	_, err := q.db.ExecContext(ctx, insertAlertPlayStatus, playStatus)
+	return err
 }
 
 const listAlertPlayStatuses = `-- name: ListAlertPlayStatuses :many
@@ -52,4 +70,19 @@ func (q *Queries) ListAlertPlayStatuses(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSettings = `-- name: UpdateSettings :exec
+UPDATE settings SET mirror_host_order = ?, platform_pref = ?, updated_at = ? WHERE id = 1
+`
+
+type UpdateSettingsParams struct {
+	MirrorHostOrder string
+	PlatformPref    string
+	UpdatedAt       string
+}
+
+func (q *Queries) UpdateSettings(ctx context.Context, arg UpdateSettingsParams) error {
+	_, err := q.db.ExecContext(ctx, updateSettings, arg.MirrorHostOrder, arg.PlatformPref, arg.UpdatedAt)
+	return err
 }
