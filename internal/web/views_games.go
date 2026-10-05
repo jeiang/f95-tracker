@@ -237,7 +237,7 @@ func gameRow(r sqlcgen.ListGamesRow) ui.GameRow {
 		g.Badges = append(g.Badges, ui.ChipProps{Tone: tone, Text: text, Title: title})
 	}
 	if r.HasUpdate == 1 {
-		add("accent", "Update", "A newer version than your last played")
+		add("info", "Update", "A newer version than your last played")
 	}
 	if r.Behind == 1 {
 		add("warn", "Behind", "Last played version is older than the latest")
@@ -252,7 +252,7 @@ func gameRow(r sqlcgen.ListGamesRow) ui.GameRow {
 		add("accent", "tags to review", "Tag review "+r.ReviewState.String)
 	}
 	if r.ImportReview == 1 {
-		add("accent", "check Play status", "Imported from CSV; Play status was derived")
+		add("warn", "check Play status", "Imported from CSV; Play status was derived")
 	}
 	return g
 }

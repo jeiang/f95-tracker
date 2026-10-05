@@ -39,6 +39,8 @@ func (s *Server) respondError(w http.ResponseWriter, r *http.Request, err error)
 	if status >= 500 {
 		s.log.Error("request failed", "method", r.Method, "path", r.URL.Path, "err", err)
 		msg = "Something went wrong. Try again."
+	} else if status == http.StatusNotFound {
+		msg = "That page or Game does not exist."
 	}
 	switch {
 	case strings.HasPrefix(r.URL.Path, "/api/"):
