@@ -21,6 +21,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/auth"
 	"github.com/jeiang/f95-tracker/internal/check"
 	"github.com/jeiang/f95-tracker/internal/clock"
+	"github.com/jeiang/f95-tracker/internal/csvimport"
 	"github.com/jeiang/f95-tracker/internal/db"
 	"github.com/jeiang/f95-tracker/internal/f95"
 	"github.com/jeiang/f95-tracker/internal/games"
@@ -516,3 +517,19 @@ func url2(kv ...string) url.Values {
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
 
 func genreKey(s string) string { return genre.Key(s) }
+
+func TestAddItchAlreadyImportedByCSV(t *testing.T) {
+	e := newAddEnv(t, true, 0)
+	im := &csvimport.Importer{
+		Store: e.store, Clock: clock.Real{}, Tags: e.tags, Log: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Games: games.New(e.store, clock.Real{}, games.Options{StateDir: t.TempDir()}),
+	}
+	sheet := "Name,Version,Abandoned,Completed,On Hold,Rating,URL Code,Link\n" +
+		"Lycoris Radiata (SFW Rework),Ch. 1,FALSE,FALSE,FALSE,5,,https://Kuro-Kai.itch.io/lycoris-radiata/\n"
+	if _, err := im.Run(context.Background(), strings.NewReader(sheet), false); err != nil {
+		t.Fatal(err)
+	}
+	if rec := e.fetch("itchio", "https://kuro-kai.itch.io/lycoris-radiata?x=1", nil); rec.Code != http.StatusConflict {
+		t.Errorf("itch Game imported from the sheet: add answered %d, want already tracked (409)", rec.Code)
+	}
+}

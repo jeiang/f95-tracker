@@ -72,17 +72,13 @@ func f95ThreadID(in string) (string, bool) {
 
 func f95ThreadURL(id string) string { return f95.DefaultBaseURL + "/threads/" + id + "/" }
 
-// itchSourceSpec normalises an itch.io game link: external id is
-// "<user>.itch.io/<slug>" lowercased, URL has no query, fragment or trailing slash.
+// itchSourceSpec normalises an itch.io game link (itch.CanonicalURL).
 func itchSourceSpec(raw string) (games.SourceSpec, error) {
-	u, err := url.Parse(strings.TrimSpace(raw))
-	host := strings.ToLower(u.Hostname())
-	slug := strings.Trim(u.Path, "/")
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || !strings.HasSuffix(host, ".itch.io") || slug == "" || strings.Contains(slug, "/") {
+	id, u, err := itch.CanonicalURL(raw)
+	if err != nil {
 		return games.SourceSpec{}, fmt.Errorf("%w: that does not look like an itch.io game page link", domain.ErrValidation)
 	}
-	slug = strings.ToLower(slug)
-	return games.SourceSpec{Kind: domain.SourceItchio, ExternalID: host + "/" + slug, URL: "https://" + host + "/" + slug}, nil
+	return games.SourceSpec{Kind: domain.SourceItchio, ExternalID: id, URL: u}, nil
 }
 
 func manualSourceSpec(raw string) (games.SourceSpec, error) {

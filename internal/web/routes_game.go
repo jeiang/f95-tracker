@@ -352,8 +352,8 @@ func linkSourceSpec(raw string) (games.SourceSpec, error) {
 			return games.SourceSpec{Kind: domain.SourceF95Thread, ExternalID: m[1], URL: "https://f95zone.to/threads/" + m[1] + "/"}, nil
 		}
 	}
-	if slug := strings.Trim(u.Path, "/"); strings.HasSuffix(host, ".itch.io") && slug != "" && !strings.Contains(slug, "/") {
-		return games.SourceSpec{Kind: domain.SourceItchio, ExternalID: host + "/" + strings.ToLower(slug), URL: "https://" + host + "/" + slug}, nil
+	if id, gameURL, err := itch.CanonicalURL(raw); err == nil {
+		return games.SourceSpec{Kind: domain.SourceItchio, ExternalID: id, URL: gameURL}, nil
 	}
 	return games.SourceSpec{Kind: domain.SourceManual, URL: u.String()}, nil
 }
