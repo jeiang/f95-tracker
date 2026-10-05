@@ -1,8 +1,8 @@
 # Data model (PROPOSAL for ticket #11)
 
-Status: draft for the grilling. Anything not dictated by a resolved ticket is marked **PROPOSED** with the alternative in one line. Terms follow `CONTEXT.md`. Ticket refs are `#n`.
+Status: Final (resolved in #11). Terms follow `CONTEXT.md`. Ticket refs are `#n`; #11 means decided in this grilling; #14 is the UI prototype resolution.
 
-Conventions (PROPOSED): goose-style migration, `STRICT` tables, timestamps as UTC ISO-8601 `TEXT`, booleans `INTEGER CHECK (x IN (0,1))`, integer surrogate keys. Alternative: unix-epoch integers for timestamps. Stack fixed by #4 (modernc sqlite, goose, sqlc); `PRAGMA foreign_keys=ON`, `journal_mode=WAL`.
+Conventions (accepted in #11): goose-style migration, `STRICT` tables, timestamps as UTC ISO-8601 `TEXT`, booleans `INTEGER CHECK (x IN (0,1))`, integer surrogate keys. Stack fixed by #4 (modernc sqlite, goose, sqlc); `PRAGMA foreign_keys=ON`, `journal_mode=WAL`.
 
 ## Schema
 
@@ -17,7 +17,9 @@ CREATE TABLE game (
   play_status   TEXT NOT NULL DEFAULT 'planned'
                 CHECK (play_status IN ('planned','playing','finished','dropped','on_hold')),
   rating_x2     INTEGER CHECK (rating_x2 BETWEEN 1 AND 10),  -- 0.5..5 in 0.5 steps stored x2; NULL = no rating (CONTEXT)
-  cover_url     TEXT,                                -- PROPOSED: URL only. Alt: cache image file in state dir
+  cover_path    TEXT,                                -- cached image file, relative to the state dir (#11)
+  cover_source_url TEXT,                             -- where the cached file was fetched from
+  cover_fetched_at TEXT,
   platform_pref TEXT CHECK (platform_pref IN ('linux','win_linux','win')),  -- per-Game override of default (#13)
   import_review INTEGER NOT NULL DEFAULT 0 CHECK (import_review IN (0,1)),  -- on the CSV-import review list (#10)
   added_at      TEXT NOT NULL,
@@ -30,11 +32,11 @@ CREATE TABLE source (
   id               INTEGER PRIMARY KEY,
   game_id          INTEGER NOT NULL REFERENCES game(id) ON DELETE CASCADE,
   kind             TEXT NOT NULL CHECK (kind IN ('f95_thread','itchio','manual')),
-  is_primary       INTEGER NOT NULL DEFAULT 1 CHECK (is_primary IN (0,1)),   -- PROPOSED: many Sources allowed, one primary. Alt: UNIQUE(game_id)
+  is_primary       INTEGER NOT NULL DEFAULT 0 CHECK (is_primary IN (0,1)),   -- many Sources per Game, exactly one primary (#11); only the primary is checked
   external_id      TEXT,                              -- F95 thread id; itch.io URL slug; NULL for manual
   url              TEXT NOT NULL,
   -- version / update detection (see "Update detection")
-  latest_version   TEXT,                              -- raw string as last seen; display + Behind input
+  latest_version   TEXT,                              -- raw version string/token as last seen; NULL when the Source reports only a date (itch.io without a version token, #7, #11)
   change_key       TEXT,                              -- compared EXACTLY between checks (F95: = latest_version; itch.io: fingerprint, #7)
   latest_version_norm TEXT GENERATED ALWAYS AS (
     lower(CASE WHEN lower(substr(trim(latest_version, ' '||char(9,10,13)),1,1)) = 'v'
@@ -52,42 +54,49 @@ CREATE TABLE source (
   checks_enabled   INTEGER NOT NULL DEFAULT 1 CHECK (checks_enabled IN (0,1)),  -- manual re-enable clears unavailable_at (#8)
   created_at       TEXT NOT NULL,
   CHECK (kind <> 'f95_thread' OR external_id IS NOT NULL),
-  CHECK (kind <> 'manual' OR change_key IS NULL)      -- manual Sources are never checked
+  CHECK (kind <> 'manual' OR change_key IS NULL),     -- manual Sources are never checked
+  CHECK (is_primary = 1 OR (latest_version IS NULL AND change_key IS NULL AND dev_status IS NULL  -- non-primary = link only (#11)
+         AND thread_updated_at IS NULL AND last_checked_at IS NULL AND last_detail_at IS NULL
+         AND miss_count = 0 AND details_pending = 0 AND unavailable_at IS NULL))
 ) STRICT;
 CREATE UNIQUE INDEX source_kind_external ON source(kind, external_id) WHERE external_id IS NOT NULL;  -- thread = exactly one Game (CONTEXT, #10)
 CREATE UNIQUE INDEX source_one_primary ON source(game_id) WHERE is_primary = 1;
-CREATE INDEX source_checkable ON source(kind) WHERE checks_enabled = 1 AND unavailable_at IS NULL AND kind <> 'manual';
+CREATE INDEX source_checkable ON source(kind) WHERE is_primary = 1 AND checks_enabled = 1 AND unavailable_at IS NULL AND kind <> 'manual';
 
--- ============ Play log (append-only) ============
+-- ============ Play log (user may edit/delete entries, #11) ============
 
 CREATE TABLE play_log (
-  id         INTEGER PRIMARY KEY,                     -- order = insertion order; newest id = last played
+  id         INTEGER PRIMARY KEY,                     -- tie-break for equal dates: higher id
   game_id    INTEGER NOT NULL REFERENCES game(id) ON DELETE CASCADE,
   version    TEXT NOT NULL,
   version_norm TEXT GENERATED ALWAYS AS (
     lower(CASE WHEN lower(substr(trim(version, ' '||char(9,10,13)),1,1)) = 'v'
                THEN substr(trim(version, ' '||char(9,10,13)),2)
                ELSE trim(version, ' '||char(9,10,13)) END)) VIRTUAL,
-  played_on  TEXT,                                    -- NULL for imported rows (#10)
+  played_on  TEXT,                                    -- date (YYYY-MM-DD); NULL for imported rows (#10)
   origin     TEXT NOT NULL CHECK (origin IN ('user','imported')),
   created_at TEXT NOT NULL,
-  CHECK (origin <> 'user' OR played_on IS NOT NULL)   -- PROPOSED: user entries always dated. Alt: allow undated
+  CHECK (origin <> 'user' OR played_on IS NOT NULL)   -- user entries stay dated; edits cannot clear the date
 ) STRICT;
-CREATE INDEX play_log_game ON play_log(game_id, id DESC);
--- +goose StatementBegin
-CREATE TRIGGER play_log_no_update BEFORE UPDATE ON play_log BEGIN SELECT RAISE(ABORT,'play_log is append-only'); END;
-CREATE TRIGGER play_log_no_delete BEFORE DELETE ON play_log
-  WHEN EXISTS (SELECT 1 FROM game WHERE id = OLD.game_id)       -- allows ON DELETE CASCADE of a Game
-  BEGIN SELECT RAISE(ABORT,'play_log is append-only'); END;
--- +goose StatementEnd
+CREATE INDEX play_log_game ON play_log(game_id, played_on DESC, id DESC);
 
--- Behind: last played (newest Play log entry) vs latest version of the primary Source.
+-- Last played = newest dated entry, else the newest imported (undated) entry. Empty log: no row.
+CREATE VIEW game_last_played AS
+SELECT game_id, id AS play_log_id, version, version_norm, played_on
+FROM (SELECT p.*, ROW_NUMBER() OVER (PARTITION BY game_id
+        ORDER BY played_on IS NULL, played_on DESC, id DESC) AS rn FROM play_log p)
+WHERE rn = 1;
+
+-- Behind, evaluated against the primary Source only. Empty Play log = not Behind (#14).
+-- UI shows the badge only for Games whose Play status is in the alert set (#14).
 CREATE VIEW game_behind AS
-SELECT g.id AS game_id, s.latest_version, p.version AS last_played
+SELECT g.id AS game_id, s.latest_version, lp.version AS last_played, lp.played_on
 FROM game g
-JOIN source s   ON s.game_id = g.id AND s.is_primary = 1
-JOIN play_log p ON p.id = (SELECT MAX(id) FROM play_log WHERE game_id = g.id)
-WHERE s.latest_version_norm IS NOT NULL AND s.latest_version_norm <> p.version_norm;
+JOIN source s ON s.game_id = g.id AND s.is_primary = 1
+JOIN game_last_played lp ON lp.game_id = g.id
+WHERE (s.latest_version_norm IS NOT NULL AND s.latest_version_norm <> lp.version_norm)       -- version-bearing Source
+   OR (s.latest_version IS NULL AND s.thread_updated_at IS NOT NULL                          -- date-only Source (#7, #11)
+       AND lp.played_on IS NOT NULL AND date(s.thread_updated_at) > lp.played_on);
 
 -- ============ Tag vocabulary, synonyms, Game tags ============
 
@@ -150,7 +159,8 @@ CREATE TABLE settings (                               -- single row
 
 CREATE TABLE alert_play_status (                      -- configured alert set (CONTEXT: Update)
   play_status TEXT PRIMARY KEY CHECK (play_status IN ('planned','playing','finished','dropped','on_hold'))
-) STRICT;                                              -- PROPOSED default rows: playing, on_hold. Alt: playing only
+) STRICT;
+INSERT INTO alert_play_status(play_status) VALUES ('playing'),('on_hold'),('planned');  -- default alert set (#14, #11)
 
 CREATE TABLE f95_credential (                         -- single row; plaintext by decision (#8)
   id               INTEGER PRIMARY KEY CHECK (id = 1),
@@ -167,12 +177,19 @@ CREATE TABLE api_token (                              -- personal tokens, shown 
   id           INTEGER PRIMARY KEY,
   name         TEXT NOT NULL,
   scope        TEXT NOT NULL CHECK (scope IN ('submit_links','downloader')),  -- userscript / artemis worker (#13)
-  token_hash   BLOB NOT NULL UNIQUE,                  -- SHA-256 of a >=256-bit random token. PROPOSED sha256. Alt: argon2 (pointless for high-entropy)
+  token_hash   BLOB NOT NULL UNIQUE,                  -- SHA-256 of a >=256-bit random token. sha256 (accepted; high-entropy token)
   created_at   TEXT NOT NULL,
   last_used_at TEXT,
   revoked_at   TEXT
 ) STRICT;
--- Sessions: none (stateless signed cookie, 30-day sliding, #12). See open questions.
+
+-- Sessions: scs sqlite3store schema, revocable (#11). 30-day sliding lifetime (#12); expiry is a Julian-day REAL as scs writes it.
+CREATE TABLE sessions (
+  token  TEXT PRIMARY KEY,
+  data   BLOB NOT NULL,
+  expiry REAL NOT NULL
+);
+CREATE INDEX sessions_expiry_idx ON sessions(expiry);
 
 -- ============ Checks ============
 
@@ -242,7 +259,7 @@ CREATE TABLE download_job (
   target_version TEXT NOT NULL,                        -- version string at creation; destination dir ~/Games/<Game>/<version>
   trigger        TEXT NOT NULL CHECK (trigger IN ('update','button')),
   state          TEXT NOT NULL DEFAULT 'awaiting_links'
-                 CHECK (state IN ('awaiting_links','queued','downloading','extracting','done','needs_human')),
+                 CHECK (state IN ('awaiting_links','queued','downloading','extracting','done','needs_human','cancelled')),
   needs_human_reason TEXT,
   active_mirror_id INTEGER,                            -- mirror currently attempted
   bytes_done     INTEGER,
@@ -252,8 +269,8 @@ CREATE TABLE download_job (
   updated_at     TEXT NOT NULL,
   CHECK (state <> 'needs_human' OR needs_human_reason IS NOT NULL)
 ) STRICT;
--- PROPOSED: one open job per (game, version). Alt: allow duplicates, UI warns.
-CREATE UNIQUE INDEX download_job_open ON download_job(game_id, target_version) WHERE state <> 'done';
+-- One open job per (game, version) (accepted in #11); done/cancelled jobs are history.
+CREATE UNIQUE INDEX download_job_open ON download_job(game_id, target_version) WHERE state NOT IN ('done','cancelled');
 CREATE INDEX download_job_state ON download_job(state);
 
 CREATE TABLE download_mirror (
@@ -288,7 +305,7 @@ CREATE INDEX download_job_transition_job ON download_job_transition(job_id, id);
 
 Notes on the DDL:
 - `notification_item.download_job_id` should be declared `REFERENCES download_job(id) ON DELETE SET NULL` by reordering the two tables in the real migration; shown loose here only for reading order.
-- Allowed `download_job` transitions are enforced in Go (single state-machine function), not triggers: `awaiting_links→queued→downloading→extracting→done`; any of `queued/downloading/extracting→queued` (mirror fall-through) ; `*→needs_human`; `needs_human→done|queued` (user action). PROPOSED; alt: SQLite trigger table.
+- Allowed `download_job` transitions are enforced in Go (single state-machine function), not triggers: `awaiting_links→queued→downloading→extracting→done`; any of `queued/downloading/extracting→queued` (mirror fall-through); `*→needs_human`; `needs_human→done|queued` (user action); `awaiting_links|queued|downloading|extracting|needs_human→cancelled` (user action; the downloader sees `cancelled` on its next poll and stops). `done` and `cancelled` are terminal. Accepted in #11.
 
 ## Update detection
 
@@ -297,22 +314,23 @@ Two different comparisons, two different column sets (#8, #2, CONTEXT).
 | Concept | Rule | Columns |
 |---|---|---|
 | **Update** (F95) | Exact byte-string inequality of the `checker.php` version vs the stored one. No trimming, case-folding, or parsing (versions are free-form, #2). | `source.change_key` (= raw F95 version) compared by the app; result recorded as `check_result(outcome='update', old_key, new_key)`; then `source.latest_version`/`change_key` overwritten. |
-| **Update** (itch.io) | Inequality of a fingerprint built from the `Updated` timestamp + title/upload names + highest `Version N` (#7). | `source.change_key` = fingerprint; `source.latest_version` = version token if found else the date; `thread_updated_at` = timestamp. |
-| **Behind** | `last played ≠ latest`, both lower-cased, surrounding whitespace trimmed, one leading `v` stripped (#8, CONTEXT). | `play_log.version_norm` (newest row) vs `source.latest_version_norm`; both VIRTUAL generated columns; exposed by view `game_behind`. |
+| **Update** (itch.io) | Inequality of a fingerprint built from the `Updated` timestamp + title/upload names + highest `Version N` (#7). | `source.change_key` = fingerprint; `source.latest_version` = version token if found, else NULL (UI shows the date from `thread_updated_at`); `thread_updated_at` = timestamp. |
+| **Behind** (versioned Source) | `last played ≠ latest`, both lower-cased, surrounding whitespace trimmed, one leading `v` stripped (#8, CONTEXT). Last played = newest dated Play log entry, else the imported entry. | `play_log.version_norm` (via view `game_last_played`) vs `source.latest_version_norm`; both VIRTUAL generated columns; view `game_behind`. |
+| **Behind** (date-only Source) | Primary Source `thread_updated_at` is later than the newest dated Play log entry (`latest_version` is NULL). No dated entry = not Behind (#11, CONTEXT). | `source.thread_updated_at` vs `game_last_played.played_on`; view `game_behind`. |
 
-Flow per Source in a run: answer received → `last_checked_at`, `miss_count=0` → if `change_key` differs: write `check_result` (update), set new values, enqueue `detail_fetch_queue(reason='update')`, and if `game.play_status IN alert_play_status` create `download_job` (`awaiting_links`) and a `notification_item` for the digest. Import baseline (#10): `latest_version`/`change_key` are written at import with no `check_result`, so no pre-import Update. Missing from `checker.php`: `miss_count+1`; at 3 → one confirming detail fetch → `unavailable_at` set + `notification(kind='source_unavailable')`; the Source leaves `source_checkable` until `checks_enabled`/`unavailable_at` is reset by hand (#8).
+Only the primary Source of a Game is checked; non-primary Sources are links and none of the fields below are used for them (#11). Flow per primary Source in a run: answer received → `last_checked_at`, `miss_count=0` → if `change_key` differs: write `check_result` (update), set new values, enqueue `detail_fetch_queue(reason='update')`, and if `game.play_status IN alert_play_status` create `download_job` (`awaiting_links`) and a `notification_item` for the digest. Import baseline (#10): `latest_version`/`change_key` are written at import with no `check_result`, so no pre-import Update. Missing from `checker.php`: `miss_count+1`; at 3 → one confirming detail fetch → `unavailable_at` set + `notification(kind='source_unavailable')`; the Source leaves `source_checkable` until `checks_enabled`/`unavailable_at` is reset by hand (#8).
 
-PROPOSED: `lower()`/`trim()` are SQLite ASCII-only; the Go normalizer MUST match (one shared test vector list). Alt: compute Behind only in Go and drop the generated columns.
+`lower()`/`trim()` are SQLite ASCII-only; the Go normalizer MUST match (one shared test vector list; accepted in #11).
 
 ## Invariants
 
 1. Play status is one of planned/playing/finished/dropped/on_hold, set only by the user (never by checks), except the CSV import derivation (CONTEXT, #10). `game.play_status` CHECK; no code path from checks writes it.
-2. Dev status is fetched, never user-set, for F95 Sources; user-set only on manual/itch.io Sources; CSV flags apply only to non-F95 and converted rows, F95 live data wins (CONTEXT, #10). `source.dev_status`.
-3. An F95 thread is exactly one Game; a sequel on another thread is another Game (CONTEXT, #10). `UNIQUE(kind, external_id)`; a Game has one primary Source (`source_one_primary`).
+2. Dev status lives on `source` and comes from the primary Source; fetched, never user-set, for F95 Sources; user-edited only for non-F95 Sources (#14, #10, #11); CSV flags apply only to non-F95 and converted rows, F95 live data wins (CONTEXT, #10). `source.dev_status`.
+3. An F95 thread is exactly one Game; a sequel on another thread is another Game (CONTEXT, #10). `UNIQUE(kind, external_id)`; a Game has exactly one primary Source (`source_one_primary`); others are links only and carry no check fields (CONTEXT, #11).
 4. Rating is NULL or 0.5–5 in 0.5 steps (CONTEXT). `rating_x2 BETWEEN 1 AND 10`.
-5. Play log is append-only; newest entry = last played; imported rows have NULL date and origin `imported`; one row per CSV row, same-thread merges become earlier entries (CONTEXT, #10). Triggers + CHECK.
-6. Update = exact change of the version string; Behind = normalized inequality (#8, CONTEXT). See above.
-7. Alerts (digest rows, download jobs) only for Games whose Play status is in `alert_play_status` (CONTEXT, #13).
+5. Play log entries may be corrected (date, version) or deleted by the user; user entries stay dated; last played = newest dated entry, else the imported entry; imported rows have NULL date and origin `imported`; one row per CSV row, same-thread merges become earlier entries (CONTEXT, #10, #11). View `game_last_played`.
+6. Update = exact change of the primary Source's version string; Behind = normalized inequality, or for date-only Sources, updated after the newest dated entry; empty Play log is not Behind (#8, #11, #14, CONTEXT). See above.
+7. Alerts (digest rows, download jobs) and Update/Behind badges only for Games whose Play status is in `alert_play_status`, default playing, on_hold, planned (CONTEXT, #13, #14, #11).
 8. F95 version strings are never parsed or ordered (#2). Only equality is used.
 9. The daily check uses no cookie (`checker.php`); detail fetches (tags, Genre, cover, Dev status) use the stored cookie + UA (#2, #3, #8).
 10. A Source is marked unavailable only after 3 consecutive misses plus a confirming detail fetch; unavailable Sources are excluded from checks until re-enabled by hand (#8).
@@ -320,30 +338,17 @@ PROPOSED: `lower()`/`trim()` are SQLite ASCII-only; the Go normalizer MUST match
 12. Rotated `Set-Cookie` values are persisted into `f95_credential.cookie_jar` (#8). Cookie is plaintext (decision, #8); the app never sends it to the downloader (#6, #13).
 13. A Game tag refers to exactly one tag (F95 or custom); one row per (Game, tag); present+planned collapses to present (#9). `UNIQUE(game_id, tag_id)`.
 14. Qualifier ∈ present/planned/optional; origin ∈ f95_list/genre/both/manual; verification ∈ unverified/confirmed/wrong (CONTEXT, #9).
-15. Verification changes only in a Tag review (user action) except hand-picked tags on manual/itch.io Games, which start `confirmed`; add-time confirmation never verifies (CONTEXT, #9).
+15. Verification is set only by the user: in a Tag review, by hand on any tag of any qualifier outside a review, or by adding a tag by hand (starts `confirmed`, any Game); add-time confirmation never verifies. A planned/optional tag marked "now present" in a review becomes qualifier `present` + `confirmed`. Tags marked `wrong` never match tag filters (CONTEXT, #9, #14, #11).
 16. Refresh merges: user verifications and mapping overrides persist; new tags arrive `unverified` + `is_new`; tags gone from the Source are kept with `removed_at_source_at`; a planned/optional tag that appears present is promoted and flagged `promoted` (#9).
 17. F95 tags absent from Genre text are `f95_only` (#9).
-18. Games with Tag review `pending` or `skipped` form the tags-to-review queue; all imported F95 Games start `pending` (#9, #10).
-19. A mapping fix saves a `synonym` (origin `user`); the synonym table is seeded from research `SYN` (#9).
+18. One `tag_review` row per Game; `pending`/`skipped` rows form the tags-to-review queue, all imported F95 Games start `pending`; a review prefills earlier verdicts, and the Game leaves the queue (`done`) only when every present tag has a verdict (partial save keeps it queued) (#9, #10, #14, #11).
+19. A mapping fix saves a `synonym` (origin `user`); the synonym table is seeded from research `SYN`; creating or editing a synonym re-applies it to `unverified`, non-`mapping_override` tags on existing Games, leaving verified and overridden tags untouched (#9, #14, #11).
 20. Vocabulary grows automatically from every logged-in F95 tag list; custom tags exist only for phrases without an F95 slug (#9).
 21. Every imported Game has `import_review=1` until the user clears it (bulk edit) (#10).
 22. Import is idempotent by thread id / link (#10); `UNIQUE(kind, external_id)` is the key.
 23. Detail-fetch queue: one entry per Source; routine budget 40/day, import has its own budget (#8).
 24. API tokens are stored only as hashes, scoped, and revocable; a revoked token authenticates nothing (#13).
 25. Download job holds an ordered mirror list of resolved URLs only; unsupported hosts stay as `manual` mirrors; no supported mirror or all failed → `needs_human` with a reason and one notification; `done` only after verify + extract (#13).
-26. Versions are kept on disk per `<Game>/<version>`; the job table never deletes history while the Game exists (#13).
-27. One session cookie, 30-day sliding, signed, no server-side session table; only OIDC subjects in the allowlist (module option, not DB) get a session (#12).
-28. Backups use `VACUUM INTO` of a consistent DB; the schema has no state outside the one SQLite file (#12).
-
-## Open questions for the grilling
-
-1. **Dev status location**: on `source` (proposed, follows "fetched from its Source") or on `game` (simpler reads, one more writer rule)?
-2. **Multiple Sources per Game**: allow non-primary extra Sources (proposed) or force exactly one? Does anything in the UI ever need a second?
-3. **itch.io "Behind"**: with only a date when no version token exists, is last played compared against the date string, or is Behind simply not shown for itch.io Games?
-4. **Alert set default** (`playing` + `on_hold`?) and whether `planned` Games ever alert.
-5. **Sessions**: stateless signed cookie (revoking requires rotating the secret) vs an `scs` sqlite session table (revocable, "log out everywhere")?
-6. **Dropped/cancelled download jobs**: #13 has no cancel state. Add `cancelled`, or just delete the job?
-7. **History retention**: prune `check_result`, `notification`, finished jobs after N days, or keep forever (single user, small)?
-8. **Imported rows' `played_on`**: also allow the user to backfill a date on an `imported` row, or is Play log strictly immutable including that?
-9. **Planned/optional verification**: can a user ever confirm/mark wrong a planned or optional tag outside the review (e.g. hand-edit), or only after promotion?
-10. **Cover**: store the URL only (hotlink F95 image, may rot or need cookie) or cache the file in the state dir (adds files to backup)?
+26. Versions are kept on disk per `<Game>/<version>`; no table is ever pruned: checks, notifications, jobs, and Play log history are kept forever (#13, #11). A `cancelled` job is terminal and stops the downloader on its next poll (#11).
+27. Sessions are rows in the scs `sessions` table (revocable), 30-day sliding; only OIDC subjects in the allowlist (module option, not DB) get a session (#12, #11).
+28. Backups use `VACUUM INTO` of a consistent DB; state is the one SQLite file plus cached cover files in the state dir (#12, #11).
