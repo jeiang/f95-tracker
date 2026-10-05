@@ -10,6 +10,9 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
+	"github.com/jeiang/f95-tracker/internal/games"
+	"github.com/jeiang/f95-tracker/internal/itch"
+	"github.com/jeiang/f95-tracker/internal/notify"
 )
 
 // Deps are everything handlers may use; later items add fields (services) here.
@@ -19,18 +22,27 @@ type Deps struct {
 	Log    *slog.Logger
 	Config config.Config
 	Auth   *auth.Auth
+	Games  *games.Service
+	Notify *notify.Notifier
+	Itch   *itch.Client
 }
 
 type Server struct {
-	store *db.Store
-	clock clock.Clock
-	log   *slog.Logger
-	cfg   config.Config
-	auth  *auth.Auth
+	store  *db.Store
+	clock  clock.Clock
+	log    *slog.Logger
+	cfg    config.Config
+	auth   *auth.Auth
+	games  *games.Service
+	notify *notify.Notifier
+	itch   *itch.Client
 }
 
 func New(d Deps) *Server {
-	return &Server{store: d.Store, clock: d.Clock, log: d.Log.With("component", "web"), cfg: d.Config, auth: d.Auth}
+	return &Server{
+		store: d.Store, clock: d.Clock, log: d.Log.With("component", "web"), cfg: d.Config,
+		auth: d.Auth, games: d.Games, notify: d.Notify, itch: d.Itch,
+	}
 }
 
 // Handler returns the full middleware chain around the router.
