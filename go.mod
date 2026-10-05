@@ -3,12 +3,15 @@ module github.com/jeiang/f95-tracker
 go 1.26.0
 
 require (
+	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/a-h/templ v0.3.1020
 	github.com/pressly/goose/v3 v3.28.0
+	golang.org/x/net v0.58.0
 	modernc.org/sqlite v1.60.1
 )
 
 require (
+	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
