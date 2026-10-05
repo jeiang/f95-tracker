@@ -124,6 +124,9 @@ func (s *Server) gameRefresh(w http.ResponseWriter, r *http.Request) {
 	res, err := s.refresher.Refresh(r.Context(), d.Primary.ID, runID)
 	if err != nil {
 		finish("failed")
+		if errors.Is(err, f95.ErrCookieInvalid) {
+			s.alertCookieInvalid(r.Context())
+		}
 		msg, status := refreshFailure(err)
 		if status == 0 {
 			s.respondError(w, r, err)
