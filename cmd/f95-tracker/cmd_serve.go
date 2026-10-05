@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jeiang/f95-tracker/internal/auth"
+	"github.com/jeiang/f95-tracker/internal/check"
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
@@ -17,6 +18,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/itch"
 	"github.com/jeiang/f95-tracker/internal/notify"
+	"github.com/jeiang/f95-tracker/internal/tags"
 	"github.com/jeiang/f95-tracker/internal/web"
 )
 
@@ -49,16 +51,21 @@ func runServe(ctx context.Context, args []string) error {
 		return err
 	}
 	defer f95c.Close()
+	gs := games.New(store, clk, games.Options{StateDir: cfg.StateDir})
+	ts := tags.New(store, clk)
+	ic := itch.NewClient(itch.Options{Clock: clk, Version: version})
 	deps := web.Deps{
-		Store:  store,
-		Clock:  clk,
-		Log:    base,
-		Config: cfg,
-		Auth:   auth.New(cfg, store, clk, base),
-		Games:  games.New(store, clk, games.Options{StateDir: cfg.StateDir}),
-		Notify: notify.New(store, clk, notify.Options{URL: cfg.NtfyURL, Topic: cfg.NtfyTopic, Token: cfg.NtfyToken, BaseURL: cfg.BaseURL}),
-		Itch:   itch.NewClient(itch.Options{Clock: clk, Version: version}),
-		F95:    f95c,
+		Store:     store,
+		Clock:     clk,
+		Log:       base,
+		Config:    cfg,
+		Auth:      auth.New(cfg, store, clk, base),
+		Games:     gs,
+		Tags:      ts,
+		Notify:    notify.New(store, clk, notify.Options{URL: cfg.NtfyURL, Topic: cfg.NtfyTopic, Token: cfg.NtfyToken, BaseURL: cfg.BaseURL}),
+		Itch:      ic,
+		F95:       f95c,
+		Refresher: check.NewRefresher(store, clk, gs, ts, f95c, ic, base),
 	}
 	srv := &http.Server{
 		Handler:           web.New(deps).Handler(),
