@@ -307,6 +307,8 @@ Notes on the DDL:
 - `notification_item.download_job_id` should be declared `REFERENCES download_job(id) ON DELETE SET NULL` by reordering the two tables in the real migration; shown loose here only for reading order.
 - Allowed `download_job` transitions are enforced in Go (single state-machine function), not triggers: `awaiting_links→queued→downloading→extracting→done`; any of `queued/downloading/extracting→queued` (mirror fall-through); `*→needs_human`; `needs_human→done|queued` (user action); `awaiting_links|queued|downloading|extracting|needs_human→cancelled` (user action; the downloader sees `cancelled` on its next poll and stops). `done` and `cancelled` are terminal. Accepted in #11.
 
+Built: migration `00002_source_genre_text.sql` adds nullable `source.genre_text` (raw Genre text of the primary F95 Source, shown on Game detail per R-UI-3; cleared when a Source stops being primary).
+
 ## Update detection
 
 Two different comparisons, two different column sets (#8, #2, CONTEXT).
