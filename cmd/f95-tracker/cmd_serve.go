@@ -13,6 +13,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
+	"github.com/jeiang/f95-tracker/internal/f95"
 	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/itch"
 	"github.com/jeiang/f95-tracker/internal/notify"
@@ -37,6 +38,17 @@ func runServe(ctx context.Context, args []string) error {
 	defer store.Close()
 
 	clk := clock.Real{}
+	f95c, err := f95.New(f95.Options{
+		BaseURL:     cfg.F95BaseURL,
+		Pacer:       f95.NewPacer(cfg.F95LockPath()),
+		Creds:       f95.NewCredStore(store, clk),
+		Version:     version,
+		Interactive: true,
+	})
+	if err != nil {
+		return err
+	}
+	defer f95c.Close()
 	deps := web.Deps{
 		Store:  store,
 		Clock:  clk,
@@ -46,6 +58,7 @@ func runServe(ctx context.Context, args []string) error {
 		Games:  games.New(store, clk, games.Options{StateDir: cfg.StateDir}),
 		Notify: notify.New(store, clk, notify.Options{URL: cfg.NtfyURL, Topic: cfg.NtfyTopic, Token: cfg.NtfyToken, BaseURL: cfg.BaseURL}),
 		Itch:   itch.NewClient(itch.Options{Clock: clk, Version: version}),
+		F95:    f95c,
 	}
 	srv := &http.Server{
 		Handler:           web.New(deps).Handler(),

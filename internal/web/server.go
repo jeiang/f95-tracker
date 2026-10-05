@@ -10,6 +10,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
+	"github.com/jeiang/f95-tracker/internal/f95"
 	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/itch"
 	"github.com/jeiang/f95-tracker/internal/notify"
@@ -25,6 +26,7 @@ type Deps struct {
 	Games  *games.Service
 	Notify *notify.Notifier
 	Itch   *itch.Client
+	F95    *f95.Client
 }
 
 type Server struct {
@@ -36,12 +38,13 @@ type Server struct {
 	games  *games.Service
 	notify *notify.Notifier
 	itch   *itch.Client
+	f95    *f95.Client
 }
 
 func New(d Deps) *Server {
 	return &Server{
 		store: d.Store, clock: d.Clock, log: d.Log.With("component", "web"), cfg: d.Config,
-		auth: d.Auth, games: d.Games, notify: d.Notify, itch: d.Itch,
+		auth: d.Auth, games: d.Games, notify: d.Notify, itch: d.Itch, f95: d.F95,
 	}
 }
 
