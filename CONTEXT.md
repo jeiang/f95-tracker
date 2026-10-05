@@ -35,20 +35,20 @@ The user's post-play pass that marks a Game's present tags confirmed or wrong. G
 The free text under the Genre heading of an F95zone thread, parsed into Game tags. Markers in it set the planned or optional qualifier.
 
 **Play log**:
-An append-only record of (date, version) entries made when the user marks a version played. The newest entry is the last played version. Entries from the CSV import have no date and the origin "imported".
+A record of (date, version) entries made when the user marks a version played. The entry with the newest date is the last played version. The user may correct or delete entries. Entries from the CSV import have no date and the origin "imported".
 
 **Behind**:
-A Game whose last played version differs from its latest version at the Source, ignoring case, surrounding whitespace, and a leading "v".
+A Game whose last played version differs from the latest version at its primary Source, ignoring case, surrounding whitespace, and a leading "v". For a Source that reports only an update date, a Game is Behind when the Source was updated after the newest dated Play log entry.
 
 **Update**:
-A change of the latest version at a Game's Source since the last check. Alerts are sent only for Games whose Play status is in the configured alert set.
+A change of the latest version at a Game's primary Source since the last check. Alerts are sent only for Games whose Play status is in the configured alert set (default: playing, on hold, planned).
 
 ## Relationships
 
 - A **Game** has exactly one **Play status** and at most one **Dev status**.
-- A **Game** has one primary **Source**. An F95zone thread is exactly one **Game**; a remake, rework, or part 2 posted on the same thread is the same **Game**. A sequel on a different thread is a different **Game**.
+- A **Game** has one primary **Source** and may list other Sources as links only; only the primary Source is checked and supplies the Dev status. An F95zone thread is exactly one **Game**; a remake, rework, or part 2 posted on the same thread is the same **Game**. A sequel on a different thread is a different **Game**.
 - A **Game** has a rating from 0.5 to 5 in 0.5 steps, or no rating.
-- A **Game tag** is confirmed or marked wrong by the user only in a **Tag review**, after play. Confirming the parse when a Game is added does not verify any tag.
+- A **Game tag** becomes confirmed or wrong only by the user: in a **Tag review**, by editing it by hand, or by adding it by hand (which confirms it). Confirming the parse when a Game is added does not verify any tag.
 
 ## Flagged ambiguities
 
