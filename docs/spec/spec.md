@@ -15,7 +15,7 @@ Status: consolidated from the resolved tickets of map [#1](https://github.com/je
 In scope (Destination of #1): a single-user web app that tracks adult games from F95zone threads plus manual sources (itch.io best-effort, fanbox manual); daily Update check with an ntfy digest; Nix flake + NixOS module; downloader protocol and tracker-side API (#13); one-off CSV import (#10).
 
 Out of scope (#1):
-- Building the downloader worker itself: only its contract and the tracker side of it are built now (R-DL). The worker is a later milestone.
+- All downloader work (tracker-side jobs, JSON API, downloads and paste pages, digest/push download sections, the worker, the userscript): later milestone M6 ([backlog](backlog.md)). v1 ships with no download features; the schema tables exist but stay unused. R-DL is the contract for M6.
 - Multi-user support. A JavaScript backend.
 - Not built, because [`data-model.md`](data-model.md) has no column for it: the itch.io `wharf/latest` per-Game channel opt-in mentioned as optional in #7. If wanted later it needs a migration.
 - Using `api.f95checker.dev`, RSS, or `latest_data.php` (#2).
@@ -224,7 +224,7 @@ Source of truth: prototype branch `prototype/ui` (`prototype/README.md`, `assets
 - **R-TOK-3** (#13, #12) The downloader token is also provisioned to artemis via sops (R-DEP-8); the `submit_links` token is pasted into the userscript by the user.
 - **R-TOK-4** **PROPOSED** Scope enforcement: `submit_links` may call only the link endpoints; `downloader` only the downloader endpoints (§4.3). Neither can read Game data beyond what those endpoints return.
 
-### 3.11 Downloader contract (R-DL; tracker side built now, worker later)
+### 3.11 Downloader contract (R-DL; built in milestone M6, not v1)
 
 Research: [downloader](../research/downloader.md). State machine: [`data-model.md`](data-model.md) notes.
 
