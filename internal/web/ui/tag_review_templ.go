@@ -48,7 +48,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		var templ_7745c5c3_Var2 templ.SafeURL
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinURLErrs(gameHref(v.GameID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 16, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 16, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -61,7 +61,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(v.GameName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 16, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 16, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -79,7 +79,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(v.Version)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 20, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 20, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -92,7 +92,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(v.GameName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 20, Col: 112}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 20, Col: 112}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -110,7 +110,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		var templ_7745c5c3_Var6 templ.SafeURL
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(reviewAction(v.GameID, ""))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 24, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 24, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -123,7 +123,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(reviewAction(v.GameID, ""))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 24, Col: 112}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 24, Col: 112}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -152,7 +152,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(v.MarkedCount()))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 30, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 30, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -165,7 +165,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(v.Present)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 30, Col: 106}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 30, Col: 106}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -208,7 +208,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(v.Reviewed)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 46, Col: 77}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 46, Col: 77}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -237,7 +237,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(v.Other)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 59, Col: 74}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 59, Col: 74}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -275,7 +275,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(reviewAction(v.GameID, "/skip"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 74, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 74, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
@@ -288,7 +288,7 @@ func TagReviewPage(v ReviewView) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(reviewAction(v.GameID, "/skip"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 74, Col: 142}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 74, Col: 142}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
@@ -330,7 +330,7 @@ func reviewRow(t ReviewItem, firstLabel, firstValue, secondLabel, secondValue st
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(t.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 86, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 86, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -377,7 +377,7 @@ func reviewRow(t ReviewItem, firstLabel, firstValue, secondLabel, secondValue st
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(t.Origin)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 104, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 104, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -395,7 +395,7 @@ func reviewRow(t ReviewItem, firstLabel, firstValue, secondLabel, secondValue st
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(t.Note)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `tag_review.templ`, Line: 106, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/tag_review.templ`, Line: 106, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
