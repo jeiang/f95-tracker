@@ -499,3 +499,25 @@ func TestProbeThreadChoice(t *testing.T) {
 		t.Fatalf("oldest source: %q, %v", id, err)
 	}
 }
+
+func TestFetchThreadRejectedCookieKeepsGuestData(t *testing.T) {
+	e := newEnv(t, true)
+	ctx := context.Background()
+	e.loadThread(t, "59416", "67494.html", "59416.guest.html")
+	e.fake.SetValidUser("someone-else")
+	th, err := e.client(t, nil).FetchThread(ctx, "59416")
+	if !errors.Is(err, ErrCookieInvalid) {
+		t.Fatalf("err = %v", err)
+	}
+	if th == nil || th.LoggedIn || th.HasGenre || th.Name != "Maids and Maidens" || th.Version != "v0.13.0" || th.CoverURL == "" {
+		t.Fatalf("guest data lost: %+v", th)
+	}
+	if row, _ := e.creds.Get(ctx); row.Validity != string(domain.CookieInvalid) {
+		t.Errorf("validity = %q", row.Validity)
+	}
+	// a login page with no thread content yields no thread
+	e.fake.Program("59416", testutil.F95Response{Body: `<html data-logged-in="false"><head><title>Log in</title></head><body>Log in</body></html>`})
+	if th, err := e.client(t, nil).FetchThread(ctx, "59416"); th != nil || !errors.Is(err, ErrCookieInvalid) {
+		t.Fatalf("login page: %v, %v", th, err)
+	}
+}

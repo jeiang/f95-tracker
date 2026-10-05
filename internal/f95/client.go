@@ -344,8 +344,22 @@ func validThreadID(id string) bool {
 
 // FetchThread loads and parses a thread page (R-F95-8). Without a stored cookie
 // it reads as a guest (HasGenre false).
+//
+// When the stored cookie is rejected and F95 still serves a readable thread page
+// as a guest, it returns that guest parse (LoggedIn false) together with
+// ErrCookieInvalid, so Add Game can keep name/version/cover (R-F95-10). Callers
+// that must not apply guest data treat any non-nil error as failure. A login or
+// 403 page with no thread content gives (nil, ErrCookieInvalid).
 func (c *Client) FetchThread(ctx context.Context, threadID string) (*Thread, error) {
 	pg, loggedIn, err := c.threadPage(ctx, threadID)
+	if errors.Is(err, ErrCookieInvalid) {
+		if pg != nil && pg.status == http.StatusOK {
+			if th, perr := ParseThread(pg.body, threadID, pg.url, false); perr == nil {
+				return th, err
+			}
+		}
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}

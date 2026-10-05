@@ -239,8 +239,10 @@ func (s *Server) fetchF95(w http.ResponseWriter, r *http.Request, v ui.AddView, 
 	case errors.Is(err, f95.ErrBusy):
 		return notice(http.StatusServiceUnavailable, "warn", "F95 busy, try again.")
 	case errors.Is(err, f95.ErrCookieInvalid):
-		f.pending = true // the client keeps no guest data once the stored cookie is rejected
-		return true
+		f.pending = true
+		if th == nil { // login page: nothing readable
+			return true
+		}
 	case errors.Is(err, f95.ErrRestricted):
 		return notice(http.StatusUnprocessableEntity, "bad", "That thread is restricted or no longer available on F95.")
 	case errors.Is(err, f95.ErrBlocked):
