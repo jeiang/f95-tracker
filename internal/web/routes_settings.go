@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -185,16 +184,8 @@ func (s *Server) createSynonym(w http.ResponseWriter, r *http.Request) {
 	s.settingsDone(w, r, settingsState{code: "syn-added", n: res.Repointed, c: res.Collapsed}, "synonym-list", "synonyms")
 }
 
-func pathID(r *http.Request) (int64, error) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil || id <= 0 {
-		return 0, fmt.Errorf("%w: synonym", domain.ErrNotFound)
-	}
-	return id, nil
-}
-
 func (s *Server) updateSynonym(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := pathID(r, "id")
 	if err == nil {
 		err = s.parseForm(w, r)
 	}
@@ -214,7 +205,7 @@ func (s *Server) updateSynonym(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) deleteSynonym(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := pathID(r, "id")
 	if err == nil {
 		err = s.tags.DeleteSynonym(r.Context(), id)
 	}
