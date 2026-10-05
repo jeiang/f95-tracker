@@ -2,6 +2,8 @@ package web
 
 import (
 	"context"
+	"database/sql"
+	"github.com/jeiang/f95-tracker/internal/db/sqlcgen"
 	"net/http"
 	"net/url"
 	"strings"
@@ -147,5 +149,28 @@ func TestImportReviewNoJSRedirects(t *testing.T) {
 	}
 	if body := e.req("GET", loc, nil, false).Body.String(); !strings.Contains(body, "1 Game confirmed") {
 		t.Error("redirected page lacks the result note")
+	}
+}
+
+func TestImportRuleNeverContradictsStoredStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		play  domain.PlayStatus
+		logs  int64
+		dev   string
+		want  string
+		avoid string
+	}{
+		{"finished from CSV flags before any fetch", domain.PlayFinished, 1, "", "CSV flags", "Playing"},
+		{"playing from CSV flags before any fetch", domain.PlayPlaying, 1, "", "CSV flags", "Finished"},
+		{"planned though played, no Dev status", domain.PlayPlanned, 1, "", "Changed by you", "provisional"},
+		{"live Dev status matches", domain.PlayFinished, 1, "completed", "→ Finished", "Changed"},
+		{"live Dev status differs", domain.PlayDropped, 1, "completed", "Changed by you", "→ Finished"},
+	} {
+		r := importRow(sqlcgen.ListImportReviewGamesRow{PlayStatus: string(tc.play), PlayLogCount: tc.logs,
+			DevStatus: sql.NullString{String: tc.dev, Valid: tc.dev != ""}})
+		if !strings.Contains(r.Rule, tc.want) || strings.Contains(strings.ToLower(r.Rule), strings.ToLower(tc.avoid)) {
+			t.Errorf("%s: rule %q", tc.name, r.Rule)
+		}
 	}
 }
