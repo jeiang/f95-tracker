@@ -7,7 +7,21 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
+
+const claimCookieInvalidAlert = `-- name: ClaimCookieInvalidAlert :execrows
+UPDATE f95_credential SET invalid_alerted_at = ?
+WHERE id = 1 AND validity = 'invalid' AND invalid_alerted_at IS NULL
+`
+
+func (q *Queries) ClaimCookieInvalidAlert(ctx context.Context, invalidAlertedAt sql.NullString) (int64, error) {
+	result, err := q.db.ExecContext(ctx, claimCookieInvalidAlert, invalidAlertedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
 
 const getNotification = `-- name: GetNotification :one
 
@@ -29,4 +43,160 @@ func (q *Queries) GetNotification(ctx context.Context, id int64) (Notification, 
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getSourceNotifyInfo = `-- name: GetSourceNotifyInfo :one
+SELECT game_id, unavailable_at FROM source WHERE id = ?
+`
+
+type GetSourceNotifyInfoRow struct {
+	GameID        int64
+	UnavailableAt sql.NullString
+}
+
+func (q *Queries) GetSourceNotifyInfo(ctx context.Context, id int64) (GetSourceNotifyInfoRow, error) {
+	row := q.db.QueryRowContext(ctx, getSourceNotifyInfo, id)
+	var i GetSourceNotifyInfoRow
+	err := row.Scan(&i.GameID, &i.UnavailableAt)
+	return i, err
+}
+
+const insertNotification = `-- name: InsertNotification :one
+INSERT INTO notification (kind, run_id, title, body, created_at)
+VALUES (?, ?, ?, ?, ?) RETURNING id, kind, run_id, title, body, sent_at, error, created_at
+`
+
+type InsertNotificationParams struct {
+	Kind      string
+	RunID     sql.NullInt64
+	Title     string
+	Body      string
+	CreatedAt string
+}
+
+func (q *Queries) InsertNotification(ctx context.Context, arg InsertNotificationParams) (Notification, error) {
+	row := q.db.QueryRowContext(ctx, insertNotification,
+		arg.Kind,
+		arg.RunID,
+		arg.Title,
+		arg.Body,
+		arg.CreatedAt,
+	)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.Kind,
+		&i.RunID,
+		&i.Title,
+		&i.Body,
+		&i.SentAt,
+		&i.Error,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const insertNotificationItem = `-- name: InsertNotificationItem :exec
+INSERT INTO notification_item (notification_id, game_id, check_result_id, download_job_id)
+VALUES (?, ?, ?, ?)
+`
+
+type InsertNotificationItemParams struct {
+	NotificationID int64
+	GameID         sql.NullInt64
+	CheckResultID  sql.NullInt64
+	DownloadJobID  sql.NullInt64
+}
+
+func (q *Queries) InsertNotificationItem(ctx context.Context, arg InsertNotificationItemParams) error {
+	_, err := q.db.ExecContext(ctx, insertNotificationItem,
+		arg.NotificationID,
+		arg.GameID,
+		arg.CheckResultID,
+		arg.DownloadJobID,
+	)
+	return err
+}
+
+const listUnsentImmediateNotifications = `-- name: ListUnsentImmediateNotifications :many
+SELECT id, kind, run_id, title, body, sent_at, error, created_at FROM notification WHERE sent_at IS NULL AND kind <> 'digest' ORDER BY id
+`
+
+func (q *Queries) ListUnsentImmediateNotifications(ctx context.Context) ([]Notification, error) {
+	rows, err := q.db.QueryContext(ctx, listUnsentImmediateNotifications)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Notification
+	for rows.Next() {
+		var i Notification
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.RunID,
+			&i.Title,
+			&i.Body,
+			&i.SentAt,
+			&i.Error,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markNotificationFailed = `-- name: MarkNotificationFailed :exec
+UPDATE notification SET error = ? WHERE id = ?
+`
+
+type MarkNotificationFailedParams struct {
+	Error sql.NullString
+	ID    int64
+}
+
+func (q *Queries) MarkNotificationFailed(ctx context.Context, arg MarkNotificationFailedParams) error {
+	_, err := q.db.ExecContext(ctx, markNotificationFailed, arg.Error, arg.ID)
+	return err
+}
+
+const markNotificationSent = `-- name: MarkNotificationSent :exec
+UPDATE notification SET sent_at = ?, error = NULL WHERE id = ?
+`
+
+type MarkNotificationSentParams struct {
+	SentAt sql.NullString
+	ID     int64
+}
+
+func (q *Queries) MarkNotificationSent(ctx context.Context, arg MarkNotificationSentParams) error {
+	_, err := q.db.ExecContext(ctx, markNotificationSent, arg.SentAt, arg.ID)
+	return err
+}
+
+const sourceUnavailableAlerted = `-- name: SourceUnavailableAlerted :one
+SELECT EXISTS(
+  SELECT 1 FROM notification_item i JOIN notification n ON n.id = i.notification_id
+  WHERE n.kind = 'source_unavailable' AND i.game_id = ? AND n.created_at >= ?
+) AS alerted
+`
+
+type SourceUnavailableAlertedParams struct {
+	GameID    sql.NullInt64
+	CreatedAt string
+}
+
+func (q *Queries) SourceUnavailableAlerted(ctx context.Context, arg SourceUnavailableAlertedParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, sourceUnavailableAlerted, arg.GameID, arg.CreatedAt)
+	var alerted bool
+	err := row.Scan(&alerted)
+	return alerted, err
 }
