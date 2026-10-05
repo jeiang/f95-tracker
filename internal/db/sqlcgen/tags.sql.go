@@ -7,7 +7,41 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
+
+const clearGameTagFlags = `-- name: ClearGameTagFlags :exec
+UPDATE game_tag SET is_new = 0, promoted = 0 WHERE game_id = ?
+`
+
+func (q *Queries) ClearGameTagFlags(ctx context.Context, gameID int64) error {
+	_, err := q.db.ExecContext(ctx, clearGameTagFlags, gameID)
+	return err
+}
+
+const countChangedTags = `-- name: CountChangedTags :one
+SELECT COUNT(*) FROM game_tag
+ WHERE game_id = ? AND (is_new = 1 OR promoted = 1 OR removed_at_source_at IS NOT NULL)
+`
+
+func (q *Queries) CountChangedTags(ctx context.Context, gameID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countChangedTags, gameID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPresentTags = `-- name: CountPresentTags :one
+SELECT COUNT(*) FROM game_tag
+ WHERE game_id = ? AND qualifier = 'present' AND verification <> 'wrong' AND removed_at_source_at IS NULL
+`
+
+func (q *Queries) CountPresentTags(ctx context.Context, gameID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPresentTags, gameID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const countSynonymsByOrigin = `-- name: CountSynonymsByOrigin :one
 SELECT COUNT(*) FROM synonym WHERE origin = ?
@@ -31,4 +65,572 @@ func (q *Queries) CountTagsByKind(ctx context.Context, kind string) (int64, erro
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const countUnreviewedPresentTags = `-- name: CountUnreviewedPresentTags :one
+SELECT COUNT(*) FROM game_tag
+ WHERE game_id = ? AND qualifier = 'present' AND removed_at_source_at IS NULL AND verification = 'unverified'
+`
+
+func (q *Queries) CountUnreviewedPresentTags(ctx context.Context, gameID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUnreviewedPresentTags, gameID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteGameTag = `-- name: DeleteGameTag :exec
+DELETE FROM game_tag WHERE id = ?
+`
+
+func (q *Queries) DeleteGameTag(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGameTag, id)
+	return err
+}
+
+const deleteSynonym = `-- name: DeleteSynonym :exec
+DELETE FROM synonym WHERE id = ?
+`
+
+func (q *Queries) DeleteSynonym(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteSynonym, id)
+	return err
+}
+
+const getGameTag = `-- name: GetGameTag :one
+SELECT id, game_id, tag_id, origin, qualifier, verification, modifier_note, source_phrase, mapping_override, is_new, promoted, removed_at_source_at, f95_only, verified_at FROM game_tag WHERE id = ?
+`
+
+func (q *Queries) GetGameTag(ctx context.Context, id int64) (GameTag, error) {
+	row := q.db.QueryRowContext(ctx, getGameTag, id)
+	var i GameTag
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.TagID,
+		&i.Origin,
+		&i.Qualifier,
+		&i.Verification,
+		&i.ModifierNote,
+		&i.SourcePhrase,
+		&i.MappingOverride,
+		&i.IsNew,
+		&i.Promoted,
+		&i.RemovedAtSourceAt,
+		&i.F95Only,
+		&i.VerifiedAt,
+	)
+	return i, err
+}
+
+const getGameTagByTag = `-- name: GetGameTagByTag :one
+SELECT id, game_id, tag_id, origin, qualifier, verification, modifier_note, source_phrase, mapping_override, is_new, promoted, removed_at_source_at, f95_only, verified_at FROM game_tag WHERE game_id = ? AND tag_id = ?
+`
+
+type GetGameTagByTagParams struct {
+	GameID int64
+	TagID  int64
+}
+
+func (q *Queries) GetGameTagByTag(ctx context.Context, arg GetGameTagByTagParams) (GameTag, error) {
+	row := q.db.QueryRowContext(ctx, getGameTagByTag, arg.GameID, arg.TagID)
+	var i GameTag
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.TagID,
+		&i.Origin,
+		&i.Qualifier,
+		&i.Verification,
+		&i.ModifierNote,
+		&i.SourcePhrase,
+		&i.MappingOverride,
+		&i.IsNew,
+		&i.Promoted,
+		&i.RemovedAtSourceAt,
+		&i.F95Only,
+		&i.VerifiedAt,
+	)
+	return i, err
+}
+
+const getSynonym = `-- name: GetSynonym :one
+SELECT id, phrase_key, tag_id, origin, created_at FROM synonym WHERE id = ?
+`
+
+func (q *Queries) GetSynonym(ctx context.Context, id int64) (Synonym, error) {
+	row := q.db.QueryRowContext(ctx, getSynonym, id)
+	var i Synonym
+	err := row.Scan(
+		&i.ID,
+		&i.PhraseKey,
+		&i.TagID,
+		&i.Origin,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getSynonymByKey = `-- name: GetSynonymByKey :one
+SELECT id, phrase_key, tag_id, origin, created_at FROM synonym WHERE phrase_key = ?
+`
+
+func (q *Queries) GetSynonymByKey(ctx context.Context, phraseKey string) (Synonym, error) {
+	row := q.db.QueryRowContext(ctx, getSynonymByKey, phraseKey)
+	var i Synonym
+	err := row.Scan(
+		&i.ID,
+		&i.PhraseKey,
+		&i.TagID,
+		&i.Origin,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getTag = `-- name: GetTag :one
+SELECT id, kind, slug, label FROM tag WHERE id = ?
+`
+
+func (q *Queries) GetTag(ctx context.Context, id int64) (Tag, error) {
+	row := q.db.QueryRowContext(ctx, getTag, id)
+	var i Tag
+	err := row.Scan(
+		&i.ID,
+		&i.Kind,
+		&i.Slug,
+		&i.Label,
+	)
+	return i, err
+}
+
+const getTagByKindSlug = `-- name: GetTagByKindSlug :one
+SELECT id, kind, slug, label FROM tag WHERE kind = ? AND slug = ?
+`
+
+type GetTagByKindSlugParams struct {
+	Kind string
+	Slug string
+}
+
+func (q *Queries) GetTagByKindSlug(ctx context.Context, arg GetTagByKindSlugParams) (Tag, error) {
+	row := q.db.QueryRowContext(ctx, getTagByKindSlug, arg.Kind, arg.Slug)
+	var i Tag
+	err := row.Scan(
+		&i.ID,
+		&i.Kind,
+		&i.Slug,
+		&i.Label,
+	)
+	return i, err
+}
+
+const insertGameTag = `-- name: InsertGameTag :one
+INSERT INTO game_tag (game_id, tag_id, origin, qualifier, verification, modifier_note, source_phrase,
+                      mapping_override, is_new, promoted, removed_at_source_at, f95_only, verified_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, game_id, tag_id, origin, qualifier, verification, modifier_note, source_phrase, mapping_override, is_new, promoted, removed_at_source_at, f95_only, verified_at
+`
+
+type InsertGameTagParams struct {
+	GameID            int64
+	TagID             int64
+	Origin            string
+	Qualifier         string
+	Verification      string
+	ModifierNote      sql.NullString
+	SourcePhrase      sql.NullString
+	MappingOverride   int64
+	IsNew             int64
+	Promoted          int64
+	RemovedAtSourceAt sql.NullString
+	F95Only           int64
+	VerifiedAt        sql.NullString
+}
+
+func (q *Queries) InsertGameTag(ctx context.Context, arg InsertGameTagParams) (GameTag, error) {
+	row := q.db.QueryRowContext(ctx, insertGameTag,
+		arg.GameID,
+		arg.TagID,
+		arg.Origin,
+		arg.Qualifier,
+		arg.Verification,
+		arg.ModifierNote,
+		arg.SourcePhrase,
+		arg.MappingOverride,
+		arg.IsNew,
+		arg.Promoted,
+		arg.RemovedAtSourceAt,
+		arg.F95Only,
+		arg.VerifiedAt,
+	)
+	var i GameTag
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.TagID,
+		&i.Origin,
+		&i.Qualifier,
+		&i.Verification,
+		&i.ModifierNote,
+		&i.SourcePhrase,
+		&i.MappingOverride,
+		&i.IsNew,
+		&i.Promoted,
+		&i.RemovedAtSourceAt,
+		&i.F95Only,
+		&i.VerifiedAt,
+	)
+	return i, err
+}
+
+const insertSynonym = `-- name: InsertSynonym :one
+INSERT INTO synonym (phrase_key, tag_id, origin, created_at) VALUES (?, ?, ?, ?)
+RETURNING id, phrase_key, tag_id, origin, created_at
+`
+
+type InsertSynonymParams struct {
+	PhraseKey string
+	TagID     int64
+	Origin    string
+	CreatedAt string
+}
+
+func (q *Queries) InsertSynonym(ctx context.Context, arg InsertSynonymParams) (Synonym, error) {
+	row := q.db.QueryRowContext(ctx, insertSynonym,
+		arg.PhraseKey,
+		arg.TagID,
+		arg.Origin,
+		arg.CreatedAt,
+	)
+	var i Synonym
+	err := row.Scan(
+		&i.ID,
+		&i.PhraseKey,
+		&i.TagID,
+		&i.Origin,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listGameTags = `-- name: ListGameTags :many
+SELECT gt.id, gt.game_id, gt.tag_id, gt.origin, gt.qualifier, gt.verification, gt.modifier_note, gt.source_phrase, gt.mapping_override, gt.is_new, gt.promoted, gt.removed_at_source_at, gt.f95_only, gt.verified_at, t.kind AS tag_kind, t.slug AS tag_slug, t.label AS tag_label
+  FROM game_tag gt JOIN tag t ON t.id = gt.tag_id
+ WHERE gt.game_id = ?
+ ORDER BY gt.id
+`
+
+type ListGameTagsRow struct {
+	ID                int64
+	GameID            int64
+	TagID             int64
+	Origin            string
+	Qualifier         string
+	Verification      string
+	ModifierNote      sql.NullString
+	SourcePhrase      sql.NullString
+	MappingOverride   int64
+	IsNew             int64
+	Promoted          int64
+	RemovedAtSourceAt sql.NullString
+	F95Only           int64
+	VerifiedAt        sql.NullString
+	TagKind           string
+	TagSlug           string
+	TagLabel          string
+}
+
+func (q *Queries) ListGameTags(ctx context.Context, gameID int64) ([]ListGameTagsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGameTags, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGameTagsRow
+	for rows.Next() {
+		var i ListGameTagsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.TagID,
+			&i.Origin,
+			&i.Qualifier,
+			&i.Verification,
+			&i.ModifierNote,
+			&i.SourcePhrase,
+			&i.MappingOverride,
+			&i.IsNew,
+			&i.Promoted,
+			&i.RemovedAtSourceAt,
+			&i.F95Only,
+			&i.VerifiedAt,
+			&i.TagKind,
+			&i.TagSlug,
+			&i.TagLabel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReapplyCandidates = `-- name: ListReapplyCandidates :many
+SELECT id, game_id, tag_id, origin, qualifier, verification, modifier_note, source_phrase, mapping_override, is_new, promoted, removed_at_source_at, f95_only, verified_at FROM game_tag
+ WHERE verification = 'unverified' AND mapping_override = 0
+   AND source_phrase IS NOT NULL AND removed_at_source_at IS NULL
+ ORDER BY game_id, id
+`
+
+// Rows a synonym change may re-point (R-TAG-10, INV-19).
+func (q *Queries) ListReapplyCandidates(ctx context.Context) ([]GameTag, error) {
+	rows, err := q.db.QueryContext(ctx, listReapplyCandidates)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GameTag
+	for rows.Next() {
+		var i GameTag
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.TagID,
+			&i.Origin,
+			&i.Qualifier,
+			&i.Verification,
+			&i.ModifierNote,
+			&i.SourcePhrase,
+			&i.MappingOverride,
+			&i.IsNew,
+			&i.Promoted,
+			&i.RemovedAtSourceAt,
+			&i.F95Only,
+			&i.VerifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSynonymRows = `-- name: ListSynonymRows :many
+SELECT s.id, s.phrase_key, s.tag_id, s.origin, s.created_at,
+       t.kind AS tag_kind, t.slug AS tag_slug, t.label AS tag_label
+  FROM synonym s JOIN tag t ON t.id = s.tag_id
+ WHERE ?1 = ''
+    OR instr(s.phrase_key, ?1) > 0
+    OR instr(lower(t.slug), ?1) > 0
+    OR instr(lower(t.label), ?1) > 0
+ ORDER BY s.phrase_key
+`
+
+type ListSynonymRowsRow struct {
+	ID        int64
+	PhraseKey string
+	TagID     int64
+	Origin    string
+	CreatedAt string
+	TagKind   string
+	TagSlug   string
+	TagLabel  string
+}
+
+func (q *Queries) ListSynonymRows(ctx context.Context, filter interface{}) ([]ListSynonymRowsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSynonymRows, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSynonymRowsRow
+	for rows.Next() {
+		var i ListSynonymRowsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PhraseKey,
+			&i.TagID,
+			&i.Origin,
+			&i.CreatedAt,
+			&i.TagKind,
+			&i.TagSlug,
+			&i.TagLabel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTags = `-- name: ListTags :many
+SELECT id, kind, slug, label FROM tag ORDER BY kind, label COLLATE NOCASE, id
+`
+
+func (q *Queries) ListTags(ctx context.Context) ([]Tag, error) {
+	rows, err := q.db.QueryContext(ctx, listTags)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tag
+	for rows.Next() {
+		var i Tag
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.Slug,
+			&i.Label,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTagsByKind = `-- name: ListTagsByKind :many
+SELECT id, kind, slug, label FROM tag WHERE kind = ? ORDER BY slug
+`
+
+func (q *Queries) ListTagsByKind(ctx context.Context, kind string) ([]Tag, error) {
+	rows, err := q.db.QueryContext(ctx, listTagsByKind, kind)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tag
+	for rows.Next() {
+		var i Tag
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.Slug,
+			&i.Label,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateGameTag = `-- name: UpdateGameTag :exec
+UPDATE game_tag SET tag_id = ?, origin = ?, qualifier = ?, verification = ?, modifier_note = ?, source_phrase = ?,
+       mapping_override = ?, is_new = ?, promoted = ?, removed_at_source_at = ?, f95_only = ?, verified_at = ?
+ WHERE id = ?
+`
+
+type UpdateGameTagParams struct {
+	TagID             int64
+	Origin            string
+	Qualifier         string
+	Verification      string
+	ModifierNote      sql.NullString
+	SourcePhrase      sql.NullString
+	MappingOverride   int64
+	IsNew             int64
+	Promoted          int64
+	RemovedAtSourceAt sql.NullString
+	F95Only           int64
+	VerifiedAt        sql.NullString
+	ID                int64
+}
+
+func (q *Queries) UpdateGameTag(ctx context.Context, arg UpdateGameTagParams) error {
+	_, err := q.db.ExecContext(ctx, updateGameTag,
+		arg.TagID,
+		arg.Origin,
+		arg.Qualifier,
+		arg.Verification,
+		arg.ModifierNote,
+		arg.SourcePhrase,
+		arg.MappingOverride,
+		arg.IsNew,
+		arg.Promoted,
+		arg.RemovedAtSourceAt,
+		arg.F95Only,
+		arg.VerifiedAt,
+		arg.ID,
+	)
+	return err
+}
+
+const updateSynonym = `-- name: UpdateSynonym :one
+UPDATE synonym SET phrase_key = ?, tag_id = ?, origin = 'user' WHERE id = ?
+RETURNING id, phrase_key, tag_id, origin, created_at
+`
+
+type UpdateSynonymParams struct {
+	PhraseKey string
+	TagID     int64
+	ID        int64
+}
+
+func (q *Queries) UpdateSynonym(ctx context.Context, arg UpdateSynonymParams) (Synonym, error) {
+	row := q.db.QueryRowContext(ctx, updateSynonym, arg.PhraseKey, arg.TagID, arg.ID)
+	var i Synonym
+	err := row.Scan(
+		&i.ID,
+		&i.PhraseKey,
+		&i.TagID,
+		&i.Origin,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const upsertTag = `-- name: UpsertTag :one
+INSERT INTO tag (kind, slug, label) VALUES (?, ?, ?)
+ON CONFLICT (kind, slug) DO UPDATE SET kind = excluded.kind
+RETURNING id, kind, slug, label
+`
+
+type UpsertTagParams struct {
+	Kind  string
+	Slug  string
+	Label string
+}
+
+func (q *Queries) UpsertTag(ctx context.Context, arg UpsertTagParams) (Tag, error) {
+	row := q.db.QueryRowContext(ctx, upsertTag, arg.Kind, arg.Slug, arg.Label)
+	var i Tag
+	err := row.Scan(
+		&i.ID,
+		&i.Kind,
+		&i.Slug,
+		&i.Label,
+	)
+	return i, err
 }

@@ -7,7 +7,65 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
+
+const applyItchPage = `-- name: ApplyItchPage :exec
+UPDATE source SET latest_version = ?1, change_key = ?2,
+  thread_updated_at = ?3, last_checked_at = ?4, last_detail_at = ?4,
+  miss_count = 0, details_pending = 0
+WHERE id = ?5
+`
+
+type ApplyItchPageParams struct {
+	LatestVersion   sql.NullString
+	ChangeKey       sql.NullString
+	ThreadUpdatedAt sql.NullString
+	At              sql.NullString
+	ID              int64
+}
+
+// itch.io answer: the version token is NULL when the page has none (date-only Source).
+func (q *Queries) ApplyItchPage(ctx context.Context, arg ApplyItchPageParams) error {
+	_, err := q.db.ExecContext(ctx, applyItchPage,
+		arg.LatestVersion,
+		arg.ChangeKey,
+		arg.ThreadUpdatedAt,
+		arg.At,
+		arg.ID,
+	)
+	return err
+}
+
+const disableSourceChecks = `-- name: DisableSourceChecks :exec
+UPDATE source SET checks_enabled = 0 WHERE id = ?
+`
+
+func (q *Queries) DisableSourceChecks(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, disableSourceChecks, id)
+	return err
+}
+
+const finishCheckRun = `-- name: FinishCheckRun :exec
+UPDATE check_run SET status = ?, finished_at = ?, f95_stopped = ? WHERE id = ?
+`
+
+type FinishCheckRunParams struct {
+	Status     string
+	FinishedAt sql.NullString
+	F95Stopped int64
+	ID         int64
+}
+
+func (q *Queries) FinishCheckRun(ctx context.Context, arg FinishCheckRunParams) error {
+	_, err := q.db.ExecContext(ctx, finishCheckRun,
+		arg.Status,
+		arg.FinishedAt,
+		arg.F95Stopped,
+		arg.ID,
+	)
+	return err
+}
 
 const getLatestCheckRun = `-- name: GetLatestCheckRun :one
 
@@ -17,6 +75,78 @@ SELECT id, kind, started_at, finished_at, status, f95_stopped FROM check_run ORD
 // checks queries. The owning backlog item adds its queries to this file (see docs/spec/backlog.md).
 func (q *Queries) GetLatestCheckRun(ctx context.Context) (CheckRun, error) {
 	row := q.db.QueryRowContext(ctx, getLatestCheckRun)
+	var i CheckRun
+	err := row.Scan(
+		&i.ID,
+		&i.Kind,
+		&i.StartedAt,
+		&i.FinishedAt,
+		&i.Status,
+		&i.F95Stopped,
+	)
+	return i, err
+}
+
+const insertCheckResult = `-- name: InsertCheckResult :one
+INSERT INTO check_result (run_id, source_id, step, outcome, old_key, new_key, http_status, attempts, error, at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, run_id, source_id, step, outcome, old_key, new_key, http_status, attempts, error, at
+`
+
+type InsertCheckResultParams struct {
+	RunID      int64
+	SourceID   sql.NullInt64
+	Step       string
+	Outcome    string
+	OldKey     sql.NullString
+	NewKey     sql.NullString
+	HttpStatus sql.NullInt64
+	Attempts   int64
+	Error      sql.NullString
+	At         string
+}
+
+func (q *Queries) InsertCheckResult(ctx context.Context, arg InsertCheckResultParams) (CheckResult, error) {
+	row := q.db.QueryRowContext(ctx, insertCheckResult,
+		arg.RunID,
+		arg.SourceID,
+		arg.Step,
+		arg.Outcome,
+		arg.OldKey,
+		arg.NewKey,
+		arg.HttpStatus,
+		arg.Attempts,
+		arg.Error,
+		arg.At,
+	)
+	var i CheckResult
+	err := row.Scan(
+		&i.ID,
+		&i.RunID,
+		&i.SourceID,
+		&i.Step,
+		&i.Outcome,
+		&i.OldKey,
+		&i.NewKey,
+		&i.HttpStatus,
+		&i.Attempts,
+		&i.Error,
+		&i.At,
+	)
+	return i, err
+}
+
+const insertCheckRun = `-- name: InsertCheckRun :one
+INSERT INTO check_run (kind, started_at) VALUES (?, ?) RETURNING id, kind, started_at, finished_at, status, f95_stopped
+`
+
+type InsertCheckRunParams struct {
+	Kind      string
+	StartedAt string
+}
+
+func (q *Queries) InsertCheckRun(ctx context.Context, arg InsertCheckRunParams) (CheckRun, error) {
+	row := q.db.QueryRowContext(ctx, insertCheckRun, arg.Kind, arg.StartedAt)
 	var i CheckRun
 	err := row.Scan(
 		&i.ID,
