@@ -4,7 +4,8 @@
 SELECT COUNT(*) FROM game WHERE import_review = 1;
 
 -- name: CountTagReviewQueue :one
-SELECT COUNT(*) FROM tag_review WHERE state IN ('pending', 'skipped');
+SELECT COUNT(*) FROM tag_review tr WHERE tr.state IN ('pending', 'skipped')
+  AND EXISTS (SELECT 1 FROM game_tag gt WHERE gt.game_id = tr.game_id AND gt.qualifier = 'present' AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL);
 
 -- name: GetF95CredentialHealth :one
 SELECT validity, tfa_trust_expires_at FROM f95_credential WHERE id = 1;

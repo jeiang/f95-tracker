@@ -192,7 +192,7 @@ WITH base AS (
          s.id AS source_id, s.kind AS source_kind, s.url AS source_url, s.latest_version, s.dev_status,
          s.thread_updated_at, s.last_checked_at, s.details_pending, s.unavailable_at,
          lp.version AS last_played_version, lp.played_on AS last_played_on,
-         tr.state AS review_state,
+         CAST(CASE WHEN EXISTS (SELECT 1 FROM game_tag gt WHERE gt.game_id = g.id AND gt.qualifier = 'present' AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL) THEN COALESCE(tr.state, '') ELSE '' END AS TEXT) AS review_state,
          CAST(?10 AS TEXT) AS sort_mode, CAST(?11 AS TEXT) AS sort_dir,
          CAST(g.play_status IN (SELECT play_status FROM alert_play_status)
               AND EXISTS (SELECT 1 FROM game_behind b WHERE b.game_id = g.id) AS INTEGER) AS behind,
@@ -277,7 +277,7 @@ type ListGamesRow struct {
 	UnavailableAt     sql.NullString
 	LastPlayedVersion sql.NullString
 	LastPlayedOn      sql.NullString
-	ReviewState       sql.NullString
+	ReviewState       string
 	SortMode          string
 	SortDir           string
 	Behind            int64

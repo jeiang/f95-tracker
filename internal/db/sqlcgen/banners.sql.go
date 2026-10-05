@@ -24,7 +24,8 @@ func (q *Queries) CountImportReviewGames(ctx context.Context) (int64, error) {
 }
 
 const countTagReviewQueue = `-- name: CountTagReviewQueue :one
-SELECT COUNT(*) FROM tag_review WHERE state IN ('pending', 'skipped')
+SELECT COUNT(*) FROM tag_review tr WHERE tr.state IN ('pending', 'skipped')
+  AND EXISTS (SELECT 1 FROM game_tag gt WHERE gt.game_id = tr.game_id AND gt.qualifier = 'present' AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL)
 `
 
 func (q *Queries) CountTagReviewQueue(ctx context.Context) (int64, error) {

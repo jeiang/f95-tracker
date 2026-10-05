@@ -248,8 +248,8 @@ func gameRow(r sqlcgen.ListGamesRow) ui.GameRow {
 	if r.UnavailableAt.Valid {
 		add("bad", "Source unavailable", "The Source page could not be reached")
 	}
-	if r.ReviewState.String == "pending" || r.ReviewState.String == "skipped" {
-		add("accent", "tags to review", "Tag review "+r.ReviewState.String)
+	if r.ReviewState == "pending" || r.ReviewState == "skipped" {
+		add("accent", "tags to review", "Tag review "+r.ReviewState)
 	}
 	if r.ImportReview == 1 {
 		add("warn", "check Play status", "Imported from CSV; Play status was derived")

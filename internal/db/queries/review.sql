@@ -18,6 +18,7 @@ VALUES (sqlc.arg(game_id), 'done', sqlc.narg(play_log_id), sqlc.arg(at), sqlc.ar
 ON CONFLICT (game_id) DO UPDATE SET state = 'done', last_reviewed_play_log_id = excluded.last_reviewed_play_log_id,
   reviewed_at = excluded.reviewed_at, updated_at = excluded.updated_at;
 
+-- Queue = pending/skipped reviews of Games with at least one present, non-wrong tag at the Source (an imported Game has a pending row before its tags are fetched).
 -- name: ListReviewQueue :many
 SELECT tr.game_id, g.name, tr.state, tr.updated_at,
        (SELECT COUNT(*) FROM game_tag gt WHERE gt.game_id = tr.game_id AND gt.qualifier = 'present'
@@ -29,4 +30,5 @@ SELECT tr.game_id, g.name, tr.state, tr.updated_at,
   JOIN game g ON g.id = tr.game_id
   LEFT JOIN game_last_played lp ON lp.game_id = tr.game_id
  WHERE tr.state IN ('pending', 'skipped')
+   AND EXISTS (SELECT 1 FROM game_tag gt WHERE gt.game_id = tr.game_id AND gt.qualifier = 'present' AND gt.verification <> 'wrong' AND gt.removed_at_source_at IS NULL)
  ORDER BY tr.updated_at, g.name COLLATE NOCASE, g.id;
