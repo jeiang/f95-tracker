@@ -41,6 +41,8 @@ let
     RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
     CapabilityBoundingSet = "";
     MemoryMax = cfg.memoryMax;
+    # Restores the last backup when the live database is missing, before anything can create an empty one.
+    ExecStartPre = restoreScript;
   };
 
   db = "${cfg.stateDir}/f95-tracker.db";
@@ -49,6 +51,8 @@ let
   # `f95-tracker backup` refuses an existing destination, so write a temp name and rename.
   backupScript = pkgs.writeShellScript "f95-tracker-backup" ''
     set -eu
+    # Never replace the backup with a freshly created empty database.
+    [ -e ${db} ] || { echo "live database ${db} is missing; keeping existing backup" >&2; exit 1; }
     tmp=${backupFile}.new
     rm -f "$tmp"
     ${bin} backup "$tmp" --state-dir ${lib.escapeShellArg cfg.stateDir}
@@ -172,18 +176,6 @@ in
       serviceConfig = hardening // {
         Type = "oneshot";
         ExecStart = backupScript;
-      };
-    };
-
-    # Restores the last backup when the live database is missing (fresh host / disaster).
-    systemd.services.f95-tracker-restore = {
-      description = "F95 Tracker database restore";
-      wantedBy = [ "f95-tracker.service" ];
-      before = [ "f95-tracker.service" ];
-      serviceConfig = hardening // {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = restoreScript;
       };
     };
   };
