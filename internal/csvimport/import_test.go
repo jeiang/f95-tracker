@@ -258,9 +258,12 @@ func TestImportSheet(t *testing.T) {
 		_, second := e.game("https://abbys-cat.itch.io/my-new-second-chance")
 		_, alchemy := e.game("https://jjambong.itch.io/alchemy-shop")
 		for _, s := range []sqlcgen.Source{rework, second, alchemy} {
-			if s.Kind != "itchio" || !s.ExternalID.Valid || s.ChangeKey.Valid || s.LatestVersion.Valid {
+			if s.Kind != "itchio" || s.ExternalID.String != strings.ToLower(strings.TrimPrefix(s.Url, "https://")) || s.ChangeKey.Valid || s.LatestVersion.Valid {
 				t.Errorf("itch source = %+v", s)
 			}
+		}
+		if rework.ExternalID.String != "kuro-kai.itch.io/lycoris-radiata" {
+			t.Errorf("itch external id = %q, want <user>.itch.io/<slug>", rework.ExternalID.String)
 		}
 		if rework.ChecksEnabled != 1 || second.ChecksEnabled != 1 || alchemy.ChecksEnabled != 0 {
 			t.Errorf("checks enabled: %d %d %d, want only Alchemy Shop off", rework.ChecksEnabled, second.ChecksEnabled, alchemy.ChecksEnabled)
@@ -490,7 +493,7 @@ func TestParseClassification(t *testing.T) {
 		{"f95_thread", "12", "ongoing", 7, "1.0", false, "https://f95zone.to/threads/12/"},
 		{"f95_thread", "77", "on_hold", 0, "", false, "https://f95zone.to/threads/77/"},
 		{"manual", "", "abandoned", 2, "2", true, "https://f95zone.to/threads/151517/"},
-		{"itchio", "d-game", "ongoing", 0, "", false, "https://x.itch.io/d-game"},
+		{"itchio", "x.itch.io/d-game", "ongoing", 0, "", false, "https://x.itch.io/d-game"},
 		{"manual", "", "ongoing", 0, "", false, "https://dev.fanbox.cc/"},
 	}
 	for i := range want {

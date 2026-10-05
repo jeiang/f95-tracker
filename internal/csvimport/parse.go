@@ -13,6 +13,7 @@ import (
 
 	"github.com/jeiang/f95-tracker/internal/domain"
 	"github.com/jeiang/f95-tracker/internal/games"
+	"github.com/jeiang/f95-tracker/internal/itch"
 )
 
 // restricted threads stay unreadable even logged in; they import as manual Games (R-CSV-7).
@@ -153,22 +154,16 @@ func parseRow(get func(string) string) (Row, error) {
 	if err != nil || u.Host == "" {
 		return row, fmt.Errorf("link %q is not a URL", link)
 	}
-	if strings.HasSuffix(u.Host, ".itch.io") {
-		slug := path0(u.Path)
-		if slug == "" {
-			return row, fmt.Errorf("itch.io link %q has no game slug", link)
+	if strings.HasSuffix(u.Hostname(), ".itch.io") {
+		id, gameURL, err := itch.CanonicalURL(link)
+		if err != nil {
+			return row, fmt.Errorf("link %q: %w", link, err)
 		}
-		row.Spec = games.SourceSpec{Kind: domain.SourceItchio, ExternalID: slug, URL: link}
+		row.Spec = games.SourceSpec{Kind: domain.SourceItchio, ExternalID: id, URL: gameURL}
 		return row, nil
 	}
 	row.Spec = games.SourceSpec{Kind: domain.SourceManual, URL: link}
 	return row, nil
-}
-
-// path0 is the last non-empty path segment (the itch.io game slug).
-func path0(p string) string {
-	parts := strings.Split(strings.Trim(p, "/"), "/")
-	return parts[len(parts)-1]
 }
 
 // derivePlayStatus is R-CSV-4: no version → planned; completed/abandoned → finished;
