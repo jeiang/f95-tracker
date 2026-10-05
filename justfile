@@ -27,3 +27,14 @@ test:
 # Fails when generated code is out of date.
 check-drift: generate
     git diff --exit-code
+
+# Recompute vendorHash in flake.nix after go.mod/go.sum change (build fails with the new hash; paste it in).
+vendor-hash:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sed -i.bak -E 's|vendorHash = "[^"]*";|vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";|' flake.nix && rm flake.nix.bak
+    git add flake.nix
+    hash=$(nix build .#default 2>&1 | sed -n 's/^ *got: *//p' | head -n1 || true)
+    test -n "$hash" || { echo "no hash reported; build output above" >&2; exit 1; }
+    sed -i.bak -E "s|vendorHash = \"[^\"]*\";|vendorHash = \"$hash\";|" flake.nix && rm flake.nix.bak
+    echo "vendorHash = $hash"
