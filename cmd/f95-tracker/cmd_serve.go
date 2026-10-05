@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jeiang/f95-tracker/internal/auth"
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/config"
 	"github.com/jeiang/f95-tracker/internal/db"
@@ -33,7 +34,7 @@ func runServe(ctx context.Context, args []string) error {
 	defer store.Close()
 
 	srv := &http.Server{
-		Handler:           web.New(web.Deps{Store: store, Clock: clock.Real{}, Log: base, Config: cfg}).Handler(),
+		Handler:           web.New(web.Deps{Store: store, Clock: clock.Real{}, Log: base, Config: cfg, Auth: auth.New(cfg, store, clock.Real{}, base)}).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 	}

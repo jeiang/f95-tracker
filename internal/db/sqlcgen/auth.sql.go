@@ -21,3 +21,64 @@ func (q *Queries) CountActiveAPITokens(ctx context.Context) (int64, error) {
 	err := row.Scan(&count)
 	return count, err
 }
+
+const countSessions = `-- name: CountSessions :one
+SELECT COUNT(*) FROM sessions
+`
+
+func (q *Queries) CountSessions(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countSessions)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteExpiredSessions = `-- name: DeleteExpiredSessions :exec
+DELETE FROM sessions WHERE expiry <= ?
+`
+
+func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiry float64) error {
+	_, err := q.db.ExecContext(ctx, deleteExpiredSessions, expiry)
+	return err
+}
+
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM sessions WHERE token = ?
+`
+
+func (q *Queries) DeleteSession(ctx context.Context, token string) error {
+	_, err := q.db.ExecContext(ctx, deleteSession, token)
+	return err
+}
+
+const findSession = `-- name: FindSession :one
+SELECT data FROM sessions WHERE token = ? AND expiry > ?
+`
+
+type FindSessionParams struct {
+	Token  string
+	Expiry float64
+}
+
+func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) ([]byte, error) {
+	row := q.db.QueryRowContext(ctx, findSession, arg.Token, arg.Expiry)
+	var data []byte
+	err := row.Scan(&data)
+	return data, err
+}
+
+const upsertSession = `-- name: UpsertSession :exec
+INSERT INTO sessions (token, data, expiry) VALUES (?, ?, ?)
+ON CONFLICT (token) DO UPDATE SET data = excluded.data, expiry = excluded.expiry
+`
+
+type UpsertSessionParams struct {
+	Token  string
+	Data   []byte
+	Expiry float64
+}
+
+func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) error {
+	_, err := q.db.ExecContext(ctx, upsertSession, arg.Token, arg.Data, arg.Expiry)
+	return err
+}
