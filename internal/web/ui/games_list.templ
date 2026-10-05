@@ -1,0 +1,327 @@
+package ui
+
+import "strconv"
+
+templ GamesListPage(v GameListView) {
+	<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+		<h1 class="text-2xl font-semibold">Games</h1>
+		@Button(ButtonProps{Variant: "primary", Href: "/games/new"}) {
+			+ Add Game
+		}
+	</div>
+	if v.ImportReview > 0 || v.TagQueue > 0 {
+		<div class="mb-6 flex flex-col gap-2 sm:flex-row">
+			if v.ImportReview > 0 {
+				<a id="strip-import-review" href="/import-review" class="panel flex flex-1 items-center gap-3 px-4 py-3 hover:border-accent">
+					@Badge(BadgeProps{Count: v.ImportReview, Label: "imported Games to check"})
+					<span class="text-sm">imported Games need a <strong>Play status</strong> check</span>
+					<span class="ml-auto text-accent" aria-hidden="true">→</span>
+				</a>
+			}
+			if v.TagQueue > 0 {
+				<a id="strip-tag-queue" href="/queue" class="panel flex flex-1 items-center gap-3 px-4 py-3 hover:border-accent">
+					@Badge(BadgeProps{Count: v.TagQueue, Label: "Games waiting"})
+					<span class="text-sm">Games in <strong>tags to review</strong></span>
+					<span class="ml-auto text-accent" aria-hidden="true">→</span>
+				</a>
+			}
+		</div>
+	}
+	if len(v.Rows) == 0 && !v.Active {
+		<section id="first-run" class="panel max-w-xl px-6 py-8">
+			<h2 class="text-lg font-semibold">Start your library</h2>
+			<p class="mt-2 text-sm text-muted">Paste an F95zone thread link to add your first Game, or bring over the spreadsheet you already keep with a CSV import.</p>
+			<div class="mt-4 flex flex-wrap gap-2">
+				@Button(ButtonProps{Variant: "primary", Href: "/games/new"}) {
+					Add a Game
+				}
+				@Button(ButtonProps{Href: "/import"}) {
+					Import CSV
+				}
+			</div>
+		</section>
+	} else {
+		<div class="md:grid md:grid-cols-[15rem_1fr] md:items-start md:gap-6">
+			@gamesFilterForm(v)
+			@templ.Fragment("game-table") {
+				<div id="game-table" aria-live="polite">
+					@tagChips(v)
+					if len(v.Rows) == 0 {
+						<div id="no-match" class="panel px-6 py-8">
+							<p class="font-medium">No Games match these filters.</p>
+							<p class="mt-1 text-sm text-muted">Excluded tags and the Behind / Update toggles narrow results the most.</p>
+							<div class="mt-4">
+								@Button(ButtonProps{Href: "/games", Attrs: listNav("/games")}) {
+									Clear filters
+								}
+							</div>
+						</div>
+					} else {
+						<p class="mb-2 text-sm text-muted">{ strconv.Itoa(len(v.Rows)) } shown</p>
+						@gamesTable(v.Rows)
+						@gamesStack(v.Rows)
+					}
+				</div>
+			}
+		</div>
+	}
+}
+
+func listNav(href string) templ.Attributes {
+	return templ.Attributes{"hx-get": href, "hx-target": "#game-table", "hx-swap": "outerHTML", "hx-push-url": "true"}
+}
+
+templ gamesFilterForm(v GameListView) {
+	<details
+		class="panel mb-4 md:sticky md:top-4 md:mb-0"
+		open?={ v.Active }
+		x-data={ "{ open: " + strconv.FormatBool(v.Active) + " || matchMedia('(min-width: 768px)').matches }" }
+		:open="open"
+		@toggle="open = $el.open"
+	>
+		<summary class="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-semibold">
+			Filters &amp; sort
+			if v.ActiveCount > 0 {
+				@Chip(ChipProps{Tone: "accent", Text: strconv.Itoa(v.ActiveCount) + " active"})
+			}
+		</summary>
+		<form
+			id="filters"
+			method="get"
+			action="/games"
+			class="grid gap-5 border-t border-line px-4 py-4"
+			hx-get="/games"
+			hx-target="#game-table"
+			hx-swap="outerHTML"
+			hx-push-url="true"
+			hx-trigger="submit, change, input delay:300ms from:#q"
+		>
+			<div>
+				<label for="q" class="label mb-1">Name</label>
+				<input id="q" name="q" type="search" class="field" placeholder="Search Games" value={ v.Filters.Q }/>
+			</div>
+			<div>
+				<label for="sort" class="label mb-1">Sort</label>
+				<select id="sort" name="sort" class="field">
+					for _, o := range sortOptions {
+						<option value={ o.Value } selected?={ o.Value == v.Filters.Sort }>{ o.Label }</option>
+					}
+				</select>
+			</div>
+			<div>
+				<label for="dir" class="label mb-1">Direction</label>
+				<select id="dir" name="dir" class="field">
+					for _, o := range dirOptions {
+						<option value={ o.Value } selected?={ o.Value == v.Filters.Dir }>{ o.Label }</option>
+					}
+				</select>
+			</div>
+			<div>
+				<label for="play" class="label mb-1">Play status</label>
+				<select id="play" name="play" class="field">
+					<option value="">Any</option>
+					for _, s := range PlayStatuses {
+						<option value={ string(s) } selected?={ string(s) == v.Filters.Play }>{ PlayStatusLabel(s) }</option>
+					}
+				</select>
+			</div>
+			<div>
+				<label for="dev" class="label mb-1">Dev status</label>
+				<select id="dev" name="dev" class="field">
+					<option value="">Any</option>
+					for _, s := range DevStatuses {
+						<option value={ string(s) } selected?={ string(s) == v.Filters.Dev }>{ DevStatusLabel(string(s)) }</option>
+					}
+				</select>
+			</div>
+			<div>
+				<label for="rating" class="label mb-1">Rating</label>
+				<select id="rating" name="rating" class="field">
+					for _, o := range ratingOptions {
+						<option value={ o.Value } selected?={ o.Value == v.Filters.Rating }>{ o.Label }</option>
+					}
+				</select>
+			</div>
+			<fieldset>
+				<legend class="label mb-2">Versions</legend>
+				<div class="seg">
+					<label><input type="checkbox" class="sr-only" name="behind" value="1" checked?={ v.Filters.Behind }/>Behind</label>
+					<label><input type="checkbox" class="sr-only" name="updates" value="1" checked?={ v.Filters.Updates }/>Update available</label>
+				</div>
+			</fieldset>
+			<div class="flex flex-wrap items-center gap-2">
+				<button type="submit" class="btn btn-sm btn-primary">Apply</button>
+				if v.Active {
+					<a href="/games" class="btn btn-sm" { listNav("/games")... }>Clear filters</a>
+				}
+			</div>
+		</form>
+	</details>
+}
+
+templ tagChips(v GameListView) {
+	for _, t := range v.TagTokens {
+		<input type="hidden" form="filters" name="tag" value={ t }/>
+	}
+	if len(v.Tags) > 0 {
+		<fieldset class="panel mb-4 px-4 py-3">
+			<legend class="label px-1">Tags</legend>
+			<p class="mb-2 text-xs text-muted">Select once to include, twice to exclude, a third time to clear. Tags marked wrong never match.</p>
+			<div class="flex flex-wrap gap-1">
+				for i, t := range v.Tags {
+					if i < 12 {
+						@tagChip(t)
+					}
+				}
+			</div>
+			if len(v.Tags) > 12 {
+				<details class="mt-2">
+					<summary class="btn btn-ghost btn-sm inline-flex cursor-pointer">All { strconv.Itoa(len(v.Tags)) } tags</summary>
+					<div class="mt-2 flex flex-wrap gap-1">
+						for i, t := range v.Tags {
+							if i >= 12 {
+								@tagChip(t)
+							}
+						}
+					</div>
+				</details>
+			}
+			<label class="mt-3 flex items-center gap-2 text-sm">
+				<input type="checkbox" name="tags" value="all" form="filters" checked?={ v.Filters.AllTags } onchange="this.form.requestSubmit()"/>
+				Also match planned and optional tags
+			</label>
+		</fieldset>
+	}
+}
+
+templ tagChip(t TagFilterChip) {
+	<a
+		href={ templ.SafeURL(t.Href) }
+		class={ "chip min-h-8", templ.KV("chip-ok", t.State == "include"), templ.KV("chip-bad line-through", t.State == "exclude"), templ.KV("chip-muted", t.State == "") }
+		aria-label={ t.Label + tagStateText(t.State) }
+		{ listNav(t.Href)... }
+	>
+		if t.State == "include" {
+			<span aria-hidden="true">+</span>
+		} else if t.State == "exclude" {
+			<span aria-hidden="true">−</span>
+		}
+		<span>{ t.Label }</span>
+		<span class="text-muted">{ strconv.Itoa(t.Count) }</span>
+	</a>
+}
+
+func tagStateText(state string) string {
+	switch state {
+	case "include":
+		return ", included"
+	case "exclude":
+		return ", excluded"
+	}
+	return ", not filtered"
+}
+
+templ ratingCell(x2 int) {
+	if x2 > 0 {
+		<span class="text-accent" aria-label={ ratingText(x2) }>{ starsText(x2) }</span>
+		<span class="ml-1 font-mono text-xs text-muted">{ ratingNumber(x2) }</span>
+	} else {
+		<span class="font-mono text-xs text-muted">unrated</span>
+	}
+}
+
+func ratingNumber(x2 int) string {
+	return strconv.FormatFloat(float64(x2)/2, 'f', -1, 64)
+}
+
+templ versions(g GameRow) {
+	<span class={ templ.KV("text-warn", g.Behind) }>
+		if g.LastPlayed.Version == "" && g.LastPlayed.Date == "" {
+			<span class="font-mono text-sm text-muted">not played</span>
+		} else {
+			@VersionLabel(g.LastPlayed)
+		}
+	</span>
+	<span class="text-muted" aria-hidden="true">→</span>
+	@VersionLabel(g.Latest)
+}
+
+templ gameBadges(g GameRow) {
+	for _, b := range g.Badges {
+		@Chip(b)
+	}
+}
+
+templ gamesTable(rows []GameRow) {
+	<div class="panel hidden overflow-hidden md:block">
+		<table class="w-full text-left text-sm">
+			<thead class="border-b border-line">
+				<tr class="label bg-raised/60">
+					<th scope="col" class="px-4 py-2 font-semibold">Game</th>
+					<th scope="col" class="px-2 py-2 font-semibold">Play / Dev</th>
+					<th scope="col" class="px-2 py-2 font-semibold">Last played → latest</th>
+					<th scope="col" class="px-2 py-2 font-semibold">Rating</th>
+					<th scope="col" class="px-4 py-2 text-right font-semibold">Updated</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, g := range rows {
+					<tr class="border-b border-line/60 last:border-0 hover:bg-raised/40">
+						<td class="px-4 py-3">
+							<a href={ templ.SafeURL("/games/" + strconv.FormatInt(g.ID, 10)) } class="block font-medium hover:text-accent">{ g.Name }</a>
+							<span class="mt-1 flex flex-wrap gap-1">
+								@gameBadges(g)
+							</span>
+						</td>
+						<td class="px-2 py-3">
+							<div class="flex flex-col items-start gap-1">
+								@Chip(ChipProps{Tone: playTone(g.Play), Text: PlayStatusLabel(g.Play)})
+								@Chip(DevChip(g.Dev))
+							</div>
+						</td>
+						<td class="whitespace-nowrap px-2 py-3">
+							@versions(g)
+						</td>
+						<td class="whitespace-nowrap px-2 py-3">
+							@ratingCell(g.RatingX2)
+						</td>
+						<td class="whitespace-nowrap px-4 py-3 text-right font-mono text-xs text-muted">
+							if g.SourceUpdate != "" {
+								{ g.SourceUpdate }
+							} else {
+								—
+							}
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ gamesStack(rows []GameRow) {
+	<ul class="panel divide-y divide-line md:hidden">
+		for _, g := range rows {
+			<li>
+				<a href={ templ.SafeURL("/games/" + strconv.FormatInt(g.ID, 10)) } class="block px-3 py-3">
+					<span class="flex items-baseline justify-between gap-2">
+						<span class="truncate font-medium">{ g.Name }</span>
+						if g.RatingX2 > 0 {
+							<span class="shrink-0 text-xs text-accent" aria-label={ ratingText(g.RatingX2) }>{ starsText(g.RatingX2) }</span>
+						}
+					</span>
+					<span class="mt-0.5 flex items-baseline gap-1">
+						@versions(g)
+					</span>
+					<span class="mt-1 flex flex-wrap gap-1">
+						@Chip(ChipProps{Tone: playTone(g.Play), Text: PlayStatusLabel(g.Play)})
+						if g.Dev != "" {
+							@Chip(DevChip(g.Dev))
+						}
+						@gameBadges(g)
+					</span>
+				</a>
+			</li>
+		}
+	</ul>
+}
