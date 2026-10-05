@@ -235,6 +235,7 @@ func (s *Server) fetchF95(w http.ResponseWriter, r *http.Request, v ui.AddView, 
 	case errors.Is(err, f95.ErrBusy):
 		return notice(http.StatusServiceUnavailable, "warn", "F95 busy, try again.")
 	case errors.Is(err, f95.ErrCookieInvalid):
+		s.alertCookieInvalid(r.Context())
 		f.pending = true
 		if th == nil { // login page: nothing readable
 			return true
@@ -443,15 +444,20 @@ func (s *Server) overlay(ctx context.Context, form url.Values, m *tags.ParseChec
 		return tags.TagRef{Kind: tags.KindCustom, Label: text}
 	}
 	apply := func(prefix string, list []tags.Entry) {
-		rows := map[string]int{}
+		// A split phrase ("a/b") yields several entries with the same Raw; they
+		// map to the posted rows with that Raw in order.
+		rows := map[string][]int{}
 		for i := 0; form.Has(fmt.Sprintf("%s.%d.raw", prefix, i)); i++ {
-			rows[form.Get(fmt.Sprintf("%s.%d.raw", prefix, i))] = i
+			raw := form.Get(fmt.Sprintf("%s.%d.raw", prefix, i))
+			rows[raw] = append(rows[raw], i)
 		}
 		for k := range list {
-			i, ok := rows[list[k].Raw]
-			if !ok {
+			idx := rows[list[k].Raw]
+			if len(idx) == 0 {
 				continue
 			}
+			i := idx[0]
+			rows[list[k].Raw] = idx[1:]
 			f := func(n string) string { return form.Get(fmt.Sprintf("%s.%d.%s", prefix, i, n)) }
 			list[k].Accept = f("accept") == "1"
 			if prefix == "nl" {
@@ -587,4 +593,15 @@ func (s *Server) addConfirm(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Redirect(w, r, "/games/"+strconv.FormatInt(created.Game.ID, 10), http.StatusSeeOther)
+}
+
+// alertCookieInvalid sends the once-per-invalidation push (R-NOTIF-4); a push
+// failure is logged, never surfaced to the request.
+func (s *Server) alertCookieInvalid(ctx context.Context) {
+	if s.notify == nil {
+		return
+	}
+	if err := s.notify.CookieInvalid(ctx); err != nil {
+		s.log.Warn("cookie invalid push failed", "err", err)
+	}
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/genre"
 	"github.com/jeiang/f95-tracker/internal/itch"
+	"github.com/jeiang/f95-tracker/internal/notify"
 	"github.com/jeiang/f95-tracker/internal/tags"
 	"github.com/jeiang/f95-tracker/internal/testutil"
 )
@@ -41,6 +42,7 @@ type addEnv struct {
 	itch   *testutil.ItchFake
 	tags   *tags.Service
 	lock   string
+	ntfy   *testutil.NtfyFake
 }
 
 type noNetwork struct{}
@@ -88,9 +90,10 @@ func newAddEnv(t *testing.T, cookie bool, busyWait time.Duration) *addEnv {
 	ic := itch.NewClient(itch.Options{Clock: clk, BaseURL: e.itch.URL})
 	g := games.New(store, clk, games.Options{StateDir: filepath.Join(dir, "state"), HTTPClient: &http.Client{Transport: noNetwork{}}})
 	e.tags = tags.New(store, clk)
+	e.ntfy = testutil.NewNtfyFake(t)
 	s := New(Deps{
 		Store: store, Clock: clk, Log: log, Config: cfg, Auth: auth.New(cfg, store, clk, log),
-		Games: g, Tags: e.tags, Itch: ic, F95: fc, Refresher: check.NewRefresher(store, clk, g, e.tags, fc, ic, log),
+		Games: g, Tags: e.tags, Itch: ic, Notify: notify.New(store, clk, notify.Options{URL: e.ntfy.URL, Topic: "t"}), F95: fc, Refresher: check.NewRefresher(store, clk, g, e.tags, fc, ic, log),
 	})
 	h, c := signedIn(t, s, oidc)
 	e.h, e.cookie = h, c.Name+"="+c.Value
@@ -531,5 +534,34 @@ func TestAddItchAlreadyImportedByCSV(t *testing.T) {
 	}
 	if rec := e.fetch("itchio", "https://kuro-kai.itch.io/lycoris-radiata?x=1", nil); rec.Code != http.StatusConflict {
 		t.Errorf("itch Game imported from the sheet: add answered %d, want already tracked (409)", rec.Code)
+	}
+}
+
+func TestAddSplitPhraseKeepsBothTags(t *testing.T) {
+	e := newAddEnv(t, true, 0)
+	rec := e.fetch("manual", "https://example.org/g", url2("name", "Split", "tags", "Incest/NTR, Harem"))
+	form := confirmForm(t, rec.Body.String())
+	acceptAll(form)
+	if rec := e.post("/games", form); rec.Code != http.StatusSeeOther {
+		t.Fatalf("confirm %d", rec.Code)
+	}
+	for _, slug := range []string{"incest", "ntr", "harem"} {
+		if e.count(`SELECT COUNT(*) FROM game_tag gt JOIN tag t ON t.id = gt.tag_id WHERE lower(t.slug) = ?`, slug) != 1 {
+			t.Errorf("tag %q missing", slug)
+		}
+	}
+}
+
+func TestAddCookieInvalidPushesOnce(t *testing.T) {
+	e := newAddEnv(t, true, 0)
+	e.loadThread("67494", "67494.html", "59416.guest.html")
+	e.f95.SetValidUser("someone-else")
+	for range 2 {
+		if rec := e.fetch("f95_thread", "67494", nil); rec.Code != 200 {
+			t.Fatalf("fetch %d", rec.Code)
+		}
+	}
+	if n := len(e.ntfy.Requests()); n != 1 {
+		t.Errorf("pushes = %d, want 1", n)
 	}
 }
