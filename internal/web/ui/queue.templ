@@ -1,0 +1,47 @@
+package ui
+
+import "strconv"
+
+templ QueuePage(v QueueView) {
+	<h1 class="text-2xl font-semibold">Tags to review</h1>
+	<p class="mt-1 text-sm text-muted">Games you’ve played whose Tag review is pending or was skipped. Reviews only confirm or reject tags; nothing else changes.</p>
+	@templ.Fragment("queue-list") {
+		<div id="queue-list">
+			if len(v.Rows) == 0 {
+				<div id="queue-empty" class="panel mt-6 px-6 py-8">
+					<p class="font-medium">No tags waiting for review.</p>
+					<p class="mt-1 text-sm text-muted">When you mark a version played and skip its Tag review, the Game lands here.</p>
+					<div class="mt-4">
+						@Button(ButtonProps{Href: "/games"}) {
+							Back to Games
+						}
+					</div>
+				</div>
+			} else {
+				<ul class="panel mt-6 divide-y divide-line">
+					for _, r := range v.Rows {
+						<li class="flex flex-wrap items-center gap-3 px-4 py-3">
+							<div class="min-w-0 flex-1">
+								<a href={ gameHref(r.GameID) } class="font-medium hover:text-accent">{ r.Name }</a>
+								<div class="mt-0.5 text-xs text-muted">
+									if r.Version != "" {
+										played <span class="font-mono text-ink">{ r.Version }</span> ·
+									}
+									{ strconv.Itoa(r.ToReview) } tags to review
+								</div>
+							</div>
+							if r.State == "pending" {
+								@Chip(ChipProps{Tone: "accent", Text: "pending"})
+							} else {
+								@Chip(ChipProps{Tone: "muted", Text: r.State})
+							}
+							@Button(ButtonProps{Small: true, Href: r.ReviewHref}) {
+								Review now
+							}
+						</li>
+					}
+				</ul>
+			}
+		</div>
+	}
+}
