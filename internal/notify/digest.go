@@ -90,7 +90,7 @@ func nullID(id int64) sql.NullInt64 { return sql.NullInt64{Int64: id, Valid: id 
 
 func (u UpdateItem) line() string {
 	s := fmt.Sprintf("- %s: %s → %s", u.Name, u.OldVersion, u.NewVersion)
-	if u.OldDevStatus != u.NewDevStatus {
+	if u.OldDevStatus != "" && u.OldDevStatus != u.NewDevStatus { // a first-known Dev status is not a change
 		s += fmt.Sprintf(" (Dev status: %s → %s)", u.OldDevStatus, u.NewDevStatus)
 	}
 	return s
