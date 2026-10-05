@@ -1,6 +1,9 @@
 package ui
 
-import "strconv"
+import (
+	"encoding/json"
+	"strconv"
+)
 
 // AddView is the /games/new page model (also the #parse-panels fragment).
 type AddView struct {
@@ -88,4 +91,29 @@ func (r ParseRow) ReasonText() string {
 		return "Listed as possible; added as planned"
 	}
 	return ""
+}
+
+// addCopy is the per-source-type wording of the link field.
+type addCopy struct {
+	Label       string `json:"label"`
+	Placeholder string `json:"placeholder"`
+	Hint        string `json:"hint"`
+}
+
+var addCopies = map[string]addCopy{
+	"f95_thread": {"F95zone thread link or id", "https://f95zone.to/threads/… or 238127", "We read the title, latest version, Dev status, F95 tags and the Genre text. Nothing is added until you confirm."},
+	"itchio":     {"itch.io page link", "https://dev.itch.io/game", "We read the name and the page's change fingerprint. Paste tags below to run them through the parser. Nothing is added until you confirm."},
+	"manual":     {"Link", "https://…", "Any page you want to keep a link to. Manual Sources are never checked."},
+}
+
+func (v AddView) copy() addCopy {
+	if c, ok := addCopies[v.Kind]; ok {
+		return c
+	}
+	return addCopies["f95_thread"]
+}
+
+func addCopiesJSON() string {
+	b, _ := json.Marshal(addCopies)
+	return string(b)
 }

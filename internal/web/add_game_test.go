@@ -565,3 +565,12 @@ func TestAddCookieInvalidPushesOnce(t *testing.T) {
 		t.Errorf("pushes = %d, want 1", n)
 	}
 }
+
+func TestAddFormCopyFollowsSelectedKind(t *testing.T) {
+	e := newAddEnv(t, true, 0)
+	rec := e.fetch("itchio", "nope", nil) // invalid input re-renders the form with itch.io selected
+	body := rec.Body.String()
+	if !strings.Contains(body, ">itch.io page link</label>") || strings.Contains(body, ">F95zone thread link or id</label>") {
+		t.Errorf("server-rendered label does not follow kind itchio")
+	}
+}

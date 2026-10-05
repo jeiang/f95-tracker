@@ -4,7 +4,7 @@ import "strconv"
 
 templ AddGamePage(v AddView) {
 	<h1 class="text-2xl font-semibold">Add Game</h1>
-	<section class="panel mt-4 px-4 py-4" aria-labelledby="h-src" x-data={ "{ kind: '" + v.Kind + "' }" }>
+	<section class="panel mt-4 px-4 py-4" aria-labelledby="h-src" x-data={ "{ kind: '" + v.Kind + "', copy: " + addCopiesJSON() + " }" }>
 		<h2 id="h-src" class="label mb-2">Source</h2>
 		<form method="post" action="/games/fetch" hx-post="/games/fetch" hx-target="#parse-panels" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" class="grid gap-3">
 			<div class="seg" role="radiogroup" aria-labelledby="h-src">
@@ -15,8 +15,14 @@ templ AddGamePage(v AddView) {
 					</label>
 				}
 			</div>
-			@Field(FieldProps{ID: "src-input", Name: "input", Label: "Link or F95 thread id", Value: v.Input, Placeholder: "https://f95zone.to/threads/… or 238127", Error: v.Error, Required: true, Attrs: templ.Attributes{"autocomplete": "off", "inputmode": "url", "autofocus": true},
-				Hint: "F95: we read the title, latest version, Dev status, F95 tags and the Genre text. Nothing is added until you confirm."})
+			<div class="flex flex-col gap-1">
+				<label class="label" for="src-input" x-text="copy[kind].label">{ v.copy().Label }</label>
+				<input id="src-input" name="input" type="text" value={ v.Input } class="field" required autocomplete="off" inputmode="url" autofocus placeholder={ v.copy().Placeholder } :placeholder="copy[kind].placeholder"/>
+				<p class="text-xs text-muted" x-text="copy[kind].hint">{ v.copy().Hint }</p>
+				if v.Error != "" {
+					<p class="text-xs text-bad" role="alert">{ v.Error }</p>
+				}
+			</div>
 			<div class="grid gap-3 sm:grid-cols-2" x-show="kind === 'manual'">
 				@Field(FieldProps{ID: "src-name", Name: "name", Label: "Name", Value: v.Name})
 				@Field(FieldProps{ID: "src-version", Name: "version", Label: "Latest version", Value: v.Version, Hint: "You keep this up to date by hand."})
