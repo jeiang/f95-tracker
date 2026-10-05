@@ -37,6 +37,24 @@ func (q *Queries) ApplyItchPage(ctx context.Context, arg ApplyItchPageParams) er
 	return err
 }
 
+const countDailyDetailResults = `-- name: CountDailyDetailResults :one
+SELECT COUNT(*) FROM check_result r JOIN check_run u ON u.id = r.run_id
+WHERE u.kind = 'daily' AND r.step = 'detail' AND r.at >= ? AND r.at < ?
+`
+
+type CountDailyDetailResultsParams struct {
+	At   string
+	At_2 string
+}
+
+// Routine detail fetches already made by daily runs in [from, to).
+func (q *Queries) CountDailyDetailResults(ctx context.Context, arg CountDailyDetailResultsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countDailyDetailResults, arg.At, arg.At_2)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const disableSourceChecks = `-- name: DisableSourceChecks :exec
 UPDATE source SET checks_enabled = 0 WHERE id = ?
 `
@@ -85,6 +103,17 @@ func (q *Queries) GetLatestCheckRun(ctx context.Context) (CheckRun, error) {
 		&i.F95Stopped,
 	)
 	return i, err
+}
+
+const incrementSourceMiss = `-- name: IncrementSourceMiss :one
+UPDATE source SET miss_count = miss_count + 1 WHERE id = ? RETURNING miss_count
+`
+
+func (q *Queries) IncrementSourceMiss(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, incrementSourceMiss, id)
+	var miss_count int64
+	err := row.Scan(&miss_count)
+	return miss_count, err
 }
 
 const insertCheckResult = `-- name: InsertCheckResult :one
@@ -157,4 +186,167 @@ func (q *Queries) InsertCheckRun(ctx context.Context, arg InsertCheckRunParams) 
 		&i.F95Stopped,
 	)
 	return i, err
+}
+
+const listCheckableSources = `-- name: ListCheckableSources :many
+SELECT s.id, s.game_id, s.external_id, s.url, s.latest_version, s.change_key, s.thread_updated_at, s.miss_count,
+  g.name AS game_name,
+  CAST(g.play_status IN (SELECT play_status FROM alert_play_status) AS INTEGER) AS alerting
+FROM source s JOIN game g ON g.id = s.game_id
+WHERE s.is_primary = 1 AND s.checks_enabled = 1 AND s.unavailable_at IS NULL AND s.kind = ?
+ORDER BY s.id
+`
+
+type ListCheckableSourcesRow struct {
+	ID              int64
+	GameID          int64
+	ExternalID      sql.NullString
+	Url             string
+	LatestVersion   sql.NullString
+	ChangeKey       sql.NullString
+	ThreadUpdatedAt sql.NullString
+	MissCount       int64
+	GameName        string
+	Alerting        int64
+}
+
+// Checkable primary Sources of one kind with what the daily run needs (R-UPD-10).
+func (q *Queries) ListCheckableSources(ctx context.Context, kind string) ([]ListCheckableSourcesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCheckableSources, kind)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCheckableSourcesRow
+	for rows.Next() {
+		var i ListCheckableSourcesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.ExternalID,
+			&i.Url,
+			&i.LatestVersion,
+			&i.ChangeKey,
+			&i.ThreadUpdatedAt,
+			&i.MissCount,
+			&i.GameName,
+			&i.Alerting,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRoutineQueue = `-- name: ListRoutineQueue :many
+SELECT d.source_id FROM detail_fetch_queue d JOIN source s ON s.id = d.source_id
+WHERE d.budget = 'routine' AND s.kind = 'f95_thread' AND s.is_primary = 1 AND s.unavailable_at IS NULL
+ORDER BY d.enqueued_at, d.source_id
+`
+
+func (q *Queries) ListRoutineQueue(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listRoutineQueue)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var source_id int64
+		if err := rows.Scan(&source_id); err != nil {
+			return nil, err
+		}
+		items = append(items, source_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWeeklyCandidates = `-- name: ListWeeklyCandidates :many
+SELECT s.id FROM source s JOIN game g ON g.id = s.game_id
+WHERE s.kind = 'f95_thread' AND s.is_primary = 1 AND s.checks_enabled = 1 AND s.unavailable_at IS NULL
+  AND g.play_status <> 'finished'
+  AND (s.last_detail_at IS NULL OR s.last_detail_at < ?)
+  AND NOT EXISTS (SELECT 1 FROM detail_fetch_queue d WHERE d.source_id = s.id)
+ORDER BY s.last_detail_at IS NOT NULL, s.last_detail_at, s.id
+LIMIT ?
+`
+
+type ListWeeklyCandidatesParams struct {
+	LastDetailAt sql.NullString
+	Limit        int64
+}
+
+// Weekly rolling refresh candidates: never or long ago fetched, not finished, not already queued.
+func (q *Queries) ListWeeklyCandidates(ctx context.Context, arg ListWeeklyCandidatesParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listWeeklyCandidates, arg.LastDetailAt, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markSourceChecked = `-- name: MarkSourceChecked :exec
+UPDATE source SET last_checked_at = ?, miss_count = 0 WHERE id = ?
+`
+
+type MarkSourceCheckedParams struct {
+	LastCheckedAt sql.NullString
+	ID            int64
+}
+
+func (q *Queries) MarkSourceChecked(ctx context.Context, arg MarkSourceCheckedParams) error {
+	_, err := q.db.ExecContext(ctx, markSourceChecked, arg.LastCheckedAt, arg.ID)
+	return err
+}
+
+const markSourceUnavailable = `-- name: MarkSourceUnavailable :exec
+UPDATE source SET unavailable_at = ?, unavailable_reason = ? WHERE id = ?
+`
+
+type MarkSourceUnavailableParams struct {
+	UnavailableAt     sql.NullString
+	UnavailableReason sql.NullString
+	ID                int64
+}
+
+func (q *Queries) MarkSourceUnavailable(ctx context.Context, arg MarkSourceUnavailableParams) error {
+	_, err := q.db.ExecContext(ctx, markSourceUnavailable, arg.UnavailableAt, arg.UnavailableReason, arg.ID)
+	return err
+}
+
+const resetSourceMisses = `-- name: ResetSourceMisses :exec
+UPDATE source SET miss_count = 0 WHERE id = ?
+`
+
+func (q *Queries) ResetSourceMisses(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, resetSourceMisses, id)
+	return err
 }
