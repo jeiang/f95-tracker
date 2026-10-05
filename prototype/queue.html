@@ -1,0 +1,65 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): tags-to-review queue. queue.html[?skipped=id&version=] -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tags to review · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script>
+    function queuePage() {
+      const skipped = gameById(qs('skipped'));
+      if (skipped) skipped.tagReview = { state: 'skipped', version: qs('version') || skipped.latest, at: TODAY };
+      const items = qs('empty') ? [] : queueGames().sort((a, b) => b.tagReview.at.localeCompare(a.tagReview.at));
+      return { items, skipped };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-16" x-data="queuePage()">
+  <div id="nav"></div>
+  <script>renderNav('queue')</script>
+
+  <main class="mx-auto max-w-3xl px-4 py-6">
+    <h1 class="text-2xl font-semibold">Tags to review</h1>
+    <p class="mt-1 text-sm text-muted">Games you’ve played whose Tag review is pending or was skipped. Reviews only confirm or reject tags; nothing else changes.</p>
+
+    <div x-show="skipped" role="status" class="panel mt-4 px-4 py-3 text-sm">
+      Skipped the Tag review for <strong x-text="skipped?.name"></strong>. It’s at the top of the queue.
+    </div>
+
+    <ul class="panel mt-6 divide-y divide-line" x-show="items.length">
+      <template x-for="g in items" :key="g.id">
+        <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+          <span class="cover h-14 w-10 text-[10px]" :class="coverClass(g)" x-text="initials(g)" aria-hidden="true"></span>
+          <div class="min-w-0 flex-1">
+            <a :href="'game.html?id=' + g.id" class="font-medium hover:text-accent" x-text="g.name"></a>
+            <div class="mt-0.5 text-xs text-muted">
+              played <span class="font-mono text-ink" x-text="g.tagReview.version"></span>
+              on <span class="font-mono" x-text="g.tagReview.at"></span> ·
+              <span x-text="g.tags.filter(t => t.q === 'present' && t.v === 'unverified').length"></span> unverified present tags
+            </div>
+          </div>
+          <span class="chip" :class="g.tagReview.state === 'pending' ? 'chip-accent' : 'chip-muted'" x-text="g.tagReview.state"></span>
+          <a class="btn btn-sm" :href="'tag-review.html?id=' + g.id + '&version=' + encodeURIComponent(g.tagReview.version)">Review now</a>
+        </li>
+      </template>
+    </ul>
+
+    <div class="panel mt-6 px-6 py-8" x-show="!items.length" x-cloak>
+      <p class="font-medium">No tags waiting for review.</p>
+      <p class="mt-1 text-sm text-muted">When you mark a version played and skip its Tag review, the Game lands here.</p>
+      <a href="index.html" class="btn mt-4">Back to Games</a>
+    </div>
+
+    <p class="mt-10 text-xs text-muted">
+      Prototype states: <a class="underline hover:text-ink" href="queue.html?empty=1">empty queue</a> ·
+      <a class="underline hover:text-ink" href="queue.html">populated</a>
+    </p>
+  </main>
+</body>
+</html>

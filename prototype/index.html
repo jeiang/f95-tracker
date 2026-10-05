@@ -1,0 +1,349 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): Game list. Two variants via ?variant=A (ledger table) | B (grouped by Play status).
+     Real app: filters are a GET form; htmx swaps the list partial (hx-get="/games?..." hx-target="#results" hx-push-url). -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Games · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script>
+    function listPage() {
+      const games = qs('empty') ? [] : listedGames();
+      const tagCounts = {};
+      games.forEach((g) => g.tags.filter((t) => t.q === 'present' && !t.flags.includes('removed'))
+        .forEach((t) => (tagCounts[t.label] = (tagCounts[t.label] || 0) + 1)));
+      return {
+        games,
+        variant: qs('variant') === 'B' ? 'B' : 'A',
+        wide: matchMedia('(min-width: 768px)').matches,
+        allTags: Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b)),
+        tagCounts,
+        showAllTags: false,
+        search: '',
+        play: [],
+        dev: [],
+        tagState: {},
+        rating: 'any',
+        behind: false,
+        update: false,
+        sort: 'updated',
+        cycleTag(label) {
+          const next = { undefined: 'include', include: 'exclude', exclude: undefined }[this.tagState[label]];
+          if (next) this.tagState[label] = next; else delete this.tagState[label];
+        },
+        activeCount() {
+          return this.play.length + this.dev.length + Object.keys(this.tagState).length
+            + (this.rating !== 'any') + this.behind + this.update + (this.search ? 1 : 0);
+        },
+        clear() {
+          this.search = ''; this.play = []; this.dev = []; this.tagState = {};
+          this.rating = 'any'; this.behind = false; this.update = false;
+        },
+        filtered() {
+          const inc = Object.keys(this.tagState).filter((k) => this.tagState[k] === 'include');
+          const exc = Object.keys(this.tagState).filter((k) => this.tagState[k] === 'exclude');
+          const s = this.search.trim().toLowerCase();
+          const out = this.games.filter((g) => {
+            const present = g.tags.filter((t) => t.q === 'present' && t.v !== 'wrong').map((t) => t.label);
+            if (s && !g.name.toLowerCase().includes(s)) return false;
+            if (this.play.length && !this.play.includes(g.play)) return false;
+            if (this.dev.length && !this.dev.includes(g.dev)) return false;
+            if (inc.some((t) => !present.includes(t))) return false;
+            if (exc.some((t) => present.includes(t))) return false;
+            if (this.rating === 'unrated' && g.rating != null) return false;
+            if (!['any', 'unrated'].includes(this.rating) && (g.rating == null || g.rating < +this.rating)) return false;
+            if (this.behind && !isBehind(g)) return false;
+            if (this.update && !g.update) return false;
+            return true;
+          });
+          const by = {
+            updated: (a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''),
+            played: (a, b) => (lastPlayedDate(b) || '').localeCompare(lastPlayedDate(a) || ''),
+            rating: (a, b) => (b.rating ?? -1) - (a.rating ?? -1),
+            name: (a, b) => a.name.localeCompare(b.name),
+            behind: (a, b) => isBehind(b) - isBehind(a) || (b.updatedAt || '').localeCompare(a.updatedAt || ''),
+          }[this.sort];
+          return out.sort(by);
+        },
+        groups() {
+          const f = this.filtered();
+          return PLAY_STATUSES.map((s) => ({ status: s, games: f.filter((g) => g.play === s) }))
+            .filter((grp) => grp.games.length);
+        },
+        badges(g) {
+          const b = [];
+          if (g.update) b.push({ text: 'Update', cls: 'chip-info', title: 'Latest version changed since the last check' });
+          if (isBehind(g)) b.push({ text: 'Behind', cls: 'chip-warn', title: 'Last played version differs from latest' });
+          if (g.detailsPending) b.push({ text: 'details pending', cls: 'chip-warn', title: 'F95 cookie was invalid when this Game was fetched' });
+          if (g.sourceUnavailable) b.push({ text: 'Source unavailable', cls: 'chip-bad', title: 'The Source page could not be reached' });
+          if (g.tagReview) b.push({ text: 'tags to review', cls: 'chip-accent', title: 'Tag review ' + g.tagReview.state });
+          if (g.importReview) b.push({ text: 'check Play status', cls: 'chip-accent', title: 'Imported from CSV; Play status was derived' });
+          return b;
+        },
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-24" x-data="listPage()">
+  <div id="nav"></div>
+  <script>renderNav('games')</script>
+
+  <main class="mx-auto max-w-6xl px-4 py-6">
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold">Games</h1>
+        <p class="text-sm text-muted" x-show="games.length"><span x-text="filtered().length"></span> of <span x-text="games.length"></span> shown</p>
+      </div>
+      <a href="add.html" class="btn btn-primary">+ Add Game</a>
+    </div>
+
+    <!-- Inbox: review-list + tags-to-review entries -->
+    <div class="mb-6 flex flex-col gap-2 sm:flex-row" x-show="games.length">
+      <a href="import.html" class="panel flex flex-1 items-center gap-3 px-4 py-3 hover:border-accent">
+        <span class="chip chip-accent" x-text="importReviewGames().length"></span>
+        <span class="text-sm">imported Games need a <strong>Play status</strong> check</span>
+        <span class="ml-auto text-accent" aria-hidden="true">→</span>
+      </a>
+      <a href="queue.html" class="panel flex flex-1 items-center gap-3 px-4 py-3 hover:border-accent">
+        <span class="chip chip-accent" x-text="queueGames().length"></span>
+        <span class="text-sm">Games in <strong>tags to review</strong></span>
+        <span class="ml-auto text-accent" aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <!-- First-run empty state -->
+    <section x-show="!games.length" x-cloak class="panel max-w-xl px-6 py-8">
+      <h2 class="text-lg font-semibold">Start your library</h2>
+      <p class="mt-2 text-sm text-muted">Paste an F95zone thread link to add your first Game, or bring over the spreadsheet you already keep.</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <a href="add.html" class="btn btn-primary">Add a Game</a>
+        <a href="import.html" class="btn">Import CSV</a>
+      </div>
+    </section>
+
+    <div x-show="games.length" :class="variant === 'A' ? 'md:grid md:grid-cols-[15rem_1fr] md:items-start md:gap-6' : ''">
+      <!-- Filters (same controls in both variants; placement differs) -->
+      <details class="panel mb-4 md:mb-0" :class="variant === 'A' ? 'md:sticky md:top-4' : ''" :open="wide && variant === 'A'">
+        <summary class="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-semibold">
+          Filters &amp; sort
+          <span class="chip chip-accent" x-show="activeCount()" x-text="activeCount() + ' active'"></span>
+        </summary>
+        <form class="grid gap-5 border-t border-line px-4 py-4" :class="variant === 'B' ? 'md:grid-cols-3' : ''" @submit.prevent>
+          <div>
+            <label for="q" class="label mb-1">Name</label>
+            <input id="q" type="search" class="field" placeholder="Search Games" x-model="search">
+          </div>
+          <div>
+            <label for="sort" class="label mb-1">Sort</label>
+            <select id="sort" class="field" x-model="sort">
+              <option value="updated">Recently updated at Source</option>
+              <option value="played">Recently played</option>
+              <option value="behind">Behind first</option>
+              <option value="rating">Rating</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+          <div>
+            <label for="rating" class="label mb-1">Rating</label>
+            <select id="rating" class="field" x-model="rating">
+              <option value="any">Any</option>
+              <option value="5">5 only</option>
+              <option value="4.5">4.5 and up</option>
+              <option value="4">4 and up</option>
+              <option value="3">3 and up</option>
+              <option value="unrated">Unrated</option>
+            </select>
+          </div>
+          <fieldset>
+            <legend class="label mb-2">Play status</legend>
+            <div class="seg">
+              <template x-for="s in PLAY_STATUSES" :key="s">
+                <label><input type="checkbox" class="sr-only" :value="s" x-model="play"><span x-text="s"></span></label>
+              </template>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend class="label mb-2">Dev status</legend>
+            <div class="seg">
+              <template x-for="s in DEV_STATUSES" :key="s">
+                <label><input type="checkbox" class="sr-only" :value="s" x-model="dev"><span x-text="s"></span></label>
+              </template>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend class="label mb-2">Versions</legend>
+            <div class="seg">
+              <label><input type="checkbox" class="sr-only" x-model="behind">Behind</label>
+              <label><input type="checkbox" class="sr-only" x-model="update">Update available</label>
+            </div>
+          </fieldset>
+          <fieldset :class="variant === 'B' ? 'md:col-span-3' : ''">
+            <legend class="label mb-1">Tags</legend>
+            <p class="mb-2 text-xs text-muted">Tap once to include, twice to exclude, again to clear. Tags marked wrong never match.</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="t in (showAllTags ? allTags : allTags.slice(0, 12))" :key="t">
+                <button type="button" class="chip min-h-8" @click="cycleTag(t)"
+                  :class="{ 'chip-ok': tagState[t] === 'include', 'chip-bad line-through': tagState[t] === 'exclude', 'chip-muted': !tagState[t] }"
+                  :aria-label="t + (tagState[t] ? ', ' + tagState[t] + 'd' : ', not filtered')">
+                  <span x-text="tagState[t] === 'include' ? '+' : tagState[t] === 'exclude' ? '−' : ''" aria-hidden="true"></span>
+                  <span x-text="t"></span>
+                  <span class="text-muted" x-text="tagCounts[t]"></span>
+                </button>
+              </template>
+              <button type="button" class="btn btn-ghost btn-sm" x-show="allTags.length > 12" @click="showAllTags = !showAllTags"
+                x-text="showAllTags ? 'Fewer tags' : 'All ' + allTags.length + ' tags'"></button>
+            </div>
+          </fieldset>
+          <button type="button" class="btn btn-sm justify-self-start" @click="clear()" x-show="activeCount()">Clear filters</button>
+        </form>
+      </details>
+
+      <div id="results" aria-live="polite">
+        <!-- No-match state -->
+        <div x-show="!filtered().length" x-cloak class="panel px-6 py-8">
+          <p class="font-medium">No Games match these filters.</p>
+          <p class="mt-1 text-sm text-muted">Excluded tags and the Behind / Update toggles narrow results the most.</p>
+          <button type="button" class="btn mt-4" @click="clear()">Clear filters</button>
+        </div>
+
+        <!-- ===== Variant A: ledger table ===== -->
+        <template x-if="variant === 'A'">
+          <div x-show="filtered().length">
+            <!-- desktop table -->
+            <div class="panel hidden overflow-hidden md:block">
+              <table class="w-full text-left text-sm">
+                <thead class="border-b border-line">
+                  <tr class="label bg-raised/60">
+                    <th scope="col" class="px-4 py-2 font-semibold">Game</th>
+                    <th scope="col" class="px-2 py-2 font-semibold">Play / Dev</th>
+                    <th scope="col" class="px-2 py-2 font-semibold">Last played → latest</th>
+                    <th scope="col" class="px-2 py-2 font-semibold">Rating</th>
+                    <th scope="col" class="px-4 py-2 text-right font-semibold">Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="g in filtered()" :key="g.id">
+                    <tr class="border-b border-line/60 last:border-0 hover:bg-raised/40">
+                      <td class="px-4 py-3">
+                        <a :href="'game.html?id=' + g.id" class="flex items-center gap-3">
+                          <span class="cover h-12 w-9 text-[10px]" :class="coverClass(g)" x-text="initials(g)" aria-hidden="true"></span>
+                          <span class="min-w-0">
+                            <span class="block font-medium hover:text-accent" x-text="g.name"></span>
+                            <span class="mt-1 flex flex-wrap gap-1">
+                              <span class="text-xs text-muted" x-text="sourceLabel(g)"></span>
+                              <template x-for="b in badges(g)" :key="b.text">
+                                <span class="chip" :class="b.cls" :title="b.title" x-text="b.text"></span>
+                              </template>
+                            </span>
+                          </span>
+                        </a>
+                      </td>
+                      <td class="px-2 py-3">
+                        <div class="flex flex-col items-start gap-1">
+                          <span class="chip" :class="playChip(g.play)" x-text="g.play"></span>
+                          <span class="chip" :class="devChip(g.dev)" x-text="g.dev || 'no Dev status'"></span>
+                        </div>
+                      </td>
+                      <td class="whitespace-nowrap px-2 py-3 font-mono text-xs">
+                        <span :class="isBehind(g) ? 'text-warn' : 'text-muted'" x-text="lastPlayed(g) || 'not played'"></span>
+                        <span class="text-muted" aria-hidden="true">→</span>
+                        <span x-text="g.latest || '?'"></span>
+                      </td>
+                      <td class="whitespace-nowrap px-2 py-3">
+                        <span class="text-accent" x-show="g.rating != null" x-text="stars(g.rating)" :aria-label="g.rating + ' of 5'"></span>
+                        <span class="ml-1 font-mono text-xs text-muted" x-text="g.rating ?? 'unrated'"></span>
+                      </td>
+                      <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-xs text-muted" x-text="g.updatedAt || '—'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <!-- phone rows -->
+            <ul class="panel divide-y divide-line md:hidden">
+              <template x-for="g in filtered()" :key="g.id">
+                <li>
+                  <a :href="'game.html?id=' + g.id" class="flex gap-3 px-3 py-3">
+                    <span class="cover h-14 w-10 text-[10px]" :class="coverClass(g)" x-text="initials(g)" aria-hidden="true"></span>
+                    <span class="min-w-0 flex-1">
+                      <span class="flex items-baseline justify-between gap-2">
+                        <span class="truncate font-medium" x-text="g.name"></span>
+                        <span class="shrink-0 text-xs text-accent" x-text="stars(g.rating)"></span>
+                      </span>
+                      <span class="mt-0.5 block font-mono text-xs text-muted">
+                        <span :class="isBehind(g) && 'text-warn'" x-text="lastPlayed(g) || 'not played'"></span> → <span x-text="g.latest || '?'"></span>
+                      </span>
+                      <span class="mt-1 flex flex-wrap gap-1">
+                        <span class="chip" :class="playChip(g.play)" x-text="g.play"></span>
+                        <template x-for="b in badges(g)" :key="b.text">
+                          <span class="chip" :class="b.cls" x-text="b.text"></span>
+                        </template>
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
+
+        <!-- ===== Variant B: grouped by Play status ===== -->
+        <template x-if="variant === 'B'">
+          <div class="grid gap-8">
+            <template x-for="grp in groups()" :key="grp.status">
+              <section :aria-labelledby="'grp-' + grp.status.replace(' ', '-')">
+                <h2 class="mb-2 flex items-baseline gap-2 border-b border-line pb-1" :id="'grp-' + grp.status.replace(' ', '-')">
+                  <span class="text-lg font-semibold capitalize" x-text="grp.status"></span>
+                  <span class="text-sm text-muted" x-text="grp.games.length"></span>
+                  <span class="ml-auto text-xs text-muted" x-show="grp.games.filter(isBehind).length"
+                    x-text="grp.games.filter(isBehind).length + ' Behind'"></span>
+                </h2>
+                <ul class="grid gap-x-6 sm:grid-cols-2">
+                  <template x-for="g in grp.games" :key="g.id">
+                    <li class="border-b border-line/50">
+                      <a :href="'game.html?id=' + g.id" class="group flex items-center gap-3 py-2">
+                        <span class="cover h-16 w-12 text-xs" :class="coverClass(g)" x-text="initials(g)" aria-hidden="true"></span>
+                        <span class="min-w-0 flex-1">
+                          <span class="block truncate font-medium group-hover:text-accent" x-text="g.name"></span>
+                          <span class="block text-xs text-muted">
+                            <span x-text="g.dev || 'no Dev status'"></span> ·
+                            <span class="font-mono" x-text="g.latest || '?'"></span>
+                            <template x-if="isBehind(g)"><span class="text-warn"> · played <span class="font-mono" x-text="lastPlayed(g)"></span></span></template>
+                          </span>
+                          <span class="mt-1 flex flex-wrap gap-1">
+                            <template x-for="b in badges(g).filter(b => b.text !== 'Behind')" :key="b.text">
+                              <span class="chip" :class="b.cls" x-text="b.text"></span>
+                            </template>
+                          </span>
+                        </span>
+                        <span class="shrink-0 text-right">
+                          <span class="block text-sm text-accent" x-text="stars(g.rating)"></span>
+                          <span class="block font-mono text-xs text-muted" x-text="g.rating ?? 'unrated'"></span>
+                        </span>
+                      </a>
+                    </li>
+                  </template>
+                </ul>
+              </section>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <p class="mt-10 text-xs text-muted">
+      Prototype states: <a class="underline hover:text-ink" href="index.html?empty=1">first-run (no Games)</a> ·
+      <a class="underline hover:text-ink" href="index.html">populated</a>
+    </p>
+  </main>
+
+  <script>renderSwitcher([{ key: 'A', name: 'Ledger table' }, { key: 'B', name: 'Grouped by Play status' }], qs('variant') || 'A')</script>
+</body>
+</html>

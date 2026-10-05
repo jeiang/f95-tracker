@@ -1,0 +1,140 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): Import review list — Games imported from the CSV with a derived Play status.
+     Real app: rows are a form; bulk actions hx-post the selected ids and swap the list. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Import review · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script>
+    function importPage() {
+      const rows = importReviewGames().map((g) => ({
+        g,
+        play: g.importReview.derived,
+        csv: {
+          version: g.log[0]?.version || '-',
+          rating: g.rating ?? '-',
+          flags: { Abandoned: g.dev === 'abandoned', Completed: g.dev === 'completed', 'On Hold': g.dev === 'on hold' },
+        },
+      }));
+      return {
+        rows,
+        selected: [],
+        bulkPlay: 'playing',
+        only: 'all',
+        done: 0,
+        shown() { return this.rows.filter((r) => this.only === 'all' || r.g.importReview.derived === this.only); },
+        allSelected() { return this.shown().length && this.shown().every((r) => this.selected.includes(r.g.id)); },
+        toggleAll() {
+          const ids = this.shown().map((r) => r.g.id);
+          this.selected = this.allSelected() ? this.selected.filter((id) => !ids.includes(id)) : [...new Set([...this.selected, ...ids])];
+        },
+        applyBulk() { this.rows.filter((r) => this.selected.includes(r.g.id)).forEach((r) => (r.play = this.bulkPlay)); },
+        confirm(ids) {
+          this.done += ids.length;
+          this.rows = this.rows.filter((r) => !ids.includes(r.g.id));
+          this.selected = this.selected.filter((id) => !ids.includes(id));
+        },
+        derivedKinds() { return [...new Set(rows.map((r) => r.g.importReview.derived))]; },
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-16" x-data="importPage()">
+  <div id="nav"></div>
+  <script>renderNav('import')</script>
+
+  <main class="mx-auto max-w-5xl px-4 py-6">
+    <h1 class="text-2xl font-semibold">Import review</h1>
+    <p class="mt-1 max-w-2xl text-sm text-muted">
+      These Games came from <span class="mono text-ink">F95 Tracker - Sheet1.csv</span>. The sheet had no Play status, so one was derived from
+      version, rating and the Abandoned / Completed / On Hold columns (which became <strong class="text-ink">Dev status</strong>). Check it, change what’s wrong, confirm.
+    </p>
+
+    <div x-show="done" role="status" class="panel mt-4 px-4 py-3 text-sm">
+      <span class="text-ok" aria-hidden="true">✓</span> <span x-text="done"></span> Game(s) confirmed and removed from this list.
+    </div>
+
+    <template x-if="rows.length">
+      <div>
+        <!-- toolbar -->
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <span class="label">Derived</span>
+          <div class="seg" role="radiogroup" aria-label="Show derived Play status">
+            <label><input type="radio" class="sr-only" value="all" x-model="only">all <span class="ml-1 text-muted" x-text="rows.length"></span></label>
+            <template x-for="k in derivedKinds()" :key="k">
+              <label><input type="radio" class="sr-only" :value="k" x-model="only"><span x-text="k"></span></label>
+            </template>
+          </div>
+          <button type="button" class="btn btn-sm sm:ml-auto" @click="confirm(shown().map(r => r.g.id))">
+            Confirm all <span x-text="shown().length"></span> shown
+          </button>
+        </div>
+
+        <!-- bulk bar -->
+        <div class="sticky top-0 z-30 mt-3 flex flex-wrap items-center gap-2 rounded-md border border-accent/50 bg-surface px-3 py-2"
+          x-show="selected.length" x-cloak>
+          <strong class="text-sm" x-text="selected.length + ' selected'"></strong>
+          <label for="bulk" class="ml-2 text-sm text-muted">Set Play status</label>
+          <select id="bulk" class="field h-8 min-h-0 w-36 py-1 text-xs" x-model="bulkPlay">
+            <template x-for="s in PLAY_STATUSES" :key="s"><option :value="s" x-text="s"></option></template>
+          </select>
+          <button type="button" class="btn btn-sm" @click="applyBulk()">Apply</button>
+          <button type="button" class="btn btn-primary btn-sm ml-auto" @click="confirm([...selected])">Confirm selected</button>
+        </div>
+
+        <div class="panel mt-3">
+          <div class="flex items-center gap-3 border-b border-line px-4 py-2">
+            <input id="all" type="checkbox" class="h-4 w-4 accent-[rgb(var(--accent))]" :checked="allSelected()" @change="toggleAll()">
+            <label for="all" class="label">Select all shown</label>
+          </div>
+          <ul class="divide-y divide-line/60">
+            <template x-for="r in shown()" :key="r.g.id">
+              <li class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 px-4 py-3 md:grid-cols-[auto_1fr_14rem_10rem] md:items-center">
+                <input type="checkbox" class="mt-1 h-4 w-4 accent-[rgb(var(--accent))] md:mt-0" :value="r.g.id" x-model="selected" :aria-label="'Select ' + r.g.name">
+                <div class="min-w-0">
+                  <a :href="'game.html?id=' + r.g.id" class="font-medium hover:text-accent" x-text="r.g.name"></a>
+                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                    <span>CSV version <span class="font-mono text-ink" x-text="r.csv.version"></span></span>
+                    <span>rating <span class="font-mono text-ink" x-text="r.csv.rating"></span></span>
+                    <template x-for="(on, k) in r.csv.flags" :key="k">
+                      <span x-show="on" class="chip chip-muted" x-text="k + ' = TRUE'"></span>
+                    </template>
+                    <span x-show="r.g.dev" class="chip" :class="devChip(r.g.dev)" x-text="'→ Dev: ' + r.g.dev"></span>
+                  </div>
+                </div>
+                <div class="col-start-2 md:col-start-auto">
+                  <label class="sr-only" :for="'p-' + r.g.id" x-text="'Play status for ' + r.g.name"></label>
+                  <select :id="'p-' + r.g.id" class="field h-9 min-h-0 py-1 text-sm" x-model="r.play"
+                    :class="r.play !== r.g.importReview.derived && '!border-accent'">
+                    <template x-for="s in PLAY_STATUSES" :key="s"><option :value="s" x-text="s" :selected="s === r.play"></option></template>
+                  </select>
+                  <p class="mt-1 text-xs text-muted">
+                    <span x-show="r.play === r.g.importReview.derived" x-text="'derived: ' + r.g.importReview.rule"></span>
+                    <span x-show="r.play !== r.g.importReview.derived" class="text-accent" x-text="'changed from ' + r.g.importReview.derived"></span>
+                  </p>
+                </div>
+                <div class="col-start-2 md:col-start-auto md:text-right">
+                  <button type="button" class="btn btn-sm" @click="confirm([r.g.id])">Confirm</button>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </template>
+
+    <div class="panel mt-6 px-6 py-8" x-show="!rows.length" x-cloak>
+      <p class="font-medium">Every imported Game has a confirmed Play status.</p>
+      <p class="mt-1 text-sm text-muted">The review badge on the Game list is gone. Play logs from the CSV stay undated and labelled “imported”.</p>
+      <a href="index.html" class="btn mt-4">Go to Games</a>
+    </div>
+  </main>
+</body>
+</html>

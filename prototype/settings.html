@@ -1,0 +1,160 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): Settings — F95 cookie, alert Play-status set, Synonym table, ntfy test.
+     Cookie check and ntfy test are real htmx requests to static partials (need the local server). -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script>
+    function settingsPage() {
+      return {
+        cookie: '',
+        alertSet: [...ALERT_SET],
+        alertSaved: false,
+        synonyms: SYNONYMS.map((s, i) => ({ ...s, id: i })),
+        synFilter: '',
+        newSyn: { phrase: '', target: '', kind: 'f95' },
+        affected() { return listedGames().filter((g) => this.alertSet.includes(g.play)).length; },
+        shownSynonyms() {
+          const f = this.synFilter.trim().toLowerCase();
+          return this.synonyms.filter((s) => !f || s.phrase.toLowerCase().includes(f) || s.target.toLowerCase().includes(f));
+        },
+        addSyn() {
+          if (!this.newSyn.phrase.trim() || !this.newSyn.target.trim()) return;
+          this.synonyms.unshift({ ...this.newSyn, id: Date.now() });
+          this.newSyn = { phrase: '', target: '', kind: 'f95' };
+          this.$nextTick(() => this.$refs.synPhrase.focus());
+        },
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-16" x-data="settingsPage()">
+  <div id="nav"></div>
+  <script>renderNav('settings')</script>
+
+  <main class="mx-auto max-w-3xl px-4 py-6">
+    <h1 class="text-2xl font-semibold">Settings</h1>
+    <nav aria-label="Settings sections" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+      <a href="#cookie" class="hover:text-ink">F95 cookie</a>
+      <a href="#alerts" class="hover:text-ink">Alerts</a>
+      <a href="#synonyms" class="hover:text-ink">Synonyms</a>
+      <a href="#ntfy" class="hover:text-ink">ntfy</a>
+    </nav>
+
+    <!-- Cookie -->
+    <section id="cookie" class="panel mt-6 scroll-mt-4 px-4 py-4" aria-labelledby="h-cookie">
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 id="h-cookie" class="text-lg font-semibold">F95 cookie</h2>
+        <div id="cookie-status" class="flex flex-wrap items-center gap-2 sm:ml-auto" aria-live="polite">
+          <span class="chip chip-bad">invalid</span>
+          <span class="text-xs text-muted">since 2026-10-01 · last checked <span class="font-mono">2026-10-04 06:00</span></span>
+        </div>
+      </div>
+      <p class="mt-1 text-sm text-muted">
+        Needed to read thread details. While it’s invalid, new Games are added with <strong class="text-ink">details pending</strong>
+        (<a href="game.html?id=wa" class="underline">1 Game</a> right now) and version checks pause.
+      </p>
+      <form class="mt-4" hx-get="partials/cookie-check.html" hx-target="#cookie-status">
+        <label for="ck" class="mb-1 block text-sm font-medium">Raw Cookie header</label>
+        <textarea id="ck" rows="4" class="field" x-model="cookie" aria-describedby="ck-help"
+          placeholder="xf_csrf=…; xf_user=…; xf_session=…"></textarea>
+        <p id="ck-help" class="mt-1 text-xs text-muted">Browser devtools → Network → any f95zone.to request → Request Headers → copy the whole <code class="mono">Cookie</code> value. Stored on your server only; never shown again after saving.</p>
+        <div class="mt-3 flex items-center gap-2">
+          <button type="submit" class="btn btn-primary" :disabled="!cookie.trim()">Save &amp; check</button>
+          <span class="text-xs text-muted" x-show="!cookie.trim()">Paste a cookie to enable</span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Alerts -->
+    <section id="alerts" class="panel mt-6 scroll-mt-4 px-4 py-4" aria-labelledby="h-alerts">
+      <h2 id="h-alerts" class="text-lg font-semibold">Update alerts</h2>
+      <p class="mt-1 text-sm text-muted">Send an alert when a Game has an Update and its Play status is one of these.</p>
+      <fieldset class="mt-3">
+        <legend class="sr-only">Play statuses that alert on Update</legend>
+        <div class="seg">
+          <template x-for="s in PLAY_STATUSES" :key="s">
+            <label><input type="checkbox" class="sr-only" :value="s" x-model="alertSet" @change="alertSaved = false"><span x-text="s"></span></label>
+          </template>
+        </div>
+      </fieldset>
+      <p class="mt-2 text-xs text-muted"><span x-text="affected()"></span> of <span x-text="listedGames().length"></span> Games currently alert on Update.</p>
+      <div class="mt-3 flex items-center gap-3">
+        <button type="button" class="btn btn-sm" @click="alertSaved = true">Save alert set</button>
+        <span class="text-xs text-ok" x-show="alertSaved" role="status">Saved</span>
+      </div>
+    </section>
+
+    <!-- Synonyms -->
+    <section id="synonyms" class="panel mt-6 scroll-mt-4" aria-labelledby="h-syn">
+      <div class="px-4 pt-4">
+        <h2 id="h-syn" class="text-lg font-semibold">Synonyms</h2>
+        <p class="mt-1 text-sm text-muted">Map a Genre phrase to an F95 tag or a Custom tag. Used by the parse check when you add a Game or refresh.</p>
+      </div>
+      <form class="mt-4 grid gap-2 border-y border-line bg-raised/30 px-4 py-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end" @submit.prevent="addSyn()">
+        <div>
+          <label for="sp" class="label mb-1">Genre phrase</label>
+          <input id="sp" x-ref="synPhrase" class="field" placeholder="Yuri" x-model="newSyn.phrase">
+        </div>
+        <div>
+          <label for="st" class="label mb-1">Maps to</label>
+          <input id="st" class="field font-mono" placeholder="lesbian" x-model="newSyn.target" list="tag-list">
+        </div>
+        <div>
+          <label for="sk" class="label mb-1">Tag kind</label>
+          <select id="sk" class="field" x-model="newSyn.kind"><option value="f95">F95 tag</option><option value="custom">Custom tag</option></select>
+        </div>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <div class="px-4 py-3">
+        <label for="sf" class="sr-only">Filter Synonyms</label>
+        <input id="sf" type="search" class="field" placeholder="Filter Synonyms" x-model="synFilter">
+      </div>
+      <ul class="border-t border-line">
+        <template x-for="s in shownSynonyms()" :key="s.id">
+          <li class="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-line/50 px-4 py-2 last:border-0 sm:grid-cols-[1fr_auto_1fr_auto_auto]">
+            <input class="field h-8 min-h-0 py-1 text-sm" x-model="s.phrase" :aria-label="'Phrase ' + s.phrase">
+            <span class="text-muted" aria-hidden="true">→</span>
+            <input class="field h-8 min-h-0 py-1 font-mono text-sm" x-model="s.target" list="tag-list" :aria-label="'Tag for ' + s.phrase">
+            <span class="chip justify-self-start" :class="s.kind === 'custom' ? 'chip-muted' : 'chip-info'" x-text="s.kind === 'custom' ? 'custom' : 'F95'"></span>
+            <button type="button" class="btn btn-ghost btn-sm col-span-2 justify-self-end sm:col-span-1" @click="synonyms.splice(synonyms.indexOf(s), 1)" :aria-label="'Remove Synonym ' + s.phrase">Remove</button>
+          </li>
+        </template>
+      </ul>
+      <p class="px-4 py-4 text-sm text-muted" x-show="!shownSynonyms().length">No Synonyms match “<span x-text="synFilter"></span>”.</p>
+      <datalist id="tag-list">
+        <template x-for="l in [...new Set(GAMES.flatMap((x) => x.tags.map((t) => t.label)))]" :key="l"><option :value="l"></option></template>
+      </datalist>
+    </section>
+
+    <!-- ntfy -->
+    <section id="ntfy" class="panel mt-6 scroll-mt-4 px-4 py-4" aria-labelledby="h-ntfy">
+      <h2 id="h-ntfy" class="text-lg font-semibold">ntfy</h2>
+      <p class="mt-1 text-sm text-muted">Where alerts and digests are sent.</p>
+      <form class="mt-3 grid gap-3 sm:grid-cols-2" hx-get="partials/ntfy-test.html" hx-target="#ntfy-status">
+        <div>
+          <label for="ns" class="mb-1 block text-sm font-medium">Server</label>
+          <input id="ns" class="field font-mono" value="https://ntfy.sh">
+        </div>
+        <div>
+          <label for="nt" class="mb-1 block text-sm font-medium">Topic</label>
+          <input id="nt" class="field font-mono" value="f95-tracker-a8k2">
+        </div>
+        <div class="flex flex-wrap items-center gap-3 sm:col-span-2">
+          <button type="submit" class="btn">Send test notification</button>
+          <span id="ntfy-status" class="text-sm" aria-live="polite"><span class="htmx-indicator text-muted">Sending…</span></span>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

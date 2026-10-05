@@ -1,0 +1,295 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): Add Game → add-time parse check.
+     Try: any F95 thread URL or id (e.g. https://f95zone.to/threads/apocalypse-2059.238127/) → parse check.
+     An id already in the sample data (e.g. 31912) → "already tracked". Prototype controls simulate a bad cookie.
+     Real app: hx-post="/games/fetch" swaps the parse-check fragment into #step2; Confirm posts the accepted mapping. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add Game · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script>
+    // Genre text of the demo thread, pre-split the way the parser would. type:
+    // exact | synonym | custom (no match → Custom tag) | prose | marker | sep
+    const DEMO_SEGMENTS = [
+      { text: 'Post-apocalyptic', type: 'synonym', target: 'post apocalyptic', why: 'Synonym “Post-apocalyptic”' },
+      { text: ', ' },
+      { text: 'Survival', type: 'exact', target: 'survival' },
+      { text: ', ' },
+      { text: 'Harem', type: 'exact', target: 'harem' },
+      { text: ', ' },
+      { text: 'Yuri', type: 'synonym', target: 'lesbian', why: 'Synonym “Yuri”' },
+      { text: ', ' },
+      { text: 'BBW', type: 'custom', target: 'BBW', why: 'No F95 tag or Synonym' },
+      { text: ', ' },
+      { text: 'Corruption (light)', type: 'exact', target: 'corruption', note: 'light' },
+      { text: '. ' },
+      { text: 'Possible:', type: 'marker' },
+      { text: ' ' },
+      { text: 'Netorare (avoidable)', type: 'exact', target: 'netorare', q: 'optional', note: 'avoidable', why: 'After “Possible:”' },
+      { text: '. ' },
+      { text: 'Planned:', type: 'marker' },
+      { text: ' ' },
+      { text: 'Pregnancy', type: 'exact', target: 'pregnancy', q: 'planned', why: 'After “Planned:”' },
+      { text: ', ' },
+      { text: 'Futa', type: 'synonym', target: 'futa/trans', q: 'planned', why: 'Synonym “Futa”, after “Planned:”' },
+      { text: '. ' },
+      { text: 'Great story with tons of choices.', type: 'prose', why: 'Looks like a sentence, not a tag' },
+    ];
+    const DEMO_F95_ONLY = ['male protagonist', '3dcg'];
+
+    function addPage() {
+      return {
+        kind: 'f95',
+        input: '',
+        sim: 'ok', // ok | cookie
+        phase: 'input', // input | loading | parse | pending | dupe
+        error: '',
+        dupe: null,
+        play: 'planned',
+        segments: DEMO_SEGMENTS,
+        items: DEMO_SEGMENTS.filter((s) => ['exact', 'synonym', 'custom', 'prose'].includes(s.type)).map((s) => ({
+          ...s,
+          q: s.q || 'present',
+          state: s.type === 'prose' ? 'ignore' : 'accept',
+          look: s.type !== 'exact' || !!s.q, // highlighted for confirmation
+        })),
+        manual: { name: '', url: '', version: '', play: 'planned' },
+        manualDone: false,
+        threadId() {
+          const m = this.input.match(/threads\/(?:[^/]*\.)?(\d+)/) || this.input.match(/^\s*(\d+)\s*$/);
+          return m ? +m[1] : null;
+        },
+        fetch() {
+          this.error = '';
+          const id = this.threadId();
+          if (!id) { this.error = 'That doesn’t look like an F95zone thread link or thread id.'; return; }
+          this.dupe = GAMES.find((g) => !g.addDemo && g.source.kind === 'f95' && g.source.id === id);
+          if (this.dupe) { this.phase = 'dupe'; return; }
+          this.phase = 'loading';
+          setTimeout(() => (this.phase = this.sim === 'cookie' ? 'pending' : 'parse'), 700);
+        },
+        itemFor(seg) { return this.items.find((i) => i.text === seg.text); },
+        lookItems() { return this.items.filter((i) => i.look); },
+        exactItems() { return this.items.filter((i) => !i.look); },
+        acceptedCount() { return this.items.filter((i) => i.state === 'accept').length + DEMO_F95_ONLY.length; },
+        confirm() { location.href = 'game.html?id=ap&added=1'; },
+        reset() { this.phase = 'input'; this.dupe = null; },
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-16" x-data="addPage()">
+  <div id="nav"></div>
+  <script>renderNav('add')</script>
+
+  <main class="mx-auto max-w-4xl px-4 py-6">
+    <h1 class="text-2xl font-semibold">Add Game</h1>
+
+    <!-- Step 1: Source -->
+    <section class="panel mt-4 px-4 py-4" x-show="phase === 'input' || phase === 'loading'" aria-labelledby="h-src">
+      <h2 id="h-src" class="label mb-2">Source</h2>
+      <div class="seg" role="radiogroup" aria-labelledby="h-src">
+        <label><input type="radio" class="sr-only" value="f95" x-model="kind">F95 thread</label>
+        <label><input type="radio" class="sr-only" value="itch" x-model="kind">itch.io page</label>
+        <label><input type="radio" class="sr-only" value="manual" x-model="kind">Manual link</label>
+      </div>
+
+      <form x-show="kind === 'f95'" class="mt-4" @submit.prevent="fetch()">
+        <label for="url" class="mb-1 block text-sm font-medium">F95zone thread link or id</label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input id="url" class="field font-mono" placeholder="https://f95zone.to/threads/… or 238127" x-model="input"
+            autocomplete="off" inputmode="url" :aria-invalid="!!error" aria-describedby="url-help url-err" autofocus>
+          <button class="btn btn-primary sm:w-36" type="submit" :disabled="phase === 'loading'">
+            <span x-show="phase !== 'loading'">Fetch thread</span>
+            <span x-show="phase === 'loading'">Fetching…</span>
+          </button>
+        </div>
+        <p id="url-help" class="mt-1 text-xs text-muted">We read the title, latest version, Dev status, F95 tags and the Genre text. Nothing is added until you confirm.</p>
+        <p id="url-err" class="mt-1 text-sm text-bad" x-show="error" x-text="error" role="alert"></p>
+        <button type="button" class="mt-2 text-xs text-muted underline hover:text-ink" @click="input = 'https://f95zone.to/threads/apocalypse-2059.238127/'">Use example link</button>
+      </form>
+
+      <form x-show="kind !== 'f95'" x-cloak class="mt-4 grid gap-3 sm:grid-cols-2" @submit.prevent="manualDone = true">
+        <div class="sm:col-span-2">
+          <label for="m-url" class="mb-1 block text-sm font-medium" x-text="kind === 'itch' ? 'itch.io page' : 'Link'"></label>
+          <input id="m-url" class="field font-mono" type="url" required x-model="manual.url"
+            :placeholder="kind === 'itch' ? 'https://dev.itch.io/game' : 'https://…'">
+        </div>
+        <div>
+          <label for="m-name" class="mb-1 block text-sm font-medium">Name</label>
+          <input id="m-name" class="field" required x-model="manual.name">
+        </div>
+        <div>
+          <label for="m-ver" class="mb-1 block text-sm font-medium">Latest version <span class="font-normal text-muted">(you keep this up to date)</span></label>
+          <input id="m-ver" class="field font-mono" x-model="manual.version" placeholder="Ch. 1">
+        </div>
+        <div class="sm:col-span-2">
+          <label for="m-play" class="mb-1 block text-sm font-medium">Play status</label>
+          <select id="m-play" class="field sm:w-60" x-model="manual.play">
+            <template x-for="s in PLAY_STATUSES" :key="s"><option :value="s" x-text="s"></option></template>
+          </select>
+        </div>
+        <div class="sm:col-span-2 flex flex-wrap items-center gap-3">
+          <button class="btn btn-primary" type="submit">Add Game</button>
+          <span class="text-xs text-muted">No Genre text to parse: add tags by hand on the Game page.</span>
+        </div>
+        <p x-show="manualDone" role="status" class="sm:col-span-2 text-sm text-muted">Prototype stops here for non-F95 Sources; the Game page would open next (see <a href="game.html?id=lr" class="underline">an itch.io Game</a>).</p>
+      </form>
+    </section>
+
+    <!-- Already tracked -->
+    <section x-show="phase === 'dupe'" x-cloak class="panel mt-4 px-4 py-4" role="alert">
+      <p class="font-medium">You already track <span x-text="dupe?.name"></span>.</p>
+      <p class="mt-1 text-sm text-muted">One F95 thread is one Game, including remakes and part 2s posted on the same thread.</p>
+      <div class="mt-3 flex gap-2">
+        <a class="btn btn-primary" :href="'game.html?id=' + dupe?.id">Open it</a>
+        <button type="button" class="btn" @click="reset()">Add a different thread</button>
+      </div>
+    </section>
+
+    <!-- Cookie invalid → details pending -->
+    <section x-show="phase === 'pending'" x-cloak class="panel mt-4 border-warn/50 px-4 py-4" role="alert">
+      <p class="font-medium text-warn">Your F95 cookie is invalid, so the thread couldn’t be read.</p>
+      <p class="mt-1 text-sm">You can still add thread <span class="font-mono" x-text="'#' + threadId()"></span> now. It’ll show as <strong>details pending</strong>; the parse check runs after you fix the cookie and refresh.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <a class="btn btn-primary" href="game.html?id=wa">Add with details pending</a>
+        <a class="btn" href="settings.html#cookie">Update cookie first</a>
+        <button type="button" class="btn btn-ghost" @click="reset()">Back</button>
+      </div>
+    </section>
+
+    <!-- Step 2: parse check -->
+    <div x-show="phase === 'parse'" x-cloak>
+      <section class="panel mt-4 flex gap-4 px-4 py-4" aria-label="Fetched thread">
+        <div class="cover cover-3 h-28 w-20" aria-hidden="true">A2</div>
+        <div class="min-w-0 flex-1">
+          <p class="label">Fetched from F95 thread #238127</p>
+          <h2 class="mt-1 text-xl font-semibold">Apocalypse 2059</h2>
+          <div class="mt-2 flex flex-wrap gap-2 text-sm">
+            <span class="chip chip-info">Dev: ongoing</span>
+            <span class="chip">latest <span class="font-mono">0.3</span></span>
+            <a href="https://f95zone.to/threads/238127/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Open thread ↗</a>
+          </div>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <label for="p-play" class="text-sm">Play status</label>
+            <select id="p-play" class="field w-40" x-model="play">
+              <template x-for="s in PLAY_STATUSES" :key="s"><option :value="s" x-text="s"></option></template>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel mt-4 px-4 py-4" aria-labelledby="h-genre">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="h-genre" class="label">Genre text</h2>
+          <ul class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted" aria-label="Highlight legend">
+            <li><mark class="hl hl-exact">exact</mark></li>
+            <li><mark class="hl hl-synonym">synonym</mark></li>
+            <li><mark class="hl hl-custom">no match</mark></li>
+            <li><mark class="hl hl-marker">Possible / Planned</mark></li>
+            <li><mark class="hl hl-prose">prose</mark></li>
+          </ul>
+        </div>
+        <p class="mt-3 text-base leading-loose">
+          <template x-for="(s, i) in segments" :key="i">
+            <span><template x-if="!s.type"><span x-text="s.text"></span></template><template x-if="s.type"><mark class="hl" :class="'hl-' + s.type" x-text="s.text"></mark></template></span>
+          </template>
+        </p>
+      </section>
+
+      <section class="panel mt-4" aria-labelledby="h-look">
+        <div class="border-b border-line px-4 py-3">
+          <h2 id="h-look" class="font-semibold">Needs a look <span class="font-normal text-muted" x-text="lookItems().length"></span></h2>
+          <p class="text-xs text-muted">Synonyms, phrases with no match, prose and Possible / Planned items. Defaults shown; change what’s off.</p>
+        </div>
+        <ul class="divide-y divide-line/60">
+          <template x-for="it in lookItems()" :key="it.text">
+            <li class="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2 text-sm">
+                  <mark class="hl" :class="'hl-' + (it.q !== 'present' ? 'marker' : it.type)" x-text="it.text"></mark>
+                  <span class="text-muted" aria-hidden="true">→</span>
+                  <template x-if="it.type !== 'prose'">
+                    <span class="flex items-center gap-2">
+                      <input class="field h-8 min-h-0 !w-44 py-1 font-mono text-xs" x-model="it.target" :aria-label="'Tag for ' + it.text" list="tag-list">
+                      <span class="chip chip-muted" x-show="it.type === 'custom'">new Custom tag</span>
+                    </span>
+                  </template>
+                  <span x-show="it.type === 'prose'" class="text-xs italic text-muted">not a tag</span>
+                </div>
+                <p class="mt-1 text-xs text-muted" x-text="it.why"></p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <select class="field h-8 min-h-0 w-28 py-1 text-xs" x-model="it.q" x-show="it.type !== 'prose'" :aria-label="'Qualifier for ' + it.text">
+                  <option value="present">present</option><option value="planned">planned</option><option value="optional">optional</option>
+                </select>
+                <div class="seg" role="radiogroup" :aria-label="'Keep ' + it.text + '?'">
+                  <label><input type="radio" class="sr-only" value="accept" x-model="it.state" :name="'st-' + it.text"><span x-text="it.type === 'prose' ? 'make tag' : 'accept'"></span></label>
+                  <label><input type="radio" class="sr-only" value="ignore" x-model="it.state" :name="'st-' + it.text">ignore</label>
+                </div>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <div class="mt-4 grid gap-4 md:grid-cols-2">
+        <section class="panel px-4 py-4" aria-labelledby="h-exact">
+          <h2 id="h-exact" class="font-semibold">Exact matches <span class="font-normal text-muted" x-text="exactItems().length"></span></h2>
+          <p class="text-xs text-muted">Pre-accepted. Untick to drop.</p>
+          <ul class="mt-2 grid gap-1">
+            <template x-for="it in exactItems()" :key="it.text">
+              <li>
+                <label class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" class="h-4 w-4 accent-[rgb(var(--accent))]" :checked="it.state === 'accept'" @change="it.state = $event.target.checked ? 'accept' : 'ignore'">
+                  <span :class="it.state === 'ignore' && 'text-muted line-through'" x-text="it.target"></span>
+                  <span class="text-xs italic text-muted" x-show="it.note" x-text="'— ' + it.note"></span>
+                </label>
+              </li>
+            </template>
+          </ul>
+        </section>
+        <section class="panel px-4 py-4" aria-labelledby="h-f95only">
+          <h2 id="h-f95only" class="font-semibold">F95 only <span class="font-normal text-muted" x-text="DEMO_F95_ONLY.length"></span></h2>
+          <p class="text-xs text-muted">On the thread’s F95 tag list but not in the Genre text. Added as present tags.</p>
+          <ul class="mt-2 flex flex-wrap gap-1">
+            <template x-for="t in DEMO_F95_ONLY" :key="t"><li class="chip" x-text="t"></li></template>
+          </ul>
+        </section>
+      </div>
+
+      <datalist id="tag-list">
+        <template x-for="l in [...new Set(GAMES.flatMap((x) => x.tags.map((t) => t.label)))]" :key="l"><option :value="l"></option></template>
+      </datalist>
+
+      <div class="mt-6 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center">
+        <p class="text-sm text-muted">
+          <strong class="text-ink" x-text="acceptedCount()"></strong> tags will be added, all <strong class="text-ink">unverified</strong>.
+          Confirming the parse doesn’t verify any tag — that happens in a Tag review after you play.
+        </p>
+        <div class="flex shrink-0 gap-2 sm:ml-auto">
+          <button type="button" class="btn" @click="reset()">Back</button>
+          <button type="button" class="btn btn-primary" @click="confirm()">Confirm &amp; add Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- prototype controls -->
+    <aside class="mt-10 rounded-md border border-dashed border-warn/60 px-4 py-3 text-xs text-muted" aria-label="Prototype controls">
+      <strong class="text-warn">Prototype controls</strong> — simulate the fetch result:
+      <span class="seg ml-2 align-middle">
+        <label><input type="radio" class="sr-only" value="ok" x-model="sim">cookie valid</label>
+        <label><input type="radio" class="sr-only" value="cookie" x-model="sim">cookie invalid</label>
+      </span>
+      <span class="ml-2">Thread id 31912 shows “already tracked”.</span>
+    </aside>
+  </main>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): Game detail. game.html?id=ck (any id from assets/data.js).
+     Real app: Play status / rating are small forms posting via htmx (hx-post, hx-swap="outerHTML");
+     "Mark played" posts then redirects to the Tag review. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script>
+    function detailPage() {
+      const g = gameById(qs('id') || 'ck');
+      return {
+        g,
+        rating: g?.rating ?? 0,
+        play: g?.play,
+        marking: false,
+        markVersion: g?.latest || '',
+        markDate: TODAY,
+        newTag: '',
+        handTags: [],
+        flash: qs('added') ? 'added' : qs('reviewed') ? 'reviewed' : qs('skipped') ? 'skipped' : null,
+        tagsBy(q) { return [...(g?.tags || []), ...this.handTags].filter((t) => t.q === q); },
+        presentSummary() {
+          const p = this.tagsBy('present');
+          return `${p.length} present · ${p.filter((t) => t.v === 'confirmed').length} confirmed · ${p.filter((t) => t.v === 'wrong').length} wrong`;
+        },
+        addHandTag() {
+          const label = this.newTag.trim();
+          if (!label) return;
+          const known = GAMES.some((x) => x.tags.some((t) => t.kind === 'f95' && t.label === label.toLowerCase()));
+          this.handTags.push(known ? T(label.toLowerCase(), 'hand') : C(label, 'hand'));
+          this.newTag = '';
+        },
+        markPlayed() {
+          location.href = `tag-review.html?id=${g.id}&version=${encodeURIComponent(this.markVersion)}&date=${this.markDate}`;
+        },
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-16" x-data="detailPage()">
+  <div id="nav"></div>
+  <script>renderNav('games')</script>
+
+  <main class="mx-auto max-w-6xl px-4 py-6">
+    <a href="index.html" class="text-sm text-muted hover:text-ink">← Games</a>
+
+    <template x-if="!g">
+      <div class="panel mt-4 px-6 py-8">
+        <h1 class="text-lg font-semibold">No Game with that id</h1>
+        <p class="mt-1 text-sm text-muted">It may have been removed. Go back to the list or add it again.</p>
+      </div>
+    </template>
+
+    <template x-if="g">
+      <div>
+        <!-- flash messages from the previous step -->
+        <div x-show="flash" role="status" class="panel mt-4 flex items-start gap-3 border-ok/50 px-4 py-3 text-sm">
+          <span class="text-ok" aria-hidden="true">✓</span>
+          <p x-show="flash === 'added'"><strong x-text="g.name"></strong> added as <em>planned</em>. Its tags stay <strong>unverified</strong> until your first Tag review after playing.</p>
+          <p x-show="flash === 'reviewed'">Tag review saved for <span class="font-mono" x-text="qs('version')"></span>. Unset tags stay unverified.</p>
+          <p x-show="flash === 'skipped'">Marked <span class="font-mono" x-text="qs('version')"></span> played. Tag review skipped — it’s waiting in <a href="queue.html" class="underline">tags to review</a>.</p>
+          <button type="button" class="ml-auto text-muted hover:text-ink" @click="flash = null" aria-label="Dismiss">✕</button>
+        </div>
+
+        <!-- header -->
+        <header class="mt-4 flex gap-4">
+          <div class="cover h-32 w-24 text-lg sm:h-40 sm:w-28" :class="coverClass(g)" x-text="initials(g)" role="img" :aria-label="'Cover for ' + g.name"></div>
+          <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-semibold leading-tight sm:text-3xl" x-text="g.name"></h1>
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <a :href="g.source.url" target="_blank" rel="noopener noreferrer" class="text-accent underline-offset-2 hover:underline">
+                <span x-text="g.source.kind === 'f95' ? 'F95 thread #' + g.source.id : g.source.kind === 'itch' ? 'itch.io page' : 'Source link'"></span> ↗
+              </a>
+              <span class="chip" :class="devChip(g.dev)" x-text="g.dev ? 'Dev: ' + g.dev : 'no Dev status'"></span>
+              <span class="chip chip-info" x-show="g.update" title="Latest version changed since the last check">Update</span>
+              <span class="chip chip-warn" x-show="isBehind(g)">Behind</span>
+            </div>
+            <dl class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:flex sm:flex-wrap">
+              <div><dt class="label">Latest</dt><dd class="font-mono" x-text="g.latest || 'unknown'"></dd></div>
+              <div><dt class="label">Last played</dt><dd class="font-mono" :class="isBehind(g) && 'text-warn'" x-text="lastPlayed(g) || 'not played'"></dd></div>
+              <div><dt class="label">Updated at Source</dt><dd class="font-mono" x-text="g.updatedAt || '—'"></dd></div>
+              <div><dt class="label">Last checked</dt><dd class="font-mono" x-text="g.lastChecked || 'never'"></dd></div>
+            </dl>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <button type="button" class="btn btn-sm" hx-get="partials/refresh.html" hx-target="#refresh-status" hx-indicator="#refresh-status">
+                ↻ Refresh from Source
+              </button>
+              <span id="refresh-status" class="text-xs text-muted" aria-live="polite">
+                <span class="htmx-indicator">Checking…</span>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <!-- source problems -->
+        <div x-show="g.detailsPending" class="panel mt-4 border-warn/50 px-4 py-3 text-sm">
+          <p><strong class="text-warn">Details pending.</strong> The F95 cookie was invalid when this Game was fetched, so version, Dev status and tags are missing.
+            <a href="settings.html#cookie" class="underline">Update the cookie</a>, then Refresh.</p>
+        </div>
+        <div x-show="g.sourceUnavailable" class="panel mt-4 border-bad/50 px-4 py-3 text-sm">
+          <p><strong class="text-bad">Source unavailable.</strong> The page returned 404 on the last 3 checks (since 2026-09-20). Your Play log and tags are kept.</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm">Change Source link</button>
+            <button type="button" class="btn btn-sm btn-ghost">Stop checking</button>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
+          <!-- left: the user's own state -->
+          <div class="grid gap-6">
+            <section class="panel px-4 py-4" aria-labelledby="h-play">
+              <h2 id="h-play" class="label mb-3">Play status</h2>
+              <div class="seg" role="radiogroup" aria-labelledby="h-play">
+                <template x-for="s in PLAY_STATUSES" :key="s">
+                  <label><input type="radio" name="play" class="sr-only" :value="s" x-model="play"><span x-text="s"></span></label>
+                </template>
+              </div>
+              <p class="mt-2 text-xs text-muted">
+                <span x-text="ALERT_SET.includes(play) ? 'You’ll get an alert when this Game has an Update.' : 'No alerts for Updates in this Play status.'"></span>
+                <a href="settings.html#alerts" class="underline">Alert set</a>
+              </p>
+
+              <h2 class="label mb-2 mt-5" id="h-rating">Rating</h2>
+              <div class="flex items-center gap-3">
+                <span class="w-28 text-xl text-accent" aria-hidden="true" x-text="rating ? stars(rating) : '—'"></span>
+                <span class="font-mono text-sm" x-text="rating ? rating + ' / 5' : 'No rating'"></span>
+                <button type="button" class="btn btn-ghost btn-sm ml-auto" x-show="rating" @click="rating = 0">Clear</button>
+              </div>
+              <input type="range" min="0" max="5" step="0.5" x-model.number="rating" class="mt-2 w-full accent-[rgb(var(--accent))]"
+                aria-labelledby="h-rating" :aria-valuetext="rating ? rating + ' of 5' : 'No rating'">
+            </section>
+
+            <section class="panel px-4 py-4" aria-labelledby="h-log">
+              <div class="flex items-center justify-between gap-2">
+                <h2 id="h-log" class="label">Play log</h2>
+                <button type="button" class="btn btn-primary btn-sm" x-show="!marking" @click="marking = true; $nextTick(() => $refs.ver.focus())">Mark version played</button>
+              </div>
+
+              <form x-show="marking" x-cloak class="mt-3 grid gap-3 rounded-md border border-accent/50 bg-accent/5 p-3" @submit.prevent="markPlayed()">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label for="mv" class="label mb-1">Version</label>
+                    <input id="mv" x-ref="ver" class="field font-mono" x-model="markVersion" required>
+                  </div>
+                  <div>
+                    <label for="md" class="label mb-1">Date</label>
+                    <input id="md" type="date" class="field" x-model="markDate" required>
+                  </div>
+                </div>
+                <p class="text-xs text-muted">Appends to the Play log. Next you’ll review this Game’s tags.</p>
+                <div class="flex gap-2">
+                  <button type="submit" class="btn btn-primary btn-sm">Mark played → review tags</button>
+                  <button type="button" class="btn btn-ghost btn-sm" @click="marking = false">Cancel</button>
+                </div>
+              </form>
+
+              <ol class="mt-3 divide-y divide-line/60" x-show="g.log.length">
+                <template x-for="(e, i) in [...g.log].reverse()" :key="i">
+                  <li class="flex items-center gap-3 py-2 text-sm">
+                    <span class="w-24 shrink-0 font-mono text-xs" :class="e.date ? '' : 'text-muted'" x-text="e.date || 'undated'"></span>
+                    <span class="font-mono" x-text="e.version"></span>
+                    <span class="chip chip-muted" x-show="e.origin === 'imported'">imported</span>
+                    <span class="ml-auto text-xs text-muted" x-show="i === 0">last played</span>
+                  </li>
+                </template>
+              </ol>
+              <p class="mt-3 text-sm text-muted" x-show="!g.log.length">Not played yet. Mark a version once you’ve played it.</p>
+            </section>
+          </div>
+
+          <!-- right: tags -->
+          <section class="panel px-4 py-4" aria-labelledby="h-tags">
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 id="h-tags" class="label">Game tags</h2>
+              <span class="text-xs text-muted" x-text="presentSummary()"></span>
+              <a x-show="g.tagReview" :href="'tag-review.html?id=' + g.id + '&version=' + g.tagReview?.version"
+                class="chip chip-accent ml-auto">Tag review <span x-text="g.tagReview?.state"></span> →</a>
+            </div>
+            <p class="mt-1 text-xs text-muted">Tags are confirmed or marked wrong only in a Tag review after play.</p>
+
+            <template x-for="grp in [['present', 'Present'], ['planned', 'Planned'], ['optional', 'Optional']]" :key="grp[0]">
+              <div class="mt-4" x-show="tagsBy(grp[0]).length">
+                <h3 class="mb-1 text-sm font-semibold">
+                  <span x-text="grp[1]"></span>
+                  <span class="font-normal text-muted" x-text="tagsBy(grp[0]).length"></span>
+                </h3>
+                <ul class="divide-y divide-line/50">
+                  <template x-for="t in tagsBy(grp[0])" :key="t.label">
+                    <li class="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 text-sm">
+                      <span class="w-4 text-center" aria-hidden="true"
+                        :class="{ 'text-ok': t.v === 'confirmed', 'text-bad': t.v === 'wrong', 'text-muted': t.v === 'unverified' }"
+                        x-text="{ confirmed: '✓', wrong: '✗', unverified: '○' }[t.v]"></span>
+                      <span :class="t.v === 'wrong' && 'text-muted line-through'" x-text="t.label"></span>
+                      <span class="chip chip-muted" x-show="t.kind === 'custom'" title="Custom tag: no F95zone equivalent">custom</span>
+                      <span class="text-xs italic text-muted" x-show="t.note" x-text="'— ' + t.note"></span>
+                      <span class="chip chip-info" x-show="t.flags.includes('new')">new</span>
+                      <span class="chip chip-bad" x-show="t.flags.includes('removed')">removed at source</span>
+                      <span class="ml-auto flex items-center gap-2 text-xs text-muted">
+                        <span x-text="ORIGIN_LABEL[t.origin]"></span>
+                        <span class="sr-only" x-text="', ' + VERIFY_LABEL[t.v]"></span>
+                      </span>
+                    </li>
+                  </template>
+                </ul>
+              </div>
+            </template>
+            <p class="mt-4 text-sm text-muted" x-show="!g.tags.length && !handTags.length">No tags yet<span x-show="g.detailsPending"> — they arrive with the details</span>.</p>
+
+            <form class="mt-4 flex gap-2" @submit.prevent="addHandTag()">
+              <label for="nt" class="sr-only">Add a tag by hand</label>
+              <input id="nt" class="field" placeholder="Add a tag by hand (F95 tag or Custom tag)" x-model="newTag" list="known-tags">
+              <button class="btn" type="submit">Add</button>
+            </form>
+            <datalist id="known-tags">
+              <template x-for="l in [...new Set(GAMES.flatMap((x) => x.tags.map((t) => t.label)))]" :key="l"><option :value="l"></option></template>
+            </datalist>
+
+            <details class="mt-4 border-t border-line pt-3" x-show="g.genre">
+              <summary class="cursor-pointer text-sm text-muted hover:text-ink">Genre text from the thread</summary>
+              <p class="mt-2 text-sm leading-relaxed" x-text="g.genre"></p>
+            </details>
+          </section>
+        </div>
+      </div>
+    </template>
+  </main>
+</body>
+</html>

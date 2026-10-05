@@ -1,0 +1,191 @@
+<!doctype html>
+<!-- PROTOTYPE (ticket #14): post-play Tag review. tag-review.html?id=ck&version=0.19.0[&date=]
+     Variants: ?variant=A (checklist, everything on one screen) | B (one tag at a time, thumb-sized buttons).
+     Real app: one form, hx-post on Save; Skip posts "skipped" and redirects to the queue. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tag review · F95 Tracker (prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/tailwind-config.js"></script>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/data.js"></script>
+  <script src="assets/shell.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <style>.proto-switcher { bottom: 5.5rem; }</style>
+  <script>
+    function reviewPage() {
+      const g = gameById(qs('id') || 'tx');
+      const version = qs('version') || g.tagReview?.version || g.latest;
+      const date = qs('date') || g.tagReview?.at || TODAY;
+      const present = g.tags.filter((t) => t.q === 'present');
+      const later = g.tags.filter((t) => t.q !== 'present');
+      const marks = {};
+      present.forEach((t) => (marks[t.label] = t.origin === 'both' ? 'correct' : null));
+      const laterMarks = {};
+      later.forEach((t) => (laterMarks[t.label] = null));
+      const deck = present.filter((t) => marks[t.label] === null);
+      return {
+        g, version, date, present, later, marks, laterMarks,
+        variant: qs('variant') === 'B' ? 'B' : 'A',
+        // variant B
+        deck, idx: 0,
+        get current() { return this.deck[this.idx]; },
+        decide(v) { this.marks[this.current.label] = v; this.idx++; },
+        back() { if (this.idx > 0) this.idx--; },
+        // shared
+        markedCount() { return Object.values(this.marks).filter(Boolean).length; },
+        unsetCount() { return this.present.length - this.markedCount(); },
+        set(label, v) { this.marks[label] = this.marks[label] === v ? null : v; },
+        setLater(label, v) { this.laterMarks[label] = this.laterMarks[label] === v ? null : v; },
+        save() { location.href = `game.html?id=${g.id}&reviewed=1&version=${encodeURIComponent(version)}`; },
+        skip() { location.href = `queue.html?skipped=${g.id}&version=${encodeURIComponent(version)}`; },
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen pb-40" x-data="reviewPage()">
+  <div id="nav"></div>
+  <script>renderNav('queue')</script>
+
+  <main class="mx-auto max-w-3xl px-4 py-6">
+    <a :href="'game.html?id=' + g.id" class="text-sm text-muted hover:text-ink">← <span x-text="g.name"></span></a>
+    <h1 class="mt-2 text-2xl font-semibold">Tag review</h1>
+    <p class="mt-1 text-sm text-muted">
+      You played <strong class="font-mono text-ink" x-text="version"></strong> of <strong class="text-ink" x-text="g.name"></strong>
+      on <span class="whitespace-nowrap font-mono" x-text="date"></span>. Mark each present tag as correct or wrong. Tags in both the Genre text and the F95 list start as correct.
+    </p>
+
+    <!-- ===== Variant A: checklist ===== -->
+    <template x-if="variant === 'A'">
+      <div>
+        <section class="panel mt-6" aria-labelledby="h-present">
+          <div class="flex items-baseline justify-between border-b border-line px-4 py-3">
+            <h2 id="h-present" class="font-semibold">Present tags</h2>
+            <span class="text-xs text-muted"><span x-text="markedCount()"></span> of <span x-text="present.length"></span> marked</span>
+          </div>
+          <ul class="divide-y divide-line/60">
+            <template x-for="t in present" :key="t.label">
+              <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-medium" x-text="t.label"></span>
+                    <span class="chip chip-muted" x-show="t.kind === 'custom'">custom</span>
+                    <span class="chip chip-info" x-show="t.flags.includes('new')">new</span>
+                    <span class="chip chip-bad" x-show="t.flags.includes('removed')">removed at source</span>
+                  </div>
+                  <div class="mt-0.5 text-xs text-muted">
+                    <span x-text="ORIGIN_LABEL[t.origin]"></span><span x-show="t.note" x-text="' · ' + t.note"></span>
+                    <span x-show="t.v !== 'unverified'" x-text="' · last review: ' + t.v"></span>
+                  </div>
+                </div>
+                <div class="flex gap-1" role="group" :aria-label="'Verdict for ' + t.label">
+                  <button type="button" class="btn btn-sm min-w-24" :aria-pressed="marks[t.label] === 'correct'"
+                    :class="marks[t.label] === 'correct' && '!border-ok !bg-ok/15 !text-ok'" @click="set(t.label, 'correct')">✓ Correct</button>
+                  <button type="button" class="btn btn-sm min-w-24" :aria-pressed="marks[t.label] === 'wrong'"
+                    :class="marks[t.label] === 'wrong' && '!border-bad !bg-bad/15 !text-bad'" @click="set(t.label, 'wrong')">✗ Wrong</button>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </div>
+    </template>
+
+    <!-- ===== Variant B: one at a time ===== -->
+    <template x-if="variant === 'B'">
+      <div class="mt-6">
+        <p class="text-sm text-muted">
+          <span x-text="present.length - deck.length"></span> tags in both Genre and F95 are prefilled correct
+          (<button type="button" class="underline" @click="$refs.summary.open = true; $refs.summary.scrollIntoView()">change</button>).
+          <span x-text="deck.length"></span> left to decide.
+        </p>
+        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar" aria-label="Review progress"
+          :aria-valuenow="idx" aria-valuemin="0" :aria-valuemax="deck.length">
+          <div class="h-full bg-accent transition-all duration-300" :style="'width:' + (deck.length ? idx / deck.length * 100 : 100) + '%'"></div>
+        </div>
+
+        <div class="panel mt-4 px-6 py-8 text-center" x-show="current" aria-live="polite">
+          <p class="label" x-text="'Tag ' + (idx + 1) + ' of ' + deck.length"></p>
+          <p class="mt-3 text-3xl font-semibold" x-text="current?.label"></p>
+          <p class="mt-2 text-sm text-muted">
+            <span x-text="ORIGIN_LABEL[current?.origin]"></span><span x-show="current?.note" x-text="' · ' + current?.note"></span>
+            <span x-show="current?.kind === 'custom'"> · Custom tag</span>
+            <span x-show="current?.flags.includes('new')"> · new at source</span>
+            <span x-show="current?.flags.includes('removed')"> · removed at source</span>
+          </p>
+          <p class="mt-1 text-xs text-muted" x-show="current && current.v !== 'unverified'" x-text="'Last review: ' + current?.v"></p>
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <button type="button" class="btn min-h-14 border-bad/60 text-base text-bad" @click="decide('wrong')">✗ Wrong</button>
+            <button type="button" class="btn min-h-14 border-ok/60 text-base text-ok" @click="decide('correct')">✓ Correct</button>
+          </div>
+          <div class="mt-3 flex justify-between">
+            <button type="button" class="btn btn-ghost btn-sm" @click="back()" :disabled="idx === 0">← Back</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="marks[current.label] = null; idx++">Not sure, leave unverified →</button>
+          </div>
+        </div>
+        <div class="panel mt-4 px-6 py-6" x-show="!current">
+          <p class="font-medium">All present tags decided.</p>
+          <p class="mt-1 text-sm text-muted">Check the summary, then save.</p>
+          <button type="button" class="btn btn-ghost btn-sm mt-2" @click="back()" x-show="deck.length">← Back to last tag</button>
+        </div>
+
+        <details class="panel mt-4" x-ref="summary">
+          <summary class="cursor-pointer px-4 py-3 text-sm font-semibold">Summary of all present tags</summary>
+          <ul class="divide-y divide-line/60 border-t border-line">
+            <template x-for="t in present" :key="t.label">
+              <li class="flex items-center gap-2 px-4 py-2 text-sm">
+                <span x-text="t.label"></span>
+                <span class="ml-auto seg">
+                  <label><input type="radio" class="sr-only" :name="'s-' + t.label" value="correct" x-model="marks[t.label]">correct</label>
+                  <label><input type="radio" class="sr-only" :name="'s-' + t.label" value="wrong" x-model="marks[t.label]">wrong</label>
+                </span>
+              </li>
+            </template>
+          </ul>
+        </details>
+      </div>
+    </template>
+
+    <!-- Planned / optional: separate, skippable (both variants) -->
+    <details class="panel mt-6" x-show="later.length">
+      <summary class="cursor-pointer px-4 py-3">
+        <span class="font-semibold">Planned &amp; optional tags</span>
+        <span class="ml-2 text-xs text-muted">(<span x-text="later.length"></span>) optional — skip if you didn’t notice</span>
+      </summary>
+      <ul class="divide-y divide-line/60 border-t border-line">
+        <template x-for="t in later" :key="t.label">
+          <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+            <div class="min-w-0 flex-1">
+              <span class="font-medium" x-text="t.label"></span>
+              <span class="chip ml-1" :class="t.q === 'planned' ? 'chip-info' : 'chip-muted'" x-text="t.q"></span>
+              <div class="text-xs text-muted" x-show="t.note" x-text="t.note"></div>
+            </div>
+            <div class="seg" role="group" :aria-label="'Verdict for ' + t.label">
+              <label><input type="checkbox" class="sr-only" :checked="laterMarks[t.label] === 'present'" @change="setLater(t.label, 'present')">now present</label>
+              <label><input type="checkbox" class="sr-only" :checked="laterMarks[t.label] === 'wrong'" @change="setLater(t.label, 'wrong')">wrong</label>
+            </div>
+          </li>
+        </template>
+      </ul>
+    </details>
+  </main>
+
+  <!-- sticky action bar -->
+  <div class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-sm">
+    <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
+      <p class="text-xs text-muted" x-show="unsetCount()">
+        <strong class="text-ink" x-text="unsetCount()"></strong> unset tag(s) will stay unverified.
+      </p>
+      <div class="ml-auto flex gap-2">
+        <button type="button" class="btn" @click="skip()">Skip for now</button>
+        <button type="button" class="btn btn-primary" @click="save()">Save review</button>
+      </div>
+    </div>
+  </div>
+
+  <script>renderSwitcher([{ key: 'A', name: 'Checklist' }, { key: 'B', name: 'One tag at a time' }], qs('variant') || 'A')</script>
+</body>
+</html>
