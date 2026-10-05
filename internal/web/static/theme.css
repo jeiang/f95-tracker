@@ -1,0 +1,54 @@
+/*
+ * Design tokens for F95 Tracker, copied from the UI prototype (ticket #14).
+ * Direction: "ledger" - dark-first, warm-tinted neutrals, one amber accent,
+ * monospace for versions and ids. Light mode via [data-theme="light"].
+ * Colours are space-separated RGB channels so they compose with alpha:
+ * rgb(var(--accent) / 0.12).
+ */
+:root {
+  color-scheme: dark;
+  --bg: 22 20 18;
+  --surface: 31 28 25;
+  --raised: 42 38 34;
+  --line: 61 55 49;
+  --ink: 236 230 220;
+  --muted: 172 162 149;
+  --accent: 232 163 61;
+  --accent-ink: 30 21 9;
+  --ok: 127 196 128;
+  --bad: 236 120 104;
+  --warn: 226 193 92;
+  --info: 138 176 226;
+  --cover-1: 92 64 51;
+  --cover-2: 56 78 70;
+  --cover-3: 74 62 96;
+  --cover-4: 98 82 44;
+  --cover-5: 60 74 98;
+  --cover-6: 96 54 66;
+  --r-sm: 0.25rem;
+  --r-md: 0.375rem;
+  --r-lg: 0.5rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: 246 242 235;
+  --surface: 252 249 243;
+  --raised: 236 230 220;
+  --line: 212 203 190;
+  --ink: 35 30 25;
+  --muted: 96 88 78;
+  --accent: 160 92 8;
+  --accent-ink: 253 248 238;
+  --ok: 38 116 50;
+  --bad: 176 52 40;
+  --warn: 138 100 0;
+  --info: 36 88 160;
+  --cover-1: 196 160 140;
+  --cover-2: 150 180 168;
+  --cover-3: 172 160 196;
+  --cover-4: 200 180 130;
+  --cover-5: 150 170 200;
+  --cover-6: 200 150 162;
+}

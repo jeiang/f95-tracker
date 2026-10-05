@@ -1,0 +1,172 @@
+@import "tailwindcss";
+@import "./theme.css";
+@source "../**/*.templ";
+
+/* Map the tokens into Tailwind (bg-surface, text-muted, border-line, font-mono, rounded-md...). */
+@theme inline {
+  --color-bg: rgb(var(--bg));
+  --color-surface: rgb(var(--surface));
+  --color-raised: rgb(var(--raised));
+  --color-line: rgb(var(--line));
+  --color-ink: rgb(var(--ink));
+  --color-muted: rgb(var(--muted));
+  --color-accent: rgb(var(--accent));
+  --color-accent-ink: rgb(var(--accent-ink));
+  --color-ok: rgb(var(--ok));
+  --color-bad: rgb(var(--bad));
+  --color-warn: rgb(var(--warn));
+  --color-info: rgb(var(--info));
+  --font-sans: "IBM Plex Sans", ui-sans-serif, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+}
+
+/* Fonts are vendored (static/fonts); URLs resolve against /static/app.css. */
+@font-face { font-family: "IBM Plex Sans"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/ibm-plex-sans-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/ibm-plex-sans-500.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/ibm-plex-sans-600.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/ibm-plex-mono-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/ibm-plex-mono-500.woff2") format("woff2"); }
+
+@layer base {
+  html {
+    background: rgb(var(--bg));
+    color: rgb(var(--ink));
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+  [x-cloak] { display: none !important; }
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+  }
+}
+
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--r-md);
+    border: 1px solid rgb(var(--line));
+    background: rgb(var(--raised));
+    color: rgb(var(--ink));
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+    cursor: pointer;
+  }
+  .btn:hover { border-color: rgb(var(--muted)); }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary {
+    background: rgb(var(--accent));
+    border-color: rgb(var(--accent));
+    color: rgb(var(--accent-ink));
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: rgb(var(--accent) / 0.88); border-color: rgb(var(--accent)); }
+  .btn-ghost { background: transparent; border-color: transparent; }
+  .btn-ghost:hover { background: rgb(var(--raised)); border-color: transparent; }
+  .btn-sm { min-height: 2rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; line-height: 1rem; }
+
+  .field {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--r-md);
+    border: 1px solid rgb(var(--line));
+    background: rgb(var(--surface));
+    color: rgb(var(--ink));
+    font-size: 0.875rem;
+  }
+  .field::placeholder { color: rgb(var(--muted)); }
+  .field:focus-visible { outline-offset: 0; border-color: rgb(var(--accent)); }
+  textarea.field { font-family: var(--font-mono); font-size: 0.75rem; line-height: 1.25rem; }
+
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(var(--muted));
+  }
+
+  .panel {
+    background: rgb(var(--surface));
+    border: 1px solid rgb(var(--line));
+    border-radius: var(--r-lg);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--line));
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    color: rgb(var(--ink));
+    white-space: nowrap;
+  }
+  .chip-ok     { color: rgb(var(--ok));     background: rgb(var(--ok) / 0.12);     border-color: rgb(var(--ok) / 0.4); }
+  .chip-bad    { color: rgb(var(--bad));    background: rgb(var(--bad) / 0.12);    border-color: rgb(var(--bad) / 0.4); }
+  .chip-warn   { color: rgb(var(--warn));   background: rgb(var(--warn) / 0.12);   border-color: rgb(var(--warn) / 0.4); }
+  .chip-info   { color: rgb(var(--info));   background: rgb(var(--info) / 0.12);   border-color: rgb(var(--info) / 0.4); }
+  .chip-accent { color: rgb(var(--accent)); background: rgb(var(--accent) / 0.12); border-color: rgb(var(--accent) / 0.45); }
+  .chip-muted  { color: rgb(var(--muted)); }
+
+  /* segmented radio control: <div class="seg"><label><input type=radio class="sr-only">..</label></div> */
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; }
+  .seg label {
+    display: inline-flex; align-items: center; min-height: 2rem;
+    padding: 0.25rem 0.75rem; border-radius: 999px;
+    border: 1px solid rgb(var(--line)); font-size: 0.75rem; font-weight: 500;
+    cursor: pointer; color: rgb(var(--muted));
+  }
+  .seg label:has(input:checked) { background: rgb(var(--accent) / 0.14); border-color: rgb(var(--accent)); color: rgb(var(--ink)); }
+  .seg label:has(input:focus-visible) { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; }
+
+  .mono { font-family: var(--font-mono); }
+
+  /* placeholder cover art for Games without a cached cover */
+  .cover {
+    display: grid; place-items: center; flex-shrink: 0;
+    border-radius: var(--r-md);
+    color: rgb(var(--ink) / 0.85);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    background-image: repeating-linear-gradient(135deg, rgb(var(--ink) / 0.05) 0 2px, transparent 2px 8px);
+  }
+  .cover-1 { background-color: rgb(var(--cover-1)); }
+  .cover-2 { background-color: rgb(var(--cover-2)); }
+  .cover-3 { background-color: rgb(var(--cover-3)); }
+  .cover-4 { background-color: rgb(var(--cover-4)); }
+  .cover-5 { background-color: rgb(var(--cover-5)); }
+  .cover-6 { background-color: rgb(var(--cover-6)); }
+
+  /* Genre text highlight marks on the Add Game parse check */
+  mark.hl { background: transparent; color: inherit; border-bottom: 2px solid; padding: 0 0.125rem; border-radius: 0; }
+  mark.hl-exact   { border-color: rgb(var(--ok)); }
+  mark.hl-synonym { border-color: rgb(var(--info)); background: rgb(var(--info) / 0.1); }
+  mark.hl-custom  { border-color: rgb(var(--warn)); background: rgb(var(--warn) / 0.12); }
+  mark.hl-prose   { border-color: rgb(var(--muted)); border-bottom-style: dashed; }
+  mark.hl-marker  { border-color: rgb(var(--accent)); background: rgb(var(--accent) / 0.12); }
+
+  /* htmx request state */
+  .htmx-request .htmx-hide-on-request { display: none; }
+  .htmx-indicator { display: none; }
+  .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
+}

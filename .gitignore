@@ -1,1 +1,4 @@
 .worktrees/
+internal/web/static/app.css
+/f95-tracker
+.state/
