@@ -153,7 +153,7 @@ func GamesListPage(v GameListView) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"md:grid md:grid-cols-[15rem_1fr] md:items-start md:gap-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"md:grid md:grid-cols-[15rem_minmax(0,1fr)] md:items-start md:gap-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -287,7 +287,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<details class=\"panel mb-4 md:sticky md:top-4 md:mb-0\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<details class=\"group panel mb-4 md:sticky md:top-4 md:mb-0\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -320,14 +320,14 @@ func gamesFilterForm(v GameListView) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</summary><form id=\"filters\" method=\"get\" action=\"/games\" class=\"grid gap-5 border-t border-line px-4 py-4\" hx-get=\"/games\" hx-target=\"#game-table\" hx-swap=\"outerHTML\" hx-push-url=\"true\" hx-trigger=\"submit, change, input delay:300ms from:#q\"><div><label for=\"q\" class=\"label mb-1\">Name</label> <input id=\"q\" name=\"q\" type=\"search\" class=\"field\" placeholder=\"Search Games\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<span class=\"ml-auto text-muted transition-transform group-open:rotate-180\" aria-hidden=\"true\">▾</span></summary><form id=\"filters\" method=\"get\" action=\"/games\" class=\"grid gap-5 border-t border-line px-4 py-4\" hx-get=\"/games\" hx-target=\"#game-table\" hx-swap=\"outerHTML\" hx-push-url=\"true\" hx-trigger=\"submit, change, input delay:300ms from:#q\"><div><label for=\"q\" class=\"label mb-1\">Name</label> <input id=\"q\" name=\"q\" type=\"search\" class=\"field\" placeholder=\"Search Games\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.Filters.Q)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 101, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 102, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 		if templ_7745c5c3_Err != nil {
@@ -345,7 +345,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 107, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 108, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 			if templ_7745c5c3_Err != nil {
@@ -368,7 +368,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 107, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 108, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -391,7 +391,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 115, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 116, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 			if templ_7745c5c3_Err != nil {
@@ -414,7 +414,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 115, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 116, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -437,7 +437,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(s))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 124, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 125, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
@@ -460,7 +460,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(PlayStatusLabel(s))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 124, Col: 96}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 125, Col: 96}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -483,7 +483,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(s))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 133, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 134, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 			if templ_7745c5c3_Err != nil {
@@ -506,7 +506,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(DevStatusLabel(string(s)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 133, Col: 102}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 134, Col: 102}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -529,7 +529,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 141, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 142, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 			if templ_7745c5c3_Err != nil {
@@ -552,7 +552,7 @@ func gamesFilterForm(v GameListView) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 141, Col: 83}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 142, Col: 83}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -638,7 +638,7 @@ func tagChips(v GameListView) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(t)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 164, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 165, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 			if templ_7745c5c3_Err != nil {
@@ -650,7 +650,7 @@ func tagChips(v GameListView) templ.Component {
 			}
 		}
 		if len(v.Tags) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<fieldset class=\"panel mb-4 px-4 py-3\"><legend class=\"label px-1\">Tags</legend><p class=\"mb-2 text-xs text-muted\">Select once to include, twice to exclude, a third time to clear. Tags marked wrong never match.</p><div class=\"flex flex-wrap gap-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<fieldset class=\"panel mb-4 min-w-0 px-4 py-3\"><legend class=\"label px-1\">Tags</legend><p class=\"mb-2 text-xs text-muted\">Select once to include, twice to exclude, a third time to clear. Tags marked wrong never match.</p><div class=\"flex flex-wrap gap-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -674,7 +674,7 @@ func tagChips(v GameListView) templ.Component {
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(v.Tags)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 179, Col: 101}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 180, Col: 101}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 				if templ_7745c5c3_Err != nil {
@@ -749,7 +749,7 @@ func tagChip(t TagFilterChip) templ.Component {
 		var templ_7745c5c3_Var26 templ.SafeURL
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(t.Href))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 199, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 200, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -775,7 +775,7 @@ func tagChip(t TagFilterChip) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.ResolveAttributeValue(t.Label + tagStateText(t.State))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 201, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 202, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var28)
 		if templ_7745c5c3_Err != nil {
@@ -811,7 +811,7 @@ func tagChip(t TagFilterChip) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(t.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 209, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 210, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -824,7 +824,7 @@ func tagChip(t TagFilterChip) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(t.Count))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 210, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 211, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -870,14 +870,14 @@ func ratingCell(x2 int) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if x2 > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "<span class=\"text-accent\" aria-label=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "<span class=\"text-accent\" role=\"img\" aria-label=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.ResolveAttributeValue(ratingText(x2))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 226, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 227, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var32)
 			if templ_7745c5c3_Err != nil {
@@ -890,7 +890,7 @@ func ratingCell(x2 int) templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(starsText(x2))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 226, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 227, Col: 84}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -903,7 +903,7 @@ func ratingCell(x2 int) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(ratingNumber(x2))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 227, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 228, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
@@ -1045,7 +1045,7 @@ func gamesTable(rows []GameRow) templ.Component {
 			templ_7745c5c3_Var39 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "<div class=\"panel hidden overflow-hidden md:block\"><table class=\"w-full text-left text-sm\"><thead class=\"border-b border-line\"><tr class=\"label bg-raised/60\"><th scope=\"col\" class=\"px-4 py-2 font-semibold\">Game</th><th scope=\"col\" class=\"px-2 py-2 font-semibold\">Play / Dev</th><th scope=\"col\" class=\"px-2 py-2 font-semibold\">Last played → latest</th><th scope=\"col\" class=\"px-2 py-2 font-semibold\">Rating</th><th scope=\"col\" class=\"px-4 py-2 text-right font-semibold\">Updated</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "<div class=\"panel hidden overflow-hidden md:block\"><table class=\"w-full text-left text-sm\"><thead class=\"border-b border-line\"><tr class=\"bg-raised/60 text-xs uppercase tracking-wider text-muted\"><th scope=\"col\" class=\"w-full px-4 py-2 font-semibold\">Game</th><th scope=\"col\" class=\"whitespace-nowrap px-2 py-2 font-semibold\">Play / Dev</th><th scope=\"col\" class=\"whitespace-nowrap px-2 py-2 font-semibold\">Last played → latest</th><th scope=\"col\" class=\"px-2 py-2 font-semibold\">Rating</th><th scope=\"col\" class=\"px-4 py-2 text-right font-semibold\">Updated</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1057,7 +1057,7 @@ func gamesTable(rows []GameRow) templ.Component {
 			var templ_7745c5c3_Var40 templ.SafeURL
 			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/games/" + strconv.FormatInt(g.ID, 10)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 271, Col: 71}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 272, Col: 71}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 			if templ_7745c5c3_Err != nil {
@@ -1070,7 +1070,7 @@ func gamesTable(rows []GameRow) templ.Component {
 			var templ_7745c5c3_Var41 string
 			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(g.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 271, Col: 126}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 272, Col: 126}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 			if templ_7745c5c3_Err != nil {
@@ -1096,7 +1096,7 @@ func gamesTable(rows []GameRow) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div></td><td class=\"whitespace-nowrap px-2 py-3\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</div></td><td class=\"px-2 py-3\"><span class=\"flex flex-wrap items-baseline gap-x-1 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1104,7 +1104,7 @@ func gamesTable(rows []GameRow) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "</td><td class=\"whitespace-nowrap px-2 py-3\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "</span></td><td class=\"whitespace-nowrap px-2 py-3\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1120,7 +1120,7 @@ func gamesTable(rows []GameRow) templ.Component {
 				var templ_7745c5c3_Var42 string
 				templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(g.SourceUpdate)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 290, Col: 24}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 293, Col: 24}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 				if templ_7745c5c3_Err != nil {
@@ -1178,7 +1178,7 @@ func gamesStack(rows []GameRow) templ.Component {
 			var templ_7745c5c3_Var44 templ.SafeURL
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/games/" + strconv.FormatInt(g.ID, 10)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 306, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 309, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
@@ -1191,7 +1191,7 @@ func gamesStack(rows []GameRow) templ.Component {
 			var templ_7745c5c3_Var45 string
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(g.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 308, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 311, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -1202,14 +1202,14 @@ func gamesStack(rows []GameRow) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if g.RatingX2 > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "<span class=\"shrink-0 text-xs text-accent\" aria-label=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "<span class=\"shrink-0 text-xs text-accent\" role=\"img\" aria-label=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var46 string
 				templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.ResolveAttributeValue(ratingText(g.RatingX2))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 310, Col: 85}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 313, Col: 96}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var46)
 				if templ_7745c5c3_Err != nil {
@@ -1222,7 +1222,7 @@ func gamesStack(rows []GameRow) templ.Component {
 				var templ_7745c5c3_Var47 string
 				templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(starsText(g.RatingX2))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 310, Col: 111}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/ui/games_list.templ`, Line: 313, Col: 122}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 				if templ_7745c5c3_Err != nil {
@@ -1250,7 +1250,7 @@ func gamesStack(rows []GameRow) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if g.Dev != "" {
-				templ_7745c5c3_Err = Chip(DevChip(g.Dev)).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Chip(devChipLabeled(g.Dev)).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

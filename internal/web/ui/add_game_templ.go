@@ -347,7 +347,7 @@ func addParseChecked(v AddView) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" alt=\"\" referrerpolicy=\"no-referrer\" loading=\"lazy\" class=\"h-28 w-20 rounded object-cover\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" alt=\"\" referrerpolicy=\"no-referrer\" loading=\"lazy\" class=\"h-28 w-20 shrink-0 rounded-md object-cover\" onerror=\"this.remove()\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -365,7 +365,7 @@ func addParseChecked(v AddView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</p><div class=\"mt-1 max-w-md\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</p><div class=\"mt-3 max-w-md\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -397,7 +397,7 @@ func addParseChecked(v AddView) templ.Component {
 			}
 		}
 		if p.DevStatus != "" {
-			templ_7745c5c3_Err = Chip(DevChip(p.DevStatus)).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Chip(devChipLabeled(p.DevStatus)).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

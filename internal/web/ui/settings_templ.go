@@ -634,7 +634,7 @@ func synonymSection(s SynonymsView) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				for _, r := range s.Rows {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<li class=\"border-b border-line/50 last:border-0\"><form class=\"grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-2 sm:grid-cols-[1fr_auto_1fr_8rem_auto_auto]\" method=\"post\" action=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<li class=\"border-b border-line/50 last:border-0\"><form class=\"grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-4 py-2 sm:grid-cols-[1fr_auto_1fr_8rem_auto_auto]\" method=\"post\" action=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

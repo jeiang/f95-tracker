@@ -193,7 +193,7 @@ templ synonymSection(s SynonymsView) {
 						for _, r := range s.Rows {
 							<li class="border-b border-line/50 last:border-0">
 								<form
-									class="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-2 sm:grid-cols-[1fr_auto_1fr_8rem_auto_auto]"
+									class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-4 py-2 sm:grid-cols-[1fr_auto_1fr_8rem_auto_auto]"
 									method="post"
 									action={ "/settings/synonyms/" + strconv.FormatInt(r.ID, 10) }
 									hx-post={ "/settings/synonyms/" + strconv.FormatInt(r.ID, 10) }
