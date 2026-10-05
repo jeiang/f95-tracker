@@ -21,7 +21,7 @@
           src = srcFor pkgs;
 
           # Refresh after any go.mod/go.sum change: `just vendor-hash`.
-          vendorHash = "sha256-tPNFt/uWnPtgIx9zy5r8svWuDLux7WVBq1chofW9R6w=";
+          vendorHash = "sha256-LvtAjr+fFucce09/6s/UkqYrpee/mBAMRPpgKmoLwmU=";
 
           env.CGO_ENABLED = 0;
           subPackages = [ "cmd/f95-tracker" ];
