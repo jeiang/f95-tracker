@@ -62,7 +62,7 @@ func TestResumesExtractingJobAgainstRealTracker(t *testing.T) {
 			bin := t.TempDir()
 			script(t, bin, "7zz", `for a; do case "$a" in -o*) d="${a#-o}";; esac; done
 mkdir -p "$d" && echo x > "$d/game.exe"`)
-			t.Setenv("PATH", bin+":/bin:/usr/bin")
+			t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 			pd := httptest.NewServer(&fakePixeldrain{files: map[string]fakeFile{"abc": {"g.zip", bytes.Repeat([]byte("z"), 100)}}})
 			t.Cleanup(pd.Close)
 			w, err := New(Options{

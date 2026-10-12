@@ -137,7 +137,7 @@ mkdir -p "$d" && echo rar > "$d/game.exe"`)
 echo zip > "$2/game.zip"`)
 	script(t, bin, "gallery-dl", `case "$3" in *bad*) exit 1;; esac
 echo zip > "$2/game.zip"`)
-	t.Setenv("PATH", bin+":/bin:/usr/bin")
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 
 	job.State = "queued"
 	e.tracker = &fakeTracker{jobs: []api.Job{job}, state: "queued"}
