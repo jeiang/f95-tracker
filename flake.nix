@@ -13,6 +13,9 @@
       ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
 
+      # Refresh after any go.mod/go.sum change: `just vendor-hash`.
+      vendorHash = "sha256-1solfQ/SUkguN8O7LWTi/UI/n1zWbwmy/s8vlyif4fc=";
+
       mkPackage =
         pkgs:
         pkgs.buildGoModule {
@@ -20,8 +23,7 @@
           version = "0.0.0";
           src = srcFor pkgs;
 
-          # Refresh after any go.mod/go.sum change: `just vendor-hash`.
-          vendorHash = "sha256-1solfQ/SUkguN8O7LWTi/UI/n1zWbwmy/s8vlyif4fc=";
+          inherit vendorHash;
 
           env.CGO_ENABLED = 0;
           subPackages = [ "cmd/f95-tracker" ];
@@ -47,6 +49,28 @@
           meta = {
             description = "Personal tracker for F95Zone games";
             mainProgram = "f95-tracker";
+          };
+        };
+
+      mkDownloader =
+        pkgs:
+        pkgs.buildGoModule {
+          pname = "f95-downloader";
+          version = "0.0.0";
+          src = srcFor pkgs;
+          inherit vendorHash;
+
+          env.CGO_ENABLED = 0;
+          subPackages = [ "cmd/f95-downloader" ];
+          ldflags = [
+            "-s"
+            "-w"
+            "-X main.version=${self.shortRev or self.dirtyShortRev or "dirty"}"
+          ];
+
+          meta = {
+            description = "Download worker for F95 Tracker";
+            mainProgram = "f95-downloader";
           };
         };
 
@@ -94,10 +118,12 @@
       packages = forAllSystems (
         system: pkgs: {
           default = mkPackage pkgs;
+          downloader = mkDownloader pkgs;
         }
       );
 
       nixosModules.default = import ./nix/module.nix self;
+      nixosModules.downloader = import ./nix/downloader.nix self;
 
       devShells = forAllSystems (
         system: pkgs: {
@@ -167,6 +193,10 @@
           vm-test = import ./nix/vm-test.nix {
             inherit pkgs;
             module = self.nixosModules.default;
+          };
+          downloader-vm-test = import ./nix/downloader-vm-test.nix {
+            inherit pkgs;
+            module = self.nixosModules.downloader;
           };
         }
       );
