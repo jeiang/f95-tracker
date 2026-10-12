@@ -87,7 +87,7 @@ in
       wantedBy = [ "multi-user.target" ];
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
-      path = [ pkgs.megacmd pkgs.gallery-dl pkgs._7zz ];
+      path = [ pkgs.megacmd pkgs.gallery-dl pkgs.unar pkgs._7zz ];
       environment = {
         HOME = cfg.stateDir;
         F95_DOWNLOADER_TRACKER_URL = cfg.trackerUrl;

@@ -108,13 +108,12 @@ func (p *fakePixeldrain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type env struct {
-	t        *testing.T
-	games    string
-	state    string
-	tracker  *fakeTracker
-	pd       *fakePixeldrain
-	worker   *Worker
-	trackURL string
+	t       *testing.T
+	games   string
+	state   string
+	tracker *fakeTracker
+	pd      *fakePixeldrain
+	worker  *Worker
 }
 
 func script(t *testing.T, dir, name, body string) {
