@@ -12,6 +12,26 @@ func reviewAction(id int64, suffix string) string {
 	return "/games/" + strconv.FormatInt(id, 10) + "/review" + suffix
 }
 
+// bulkVerdictData gives a verdict to every present tag that has none yet, and
+// can take back exactly the tags its last action set.
+const bulkVerdictData = `{
+	last: [],
+	unmarked(list) {
+		const names = [...new Set([...list.querySelectorAll('input[type=radio]')].map(i => i.name))];
+		return names.filter(n => !list.querySelector('input[name="' + n + '"]:checked'));
+	},
+	mark(v) {
+		const list = this.$root.nextElementSibling;
+		this.last = this.unmarked(list);
+		this.last.forEach(n => { list.querySelector('input[name="' + n + '"][value="' + v + '"]').checked = true; });
+	},
+	undo() {
+		const list = this.$root.nextElementSibling;
+		this.last.forEach(n => list.querySelectorAll('input[name="' + n + '"]').forEach(i => { i.checked = false; }));
+		this.last = [];
+	},
+}`
+
 templ TagReviewPage(v ReviewView) {
 	<a href={ gameHref(v.GameID) } class="text-sm text-muted hover:text-ink">← { v.GameName }</a>
 	<h1 class="mt-2 text-2xl font-semibold">Tag review</h1>
@@ -32,6 +52,16 @@ templ TagReviewPage(v ReviewView) {
 					if len(v.Present) == 0 {
 						<p class="px-4 py-3 text-sm text-muted">No present tags need a verdict.</p>
 					} else {
+						<div
+							x-data={ bulkVerdictData }
+							x-cloak
+							class="flex flex-wrap items-center gap-2 border-b border-line/60 px-4 py-2"
+						>
+							<span class="text-xs text-muted">Unmarked tags:</span>
+							<button type="button" class="btn btn-sm" @click="mark('correct')">All correct</button>
+							<button type="button" class="btn btn-sm" @click="mark('wrong')">All wrong</button>
+							<button type="button" class="btn btn-sm btn-ghost" x-show="last.length" @click="undo()">Undo (<span x-text="last.length"></span>)</button>
+						</div>
 						<ul class="divide-y divide-line/60">
 							for _, t := range v.Present {
 								@reviewRow(t, "Correct", "correct", "Wrong", "wrong")
