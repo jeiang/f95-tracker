@@ -104,6 +104,31 @@ templ GameDetailPage(v GameDetailView) {
 						<h2 class="label mb-2 mt-5">Rating</h2>
 						@HalfStars(HalfStarsProps{RatingX2: v.RatingX2, Action: gameURL(v.ID, "/rating"), Attrs: hxDetail(gameURL(v.ID, "/rating"))})
 					</section>
+					<section id="download-panel" class="panel px-4 py-4" aria-labelledby="h-download">
+						<h2 id="h-download" class="label mb-3">Download</h2>
+						if v.Download.Version == "" {
+							<p class="text-sm text-muted">No version is known yet, so there is nothing to download.</p>
+						} else {
+							<div class="flex flex-wrap items-center gap-2">
+								<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/download")) }>
+									<button type="submit" class="btn btn-primary btn-sm">Download { v.Download.Version }</button>
+								</form>
+								if v.Download.JobHref != "" {
+									<a href={ templ.SafeURL(v.Download.JobHref) } class="text-sm text-accent underline-offset-2 hover:underline">{ downloadStateLabel(v.Download.JobState) } →</a>
+								}
+							</div>
+						}
+						<form method="post" action={ templ.SafeURL(gameURL(v.ID, "/platform-pref")) } class="mt-4 flex items-center gap-2" { hxChange(gameURL(v.ID, "/platform-pref"))... }>
+							<label for="platform-pref" class="text-sm">Platform</label>
+							<select id="platform-pref" name="platform_pref" class="field w-auto">
+								<option value="" selected?={ v.Download.PlatformPref == "" }>Default ({ PlatformPrefLabel(v.Download.DefaultPref) })</option>
+								for _, o := range PlatformPrefs {
+									<option value={ o.Value } selected?={ v.Download.PlatformPref == o.Value }>{ o.Label }</option>
+								}
+							</select>
+							<noscript><button class="btn btn-sm" type="submit">Save</button></noscript>
+						</form>
+					</section>
 					@templ.Fragment("play-log") {
 						<section id="play-log" class="panel px-4 py-4" aria-labelledby="h-log">
 							<h2 id="h-log" class="label">Play log</h2>

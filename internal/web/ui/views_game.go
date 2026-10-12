@@ -35,6 +35,8 @@ type GameDetailView struct {
 	RefreshMsg    string // result of the last Refresh from Source
 	RefreshFailed bool
 
+	Download DownloadPanel
+
 	Play       domain.PlayStatus
 	PlayAlerts bool
 	RatingX2   int

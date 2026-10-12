@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -12,21 +11,17 @@ import (
 )
 
 // requireSession guards every route except the open ones (R-AUTH-5): /healthz,
-// /auth/* and /static/*. It wraps the whole mux, so routes added later are
-// protected without doing anything.
+// /auth/*, /static/* and /api/* (bearer tokens, internal/api). It wraps the whole mux, so
+// routes added later are protected without doing anything.
 func (s *Server) requireSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
-		if p == "/healthz" || strings.HasPrefix(p, "/auth/") || strings.HasPrefix(p, "/static/") || s.auth.Authenticated(r) {
+		if p == "/healthz" || strings.HasPrefix(p, "/auth/") || strings.HasPrefix(p, "/static/") || strings.HasPrefix(p, "/api/") || s.auth.Authenticated(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
 		w.Header().Add("Vary", "HX-Request")
 		switch {
-		case strings.HasPrefix(p, "/api/"):
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized", "message": "Sign in required."})
 		case r.Header.Get("HX-Request") == "true":
 			w.Header().Set("HX-Redirect", "/auth/login")
 			w.WriteHeader(http.StatusOK)

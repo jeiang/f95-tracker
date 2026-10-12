@@ -13,6 +13,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/db/sqlcgen"
 	"github.com/jeiang/f95-tracker/internal/domain"
+	"github.com/jeiang/f95-tracker/internal/downloads"
 	"github.com/jeiang/f95-tracker/internal/tags"
 	"github.com/jeiang/f95-tracker/internal/web/ui"
 )
@@ -78,6 +79,23 @@ func (s *Server) buildGameDetail(ctx context.Context, id int64, note detailNote)
 		GenreText: p.GenreText.String, RefreshMsg: note.msg, RefreshFailed: note.failed,
 		Play: domain.PlayStatus(d.Game.PlayStatus), PlayAlerts: d.Alerting, RatingX2: int(d.Game.RatingX2.Int64),
 		MarkVersion: p.LatestVersion.String, MarkDate: clock.Date(s.clock.Now()),
+	}
+	set, err := s.games.Settings(ctx)
+	if err != nil {
+		return v, err
+	}
+	v.Download = ui.DownloadPanel{Version: p.LatestVersion.String, PlatformPref: d.Game.PlatformPref.String, DefaultPref: string(set.PlatformPref)}
+	if p.LatestVersion.Valid {
+		switch job, err := s.store.Queries().GetOpenDownloadJob(ctx, sqlcgen.GetOpenDownloadJobParams{GameID: id, TargetVersion: p.LatestVersion.String}); {
+		case err == nil:
+			v.Download.JobState = job.State
+			v.Download.JobHref = "/downloads"
+			if downloads.State(job.State) == downloads.AwaitingLinks {
+				v.Download.JobHref = "/downloads/" + strconv.FormatInt(job.ID, 10) + "/links"
+			}
+		case !errors.Is(err, sql.ErrNoRows):
+			return v, err
+		}
 	}
 	if d.Game.CoverPath.Valid {
 		v.Cover = fmt.Sprintf("/covers/%d?v=%s", id, url.QueryEscape(d.Game.CoverFetchedAt.String))

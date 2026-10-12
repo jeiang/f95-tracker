@@ -15,5 +15,7 @@ func (s *Server) routes() http.Handler {
 	s.reviewRoutes(mux)
 	s.importRoutes(mux)
 	s.settingsRoutes(mux)
+	s.downloadRoutes(mux)
+	s.apiRoutes(mux)
 	return mux
 }

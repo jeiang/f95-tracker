@@ -17,6 +17,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/db"
 	"github.com/jeiang/f95-tracker/internal/db/sqlcgen"
 	"github.com/jeiang/f95-tracker/internal/domain"
+	"github.com/jeiang/f95-tracker/internal/downloads"
 	"github.com/jeiang/f95-tracker/internal/f95"
 	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/notify"
@@ -63,7 +64,7 @@ func newSetEnv(t *testing.T, mods ...func(*f95.Options)) *setEnv {
 	cfg.NtfyURL, cfg.NtfyTopic = e.ntfy.URL, "f95-test"
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	s := New(Deps{Store: store, Clock: clk, Log: log, Config: cfg, Auth: auth.New(cfg, store, clk, log),
-		Games: e.games, Tags: e.tags, F95: client, Notify: notify.New(store, clk, notify.Options{URL: e.ntfy.URL, Topic: "f95-test"})})
+		Games: e.games, Tags: e.tags, F95: client, Tokens: auth.NewTokens(store, clk), Downloads: downloads.New(store, clk, nil), Notify: notify.New(store, clk, notify.Options{URL: e.ntfy.URL, Topic: "f95-test"})})
 	e.h, e.cookie = signedIn(t, s, oidc)
 	return e
 }

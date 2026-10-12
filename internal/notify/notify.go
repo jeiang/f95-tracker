@@ -97,9 +97,9 @@ func (n *Notifier) CookieInvalid(ctx context.Context) error {
 	}
 	return n.immediate(ctx, "cookie_invalid", "F95 cookie invalid",
 		"The F95 cookie was rejected. Paste a fresh one in Settings.",
-		func(q *sqlcgen.Queries, now string) (bool, int64, error) {
+		func(q *sqlcgen.Queries, now string) (bool, int64, int64, error) {
 			rows, err := q.ClaimCookieInvalidAlert(ctx, sql.NullString{String: now, Valid: true})
-			return rows == 1, 0, err
+			return rows == 1, 0, 0, err
 		})
 }
 
@@ -111,27 +111,27 @@ func (n *Notifier) SourceUnavailable(ctx context.Context, sourceID int64, gameNa
 	}
 	return n.immediate(ctx, "source_unavailable", "Source unavailable",
 		fmt.Sprintf("%s is no longer available at its Source and is excluded from checks.", gameName),
-		func(q *sqlcgen.Queries, _ string) (bool, int64, error) {
+		func(q *sqlcgen.Queries, _ string) (bool, int64, int64, error) {
 			info, err := q.GetSourceNotifyInfo(ctx, sourceID)
 			if err != nil {
-				return false, 0, err
+				return false, 0, 0, err
 			}
 			done, err := q.SourceUnavailableAlerted(ctx, sqlcgen.SourceUnavailableAlertedParams{
 				GameID: nullID(info.GameID), CreatedAt: info.UnavailableAt.String,
 			})
-			return !done, info.GameID, err
+			return !done, info.GameID, 0, err
 		})
 }
 
 // immediate runs claim in a tx; when it grants the push, the row (and game
 // item) is written in that same tx, then the push is sent and settled.
-func (n *Notifier) immediate(ctx context.Context, kind, event, body string, claim func(q *sqlcgen.Queries, now string) (ok bool, gameID int64, err error)) error {
+func (n *Notifier) immediate(ctx context.Context, kind, event, body string, claim func(q *sqlcgen.Queries, now string) (ok bool, gameID, jobID int64, err error)) error {
 	title := "F95 Tracker: " + event
 	var id int64
 	granted := false
 	err := n.store.WithTx(ctx, func(q *sqlcgen.Queries) error {
 		now := clock.Timestamp(n.clock.Now())
-		ok, gameID, err := claim(q, now)
+		ok, gameID, jobID, err := claim(q, now)
 		if err != nil || !ok {
 			return err
 		}
@@ -140,8 +140,8 @@ func (n *Notifier) immediate(ctx context.Context, kind, event, body string, clai
 			return err
 		}
 		id, granted = row.ID, true
-		if gameID != 0 {
-			return q.InsertNotificationItem(ctx, sqlcgen.InsertNotificationItemParams{NotificationID: id, GameID: nullID(gameID)})
+		if gameID != 0 || jobID != 0 {
+			return q.InsertNotificationItem(ctx, sqlcgen.InsertNotificationItemParams{NotificationID: id, GameID: nullID(gameID), DownloadJobID: nullID(jobID)})
 		}
 		return nil
 	})
@@ -151,6 +151,35 @@ func (n *Notifier) immediate(ctx context.Context, kind, event, body string, clai
 	sendErr := n.post(ctx, message{Title: title, Body: body, Priority: 4})
 	return errors.Join(n.settle(ctx, id, sendErr), sendErr)
 }
+
+// DownloadNeedsYou pushes once per job that needs a human (R-NOTIF-4): it is skipped when a
+// push already covers the job. It does nothing unless the job is currently needs_human.
+func (n *Notifier) DownloadNeedsYou(ctx context.Context, jobID int64) error {
+	if !n.Enabled() {
+		return nil
+	}
+	job, err := n.store.Queries().GetDownloadJob(ctx, jobID)
+	if err != nil {
+		return err
+	}
+	game, err := n.store.Queries().GetGame(ctx, job.GameID)
+	if err != nil {
+		return err
+	}
+	body := fmt.Sprintf("%s %s: %s.", game.Name, job.TargetVersion, job.NeedsHumanReason.String)
+	return n.immediate(ctx, "download_needs_human", "Download needs you", body,
+		func(q *sqlcgen.Queries, _ string) (bool, int64, int64, error) {
+			cur, err := q.GetDownloadJob(ctx, jobID)
+			if err != nil || cur.State != "needs_human" {
+				return false, 0, 0, err
+			}
+			pushed, err := q.DownloadNeedsHumanPushed(ctx, nullID(jobID))
+			return !pushed, job.GameID, jobID, err
+		})
+}
+
+// BaseURL is the tracker's own base URL without a trailing slash.
+func (n *Notifier) BaseURL() string { return strings.TrimRight(n.opts.BaseURL, "/") }
 
 // Test sends a priority-3 test push for Settings and returns the delivery
 // error. The notification table has no kind for tests, so none is recorded.

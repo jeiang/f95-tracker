@@ -18,6 +18,7 @@ const (
 	TabNone         Tab = ""
 	TabGames        Tab = "games"
 	TabQueue        Tab = "queue"
+	TabDownloads    Tab = "downloads"
 	TabAdd          Tab = "add"
 	TabImportReview Tab = "import-review"
 	TabSettings     Tab = "settings"
@@ -49,6 +50,7 @@ func (p PageMeta) navItems() []navItem {
 	items := []navItem{
 		{TabGames, "Games", "/games"},
 		{TabQueue, "Queue", "/queue"},
+		{TabDownloads, "Downloads", "/downloads"},
 		{TabAdd, "Add", "/games/new"},
 	}
 	if p.ShowImportReview {

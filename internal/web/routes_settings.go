@@ -4,12 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/jeiang/f95-tracker/internal/auth"
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/domain"
+	"github.com/jeiang/f95-tracker/internal/downloads"
 	"github.com/jeiang/f95-tracker/internal/f95"
+	"github.com/jeiang/f95-tracker/internal/games"
 	"github.com/jeiang/f95-tracker/internal/tags"
 	"github.com/jeiang/f95-tracker/internal/web/ui"
 )
@@ -27,6 +31,9 @@ func (s *Server) settingsRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /settings/synonyms/{id}/delete", h(s.deleteSynonym))
 	mux.Handle("DELETE /settings/synonyms/{id}", h(s.deleteSynonym))
 	mux.Handle("POST /settings/ntfy/test", h(s.ntfyTest))
+	mux.Handle("POST /settings/downloads", h(s.saveDownloadPrefs))
+	mux.Handle("POST /settings/tokens", h(s.createToken))
+	mux.Handle("POST /settings/tokens/{id}/revoke", h(s.revokeToken))
 }
 
 func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, st settingsState, fragment string) {
@@ -34,6 +41,9 @@ func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, st setti
 	if err != nil {
 		s.respondError(w, r, err)
 		return
+	}
+	if st.token != nil {
+		w.Header().Set("Cache-Control", "no-store") // the page carries a token shown only once
 	}
 	s.render(w, r, ui.Layout(s.pageMeta(r, ui.TabSettings, "Settings"), ui.SettingsPage(v)), fragment)
 }
@@ -225,4 +235,55 @@ func (s *Server) ntfyTest(w http.ResponseWriter, r *http.Request) {
 		st.code, st.ntfyErr = "ntfy-failed", err.Error()
 	}
 	s.settingsDone(w, r, st, "ntfy-status", "ntfy")
+}
+
+// saveDownloadPrefs stores the mirror host order and default platform (R-SET-5).
+func (s *Server) saveDownloadPrefs(w http.ResponseWriter, r *http.Request) {
+	if err := s.parseForm(w, r); err != nil {
+		s.respondError(w, r, err)
+		return
+	}
+	var order []string
+	for _, h := range strings.Split(r.PostFormValue("host_order"), ",") {
+		if h = strings.ToLower(strings.TrimSpace(h)); h != "" {
+			if !slices.Contains(downloads.SupportedHosts, h) {
+				s.respondError(w, r, fmt.Errorf("%w: %q is not a supported host (pixeldrain, mega, gofile)", domain.ErrValidation, h))
+				return
+			}
+			order = append(order, h)
+		}
+	}
+	err := s.games.SetSettings(r.Context(), games.Settings{PlatformPref: domain.PlatformPref(r.PostFormValue("platform_pref")), MirrorHostOrder: order})
+	if err != nil {
+		s.respondError(w, r, err)
+		return
+	}
+	s.settingsDone(w, r, settingsState{code: "downloads-saved"}, "download-prefs", "downloads")
+}
+
+// createToken issues an API token and renders the page that shows its plaintext once. It is a
+// direct response, not a redirect: the plaintext must not travel in a URL or be reloadable.
+func (s *Server) createToken(w http.ResponseWriter, r *http.Request) {
+	if err := s.parseForm(w, r); err != nil {
+		s.respondError(w, r, err)
+		return
+	}
+	plain, tok, err := s.tokens.Create(r.Context(), r.PostFormValue("name"), auth.Scope(r.PostFormValue("scope")))
+	if err != nil {
+		s.respondError(w, r, err)
+		return
+	}
+	s.renderSettings(w, r, settingsState{token: &ui.NewToken{Name: tok.Name, Plaintext: plain}}, "tokens")
+}
+
+func (s *Server) revokeToken(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r, "id")
+	if err == nil {
+		err = s.tokens.Revoke(r.Context(), id)
+	}
+	if err != nil {
+		s.respondError(w, r, err)
+		return
+	}
+	s.settingsDone(w, r, settingsState{code: "token-revoked"}, "tokens", "tokens")
 }
