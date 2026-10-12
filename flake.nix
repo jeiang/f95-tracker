@@ -14,7 +14,7 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
 
       # Refresh after any go.mod/go.sum change: `just vendor-hash`.
-      vendorHash = "sha256-1solfQ/SUkguN8O7LWTi/UI/n1zWbwmy/s8vlyif4fc=";
+      vendorHash = "sha256-hfTmmN35emcpLhQvuVGyDJSfRsXPdVH3lwNivKbl6lc=";
 
       mkPackage =
         pkgs:
