@@ -4,10 +4,12 @@ import "github.com/jeiang/f95-tracker/internal/domain"
 
 // SettingsView is the /settings page model.
 type SettingsView struct {
-	Cookie   CookieView
-	Alert    AlertView
-	Synonyms SynonymsView
-	Ntfy     NtfyView
+	Cookie    CookieView
+	Alert     AlertView
+	Synonyms  SynonymsView
+	Ntfy      NtfyView
+	Downloads DownloadPrefsView
+	Tokens    TokensView
 }
 
 // CookieView is the F95 cookie status. The cookie value itself is never part of it.

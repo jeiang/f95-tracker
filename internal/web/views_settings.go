@@ -21,7 +21,8 @@ type settingsState struct {
 	code      string
 	n, c      int
 	synFilter string
-	ntfyErr   string // htmx only: the delivery error
+	ntfyErr   string       // htmx only: the delivery error
+	token     *ui.NewToken // set only on the response that created it
 }
 
 var cookieResults = map[string][2]string{
@@ -73,6 +74,12 @@ func (s *Server) buildSettings(ctx context.Context, st settingsState) (ui.Settin
 		return v, err
 	}
 	if v.Synonyms, err = s.synonymsView(ctx, st); err != nil {
+		return v, err
+	}
+	if v.Downloads, err = s.downloadPrefsView(ctx, st.code == "downloads-saved"); err != nil {
+		return v, err
+	}
+	if v.Tokens, err = s.tokensView(ctx, st); err != nil {
 		return v, err
 	}
 	v.Ntfy = ui.NtfyView{Enabled: s.notify != nil && s.notify.Enabled(), URL: s.cfg.NtfyURL, Topic: s.cfg.NtfyTopic,
@@ -150,6 +157,33 @@ func (s *Server) synonymsView(ctx context.Context, st settingsState) (ui.Synonym
 		} else {
 			v.Options = append(v.Options, ui.SynonymOption{Value: t.Slug, Label: t.Label})
 		}
+	}
+	return v, nil
+}
+
+func (s *Server) downloadPrefsView(ctx context.Context, saved bool) (ui.DownloadPrefsView, error) {
+	set, err := s.games.Settings(ctx)
+	if err != nil {
+		return ui.DownloadPrefsView{}, err
+	}
+	return ui.DownloadPrefsView{HostOrder: strings.Join(set.MirrorHostOrder, ", "), PlatformPref: string(set.PlatformPref), Saved: saved}, nil
+}
+
+func (s *Server) tokensView(ctx context.Context, st settingsState) (ui.TokensView, error) {
+	toks, err := s.tokens.List(ctx)
+	if err != nil {
+		return ui.TokensView{}, err
+	}
+	v := ui.TokensView{New: st.token}
+	if st.code == "token-revoked" {
+		v.Message = "Token revoked."
+	}
+	for _, t := range toks {
+		row := ui.TokenRow{ID: t.ID, Name: t.Name, Scope: string(t.Scope), Created: minutePart(t.CreatedAt)}
+		if t.LastUsedAt != "" {
+			row.LastUsed = minutePart(t.LastUsedAt) + " UTC"
+		}
+		v.Rows = append(v.Rows, row)
 	}
 	return v, nil
 }

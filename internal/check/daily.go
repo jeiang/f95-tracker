@@ -13,6 +13,7 @@ import (
 	"github.com/jeiang/f95-tracker/internal/clock"
 	"github.com/jeiang/f95-tracker/internal/db"
 	"github.com/jeiang/f95-tracker/internal/db/sqlcgen"
+	"github.com/jeiang/f95-tracker/internal/downloads"
 	"github.com/jeiang/f95-tracker/internal/f95"
 	"github.com/jeiang/f95-tracker/internal/itch"
 	"github.com/jeiang/f95-tracker/internal/notify"
@@ -289,6 +290,11 @@ func (r *Runner) applyAnswers(ctx context.Context, st *runState, batch []sqlcgen
 				return err
 			}
 			if p.Outcome == OutcomeUpdate && s.Alerting == 1 {
+				if _, _, err := downloads.EnsureJob(ctx, q, r.Clock.Now(), downloads.NewJob{
+					GameID: s.GameID, SourceID: s.ID, Version: v, Trigger: downloads.TriggerUpdate, Actor: downloads.ActorTracker,
+				}); err != nil {
+					return err
+				}
 				updates = append(updates, pendingUpdate{s.ID, notify.UpdateItem{
 					GameID: s.GameID, CheckResultID: row.ID, Name: s.GameName, OldVersion: s.ChangeKey.String, NewVersion: v, New: true,
 				}})
@@ -349,6 +355,15 @@ func (r *Runner) itchUpdate(ctx context.Context, st *runState, s sqlcgen.ListChe
 	item := notify.UpdateItem{
 		GameID: s.GameID, CheckResultID: res.CheckResultID, Name: s.GameName, New: true,
 		OldVersion: itchLabel(s.LatestVersion, s.ThreadUpdatedAt), NewVersion: itchLabel(after.LatestVersion, after.ThreadUpdatedAt),
+	}
+	err = r.write(ctx, func(q *sqlcgen.Queries) error {
+		_, _, err := downloads.EnsureJob(ctx, q, r.Clock.Now(), downloads.NewJob{
+			GameID: s.GameID, SourceID: s.ID, Version: item.NewVersion, Trigger: downloads.TriggerUpdate, Actor: downloads.ActorTracker,
+		})
+		return err
+	})
+	if err != nil {
+		return err
 	}
 	// The devlog title is optional: its failure never fails the check (R-ITCH-7).
 	if title, err := r.Itch.DevlogTitle(ctx, s.Url); err != nil {
@@ -582,6 +597,34 @@ func (r *Runner) gameName(ctx context.Context, gameID int64) (string, error) {
 	return g.Name, err
 }
 
+// downloadSections adds the download jobs to the digest: awaiting links (with the paste page
+// link) and needs human under Needs you, unreported done jobs under Finished downloads
+// (R-NOTIF-5/6/7).
+func (r *Runner) downloadSections(ctx context.Context, d *notify.Digest) error {
+	rows, err := r.Store.Queries().ListDigestDownloadJobs(ctx)
+	if err != nil {
+		return err
+	}
+	for _, j := range rows {
+		line := notify.JobLine{JobID: j.ID, GameID: j.GameID, New: j.IsNew == 1}
+		label := j.GameName + " " + j.TargetVersion
+		switch downloads.State(j.State) {
+		case downloads.AwaitingLinks:
+			line.Text = fmt.Sprintf("%s: awaiting links, %s/downloads/%d/links", label, r.Notify.BaseURL(), j.ID)
+			d.NeedsYou.Jobs = append(d.NeedsYou.Jobs, line)
+		case downloads.NeedsHuman:
+			line.Text = fmt.Sprintf("%s: download needs you (%s), %s/downloads", label, j.NeedsHumanReason.String, r.Notify.BaseURL())
+			d.NeedsYou.Jobs = append(d.NeedsYou.Jobs, line)
+		case downloads.Done:
+			if line.New {
+				line.Text = label + ": downloaded"
+				d.FinishedDownloads = append(d.FinishedDownloads, line)
+			}
+		}
+	}
+	return nil
+}
+
 // digest builds and sends the daily digest (R-NOTIF-2, R-NOTIF-5).
 func (r *Runner) digest(ctx context.Context, st *runState) error {
 	d := notify.Digest{RunID: st.id, CheckFailed: st.failed}
@@ -597,6 +640,9 @@ func (r *Runner) digest(ctx context.Context, st *runState) error {
 		return err
 	}
 	d.NeedsYou.TagsToReview = len(queue)
+	if err := r.downloadSections(ctx, &d); err != nil {
+		return err
+	}
 	if _, err := r.Notify.SendDigest(ctx, d); err != nil {
 		r.Log.Warn("digest not delivered", "err", err) // a failed digest is recorded, not retried (R-NOTIF-1)
 	}

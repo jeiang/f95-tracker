@@ -1,0 +1,163 @@
+package ui
+
+import "strconv"
+
+templ DownloadsPage(v DownloadsView) {
+	<h1 class="text-2xl font-semibold">Downloads</h1>
+	<p class="mt-1 text-sm text-muted">Download jobs for your Games. The worker takes a job once it has links; jobs that need you are listed first.</p>
+	@templ.Fragment("download-list") {
+		<div id="download-list">
+			if v.Message != "" {
+				<p class="mt-3 text-sm text-ok" role="status">{ v.Message }</p>
+			}
+			if len(v.Jobs) == 0 {
+				<div class="panel mt-6 px-6 py-8">
+					<p class="font-medium">No download jobs.</p>
+					<p class="mt-1 text-sm text-muted">An Update on a Game that alerts, or the Download button on a Game, creates one.</p>
+				</div>
+			} else {
+				<ul class="mt-6 grid gap-4">
+					for _, j := range v.Jobs {
+						@downloadJob(j)
+					}
+				</ul>
+			}
+		</div>
+	}
+}
+
+templ downloadJob(j DownloadJobRow) {
+	<li class="panel px-4 py-4" id={ "job-" + strconv.FormatInt(j.ID, 10) }>
+		<div class="flex flex-wrap items-center gap-3">
+			<div class="min-w-0 flex-1">
+				<a href={ gameHref(j.GameID) } class="font-medium hover:text-accent">{ j.GameName }</a>
+				<span class="ml-1 font-mono text-sm text-muted">{ j.Version }</span>
+			</div>
+			@Chip(ChipProps{Tone: downloadStateTone(j.State), Text: downloadStateLabel(j.State)})
+		</div>
+		<p class="mt-1 text-xs text-muted">
+			if j.Trigger == "update" {
+				Created by an Update
+			} else {
+				Created by the Download button
+			}
+			· updated { j.Updated }
+			if j.Progress != "" {
+				· { j.Progress }
+			}
+		</p>
+		if j.Reason != "" && j.State == "needs_human" {
+			<p class="mt-2 text-sm text-bad">{ j.Reason }</p>
+		}
+		if j.Result != "" {
+			<p class="mt-2 text-xs text-muted">Saved to <span class="font-mono">{ j.Result }</span></p>
+		}
+		if len(j.Mirrors) > 0 {
+			<ol class="mt-3 divide-y divide-line/50 rounded-md border border-line text-sm">
+				for _, m := range j.Mirrors {
+					<li class="flex flex-wrap items-center gap-2 px-3 py-2">
+						<span class="w-20 shrink-0 font-medium">{ m.Host }</span>
+						if m.Platform != "" {
+							@Chip(ChipProps{Tone: "muted", Text: m.Platform})
+						}
+						<a href={ templ.SafeURL(m.URL) } target="_blank" rel="noopener noreferrer" class="min-w-0 flex-1 truncate font-mono text-xs text-accent hover:underline">{ m.URL }</a>
+						@Chip(ChipProps{Tone: mirrorTone(m), Text: mirrorStateLabels[m.State]})
+						if m.Error != "" {
+							<span class="basis-full text-xs text-bad">{ m.Error }</span>
+						}
+					</li>
+				}
+			</ol>
+		}
+		<div class="mt-3 flex flex-wrap items-center gap-2">
+			if j.CanPaste {
+				@Button(ButtonProps{Small: true, Variant: "primary", Href: jobHref(j.ID, "/links")}) {
+					Paste links
+				}
+			}
+			if j.CanRetry {
+				@jobAction(j.ID, "retry", "Retry", "")
+			}
+			if j.CanDone {
+				@jobAction(j.ID, "done", "Mark done", "")
+			}
+			if j.CanCancel {
+				@jobAction(j.ID, "cancel", "Cancel", "ghost")
+			}
+		</div>
+	</li>
+}
+
+func mirrorTone(m MirrorRow) string {
+	switch m.State {
+	case "failed":
+		return "bad"
+	case "done":
+		return "ok"
+	case "active":
+		return "info"
+	}
+	return "muted"
+}
+
+templ jobAction(id int64, action, label, variant string) {
+	<form method="post" action={ jobHref(id, "/"+action) } hx-post={ jobHref(id, "/"+action) } hx-target="#download-list" hx-swap="outerHTML">
+		@Button(ButtonProps{Small: true, Variant: variant, Type: "submit"}) {
+			{ label }
+		}
+	</form>
+}
+
+templ PasteLinksPage(v PasteLinksView) {
+	<a href="/downloads" class="text-sm text-muted hover:text-ink">← Downloads</a>
+	<h1 class="mt-2 text-2xl font-semibold">Links for { v.GameName }</h1>
+	<p class="mt-1 text-sm text-muted">
+		Version <span class="font-mono text-ink">{ v.Version }</span>. Paste the unmasked download links from F95, one per line. The userscript does this for you on the thread page.
+	</p>
+	if v.State != "awaiting_links" && v.State != "needs_human" {
+		<div class="panel mt-4 px-4 py-3 text-sm">This job is { downloadStateLabel(v.State) }; it is no longer waiting for links.</div>
+	} else {
+		<form method="post" action={ jobHref(v.JobID, "/links") } class="panel mt-4 grid gap-4 px-4 py-4">
+			if v.Error != "" {
+				<div role="alert">
+					@FormError(v.Error)
+				</div>
+			}
+			@Field(FieldProps{
+				ID: "links", Name: "links", Label: "Links", Multiline: true, Rows: 8, Value: v.Links, Required: true,
+				Placeholder: "https://pixeldrain.com/u/abc123 Linux\nhttps://mega.nz/file/xyz#key Win/Linux",
+				Hint:        "Optionally follow a link with its platform (linux, win_linux, win, mac, android) or a label like “Win/Linux”.",
+			})
+			<div>
+				<label for="platform" class="label mb-1">Platform for lines without one</label>
+				<select id="platform" name="platform" class="field w-auto">
+					<option value="" selected?={ v.Platform == "" }>Guess from the label</option>
+					for _, o := range PlatformPrefs {
+						<option value={ o.Value } selected?={ v.Platform == o.Value }>{ o.Label }</option>
+					}
+				</select>
+			</div>
+			<div class="flex items-center gap-3">
+				@Button(ButtonProps{Variant: "primary", Type: "submit"}) {
+					Save links
+				}
+				<span class="text-xs text-muted">Saving replaces the links already on the job.</span>
+			</div>
+		</form>
+	}
+	if len(v.Mirrors) > 0 {
+		<h2 class="label mt-6">Links on the job</h2>
+		<ol class="panel mt-2 divide-y divide-line/50 text-sm">
+			for _, m := range v.Mirrors {
+				<li class="flex flex-wrap items-center gap-2 px-3 py-2">
+					<span class="w-20 shrink-0 font-medium">{ m.Host }</span>
+					if m.Platform != "" {
+						@Chip(ChipProps{Tone: "muted", Text: m.Platform})
+					}
+					<span class="min-w-0 flex-1 truncate font-mono text-xs">{ m.URL }</span>
+					@Chip(ChipProps{Tone: mirrorTone(m), Text: mirrorStateLabels[m.State]})
+				</li>
+			}
+		</ol>
+	}
+}

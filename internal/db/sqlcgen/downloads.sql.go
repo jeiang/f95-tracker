@@ -7,14 +7,114 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
+	"strings"
 )
+
+const countSupportedMirrors = `-- name: CountSupportedMirrors :one
+SELECT COUNT(*) FROM download_mirror WHERE job_id = ? AND supported = 1
+`
+
+func (q *Queries) CountSupportedMirrors(ctx context.Context, jobID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countSupportedMirrors, jobID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUnfailedSupportedMirrors = `-- name: CountUnfailedSupportedMirrors :one
+SELECT COUNT(*) FROM download_mirror WHERE job_id = ? AND supported = 1 AND state <> 'failed'
+`
+
+func (q *Queries) CountUnfailedSupportedMirrors(ctx context.Context, jobID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUnfailedSupportedMirrors, jobID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteDownloadMirrors = `-- name: DeleteDownloadMirrors :exec
+DELETE FROM download_mirror WHERE job_id = ?
+`
+
+func (q *Queries) DeleteDownloadMirrors(ctx context.Context, jobID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteDownloadMirrors, jobID)
+	return err
+}
+
+const downloadJobRow = `-- name: DownloadJobRow :one
+SELECT j.id, j.game_id, j.source_id, j.target_version, j."trigger", j.state, j.needs_human_reason, j.active_mirror_id, j.bytes_done, j.bytes_total, j.result_path, j.created_at, j.updated_at, g.name AS game_name, g.platform_pref AS game_platform_pref
+FROM download_job j JOIN game g ON g.id = j.game_id
+WHERE j.id = ?
+`
+
+type DownloadJobRowRow struct {
+	DownloadJob      DownloadJob
+	GameName         string
+	GamePlatformPref sql.NullString
+}
+
+func (q *Queries) DownloadJobRow(ctx context.Context, id int64) (DownloadJobRowRow, error) {
+	row := q.db.QueryRowContext(ctx, downloadJobRow, id)
+	var i DownloadJobRowRow
+	err := row.Scan(
+		&i.DownloadJob.ID,
+		&i.DownloadJob.GameID,
+		&i.DownloadJob.SourceID,
+		&i.DownloadJob.TargetVersion,
+		&i.DownloadJob.Trigger,
+		&i.DownloadJob.State,
+		&i.DownloadJob.NeedsHumanReason,
+		&i.DownloadJob.ActiveMirrorID,
+		&i.DownloadJob.BytesDone,
+		&i.DownloadJob.BytesTotal,
+		&i.DownloadJob.ResultPath,
+		&i.DownloadJob.CreatedAt,
+		&i.DownloadJob.UpdatedAt,
+		&i.GameName,
+		&i.GamePlatformPref,
+	)
+	return i, err
+}
+
+const downloadNeedsHumanPushed = `-- name: DownloadNeedsHumanPushed :one
+SELECT EXISTS(
+  SELECT 1 FROM notification_item i JOIN notification n ON n.id = i.notification_id
+  WHERE n.kind = 'download_needs_human' AND i.download_job_id = ?
+) AS pushed
+`
+
+func (q *Queries) DownloadNeedsHumanPushed(ctx context.Context, downloadJobID sql.NullInt64) (bool, error) {
+	row := q.db.QueryRowContext(ctx, downloadNeedsHumanPushed, downloadJobID)
+	var pushed bool
+	err := row.Scan(&pushed)
+	return pushed, err
+}
+
+const findThreadGame = `-- name: FindThreadGame :one
+SELECT s.game_id, s.latest_version, s.id AS source_id
+FROM source s WHERE s.kind = 'f95_thread' AND s.external_id = ?
+`
+
+type FindThreadGameRow struct {
+	GameID        int64
+	LatestVersion sql.NullString
+	SourceID      int64
+}
+
+func (q *Queries) FindThreadGame(ctx context.Context, externalID sql.NullString) (FindThreadGameRow, error) {
+	row := q.db.QueryRowContext(ctx, findThreadGame, externalID)
+	var i FindThreadGameRow
+	err := row.Scan(&i.GameID, &i.LatestVersion, &i.SourceID)
+	return i, err
+}
 
 const getDownloadJob = `-- name: GetDownloadJob :one
 
 SELECT id, game_id, source_id, target_version, "trigger", state, needs_human_reason, active_mirror_id, bytes_done, bytes_total, result_path, created_at, updated_at FROM download_job WHERE id = ?
 `
 
-// downloads queries. The owning backlog item adds its queries to this file (see docs/spec/backlog.md).
+// downloads queries (R-DL). Job state changes go through internal/downloads only.
 func (q *Queries) GetDownloadJob(ctx context.Context, id int64) (DownloadJob, error) {
 	row := q.db.QueryRowContext(ctx, getDownloadJob, id)
 	var i DownloadJob
@@ -34,4 +134,594 @@ func (q *Queries) GetDownloadJob(ctx context.Context, id int64) (DownloadJob, er
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getDownloadMirror = `-- name: GetDownloadMirror :one
+SELECT id, job_id, position, host, url, platform, supported, state, error, attempts FROM download_mirror WHERE id = ?
+`
+
+func (q *Queries) GetDownloadMirror(ctx context.Context, id int64) (DownloadMirror, error) {
+	row := q.db.QueryRowContext(ctx, getDownloadMirror, id)
+	var i DownloadMirror
+	err := row.Scan(
+		&i.ID,
+		&i.JobID,
+		&i.Position,
+		&i.Host,
+		&i.Url,
+		&i.Platform,
+		&i.Supported,
+		&i.State,
+		&i.Error,
+		&i.Attempts,
+	)
+	return i, err
+}
+
+const getOpenDownloadJob = `-- name: GetOpenDownloadJob :one
+SELECT id, game_id, source_id, target_version, "trigger", state, needs_human_reason, active_mirror_id, bytes_done, bytes_total, result_path, created_at, updated_at FROM download_job
+WHERE game_id = ? AND target_version = ? AND state NOT IN ('done','cancelled')
+`
+
+type GetOpenDownloadJobParams struct {
+	GameID        int64
+	TargetVersion string
+}
+
+func (q *Queries) GetOpenDownloadJob(ctx context.Context, arg GetOpenDownloadJobParams) (DownloadJob, error) {
+	row := q.db.QueryRowContext(ctx, getOpenDownloadJob, arg.GameID, arg.TargetVersion)
+	var i DownloadJob
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.SourceID,
+		&i.TargetVersion,
+		&i.Trigger,
+		&i.State,
+		&i.NeedsHumanReason,
+		&i.ActiveMirrorID,
+		&i.BytesDone,
+		&i.BytesTotal,
+		&i.ResultPath,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const insertDownloadJob = `-- name: InsertDownloadJob :one
+INSERT INTO download_job (game_id, source_id, target_version, trigger, state, created_at, updated_at)
+VALUES (?, ?, ?, ?, 'awaiting_links', ?, ?) RETURNING id, game_id, source_id, target_version, "trigger", state, needs_human_reason, active_mirror_id, bytes_done, bytes_total, result_path, created_at, updated_at
+`
+
+type InsertDownloadJobParams struct {
+	GameID        int64
+	SourceID      int64
+	TargetVersion string
+	Trigger       string
+	CreatedAt     string
+	UpdatedAt     string
+}
+
+func (q *Queries) InsertDownloadJob(ctx context.Context, arg InsertDownloadJobParams) (DownloadJob, error) {
+	row := q.db.QueryRowContext(ctx, insertDownloadJob,
+		arg.GameID,
+		arg.SourceID,
+		arg.TargetVersion,
+		arg.Trigger,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i DownloadJob
+	err := row.Scan(
+		&i.ID,
+		&i.GameID,
+		&i.SourceID,
+		&i.TargetVersion,
+		&i.Trigger,
+		&i.State,
+		&i.NeedsHumanReason,
+		&i.ActiveMirrorID,
+		&i.BytesDone,
+		&i.BytesTotal,
+		&i.ResultPath,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const insertDownloadMirror = `-- name: InsertDownloadMirror :exec
+INSERT INTO download_mirror (job_id, position, host, url, platform, supported, state)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+`
+
+type InsertDownloadMirrorParams struct {
+	JobID     int64
+	Position  int64
+	Host      string
+	Url       string
+	Platform  sql.NullString
+	Supported int64
+	State     string
+}
+
+func (q *Queries) InsertDownloadMirror(ctx context.Context, arg InsertDownloadMirrorParams) error {
+	_, err := q.db.ExecContext(ctx, insertDownloadMirror,
+		arg.JobID,
+		arg.Position,
+		arg.Host,
+		arg.Url,
+		arg.Platform,
+		arg.Supported,
+		arg.State,
+	)
+	return err
+}
+
+const insertDownloadTransition = `-- name: InsertDownloadTransition :exec
+INSERT INTO download_job_transition (job_id, from_state, to_state, actor, detail, at)
+VALUES (?, ?, ?, ?, ?, ?)
+`
+
+type InsertDownloadTransitionParams struct {
+	JobID     int64
+	FromState sql.NullString
+	ToState   string
+	Actor     string
+	Detail    sql.NullString
+	At        string
+}
+
+func (q *Queries) InsertDownloadTransition(ctx context.Context, arg InsertDownloadTransitionParams) error {
+	_, err := q.db.ExecContext(ctx, insertDownloadTransition,
+		arg.JobID,
+		arg.FromState,
+		arg.ToState,
+		arg.Actor,
+		arg.Detail,
+		arg.At,
+	)
+	return err
+}
+
+const listCancelledDownloadJobIDs = `-- name: ListCancelledDownloadJobIDs :many
+SELECT id FROM download_job WHERE state = 'cancelled' AND updated_at >= ? ORDER BY id
+`
+
+func (q *Queries) ListCancelledDownloadJobIDs(ctx context.Context, updatedAt string) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listCancelledDownloadJobIDs, updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDigestDownloadJobs = `-- name: ListDigestDownloadJobs :many
+SELECT j.id, j.game_id, g.name AS game_name, j.target_version, j.state, j.needs_human_reason,
+  CAST(NOT EXISTS(
+    SELECT 1 FROM notification_item i JOIN notification n ON n.id = i.notification_id
+    WHERE i.download_job_id = j.id AND n.kind = 'digest'
+      AND n.created_at >= COALESCE((SELECT MAX(t.at) FROM download_job_transition t
+                                    WHERE t.job_id = j.id AND t.to_state = j.state), j.created_at)
+  ) AS INTEGER) AS is_new
+FROM download_job j JOIN game g ON g.id = j.game_id
+WHERE j.state IN ('awaiting_links','needs_human','done')
+ORDER BY j.id
+`
+
+type ListDigestDownloadJobsRow struct {
+	ID               int64
+	GameID           int64
+	GameName         string
+	TargetVersion    string
+	State            string
+	NeedsHumanReason sql.NullString
+	IsNew            int64
+}
+
+// Jobs the digest lists (R-NOTIF-6): awaiting links and needs human always (they wait on the user),
+// done only when unreported. is_new = no digest has covered the job since it entered its current state.
+func (q *Queries) ListDigestDownloadJobs(ctx context.Context) ([]ListDigestDownloadJobsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDigestDownloadJobs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDigestDownloadJobsRow
+	for rows.Next() {
+		var i ListDigestDownloadJobsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.GameName,
+			&i.TargetVersion,
+			&i.State,
+			&i.NeedsHumanReason,
+			&i.IsNew,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDownloadJobRows = `-- name: ListDownloadJobRows :many
+SELECT j.id, j.game_id, j.source_id, j.target_version, j."trigger", j.state, j.needs_human_reason, j.active_mirror_id, j.bytes_done, j.bytes_total, j.result_path, j.created_at, j.updated_at, g.name AS game_name, g.platform_pref AS game_platform_pref
+FROM download_job j JOIN game g ON g.id = j.game_id
+WHERE j.state IN (/*SLICE:states*/?)
+ORDER BY j.id
+`
+
+type ListDownloadJobRowsRow struct {
+	DownloadJob      DownloadJob
+	GameName         string
+	GamePlatformPref sql.NullString
+}
+
+func (q *Queries) ListDownloadJobRows(ctx context.Context, states []string) ([]ListDownloadJobRowsRow, error) {
+	query := listDownloadJobRows
+	var queryParams []interface{}
+	if len(states) > 0 {
+		for _, v := range states {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:states*/?", strings.Repeat(",?", len(states))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:states*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDownloadJobRowsRow
+	for rows.Next() {
+		var i ListDownloadJobRowsRow
+		if err := rows.Scan(
+			&i.DownloadJob.ID,
+			&i.DownloadJob.GameID,
+			&i.DownloadJob.SourceID,
+			&i.DownloadJob.TargetVersion,
+			&i.DownloadJob.Trigger,
+			&i.DownloadJob.State,
+			&i.DownloadJob.NeedsHumanReason,
+			&i.DownloadJob.ActiveMirrorID,
+			&i.DownloadJob.BytesDone,
+			&i.DownloadJob.BytesTotal,
+			&i.DownloadJob.ResultPath,
+			&i.DownloadJob.CreatedAt,
+			&i.DownloadJob.UpdatedAt,
+			&i.GameName,
+			&i.GamePlatformPref,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDownloadMirrors = `-- name: ListDownloadMirrors :many
+SELECT id, job_id, position, host, url, platform, supported, state, error, attempts FROM download_mirror WHERE job_id = ? ORDER BY position
+`
+
+func (q *Queries) ListDownloadMirrors(ctx context.Context, jobID int64) ([]DownloadMirror, error) {
+	rows, err := q.db.QueryContext(ctx, listDownloadMirrors, jobID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DownloadMirror
+	for rows.Next() {
+		var i DownloadMirror
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobID,
+			&i.Position,
+			&i.Host,
+			&i.Url,
+			&i.Platform,
+			&i.Supported,
+			&i.State,
+			&i.Error,
+			&i.Attempts,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDownloadMirrorsForJobs = `-- name: ListDownloadMirrorsForJobs :many
+SELECT id, job_id, position, host, url, platform, supported, state, error, attempts FROM download_mirror WHERE job_id IN (/*SLICE:job_ids*/?) ORDER BY job_id, position
+`
+
+func (q *Queries) ListDownloadMirrorsForJobs(ctx context.Context, jobIds []int64) ([]DownloadMirror, error) {
+	query := listDownloadMirrorsForJobs
+	var queryParams []interface{}
+	if len(jobIds) > 0 {
+		for _, v := range jobIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:job_ids*/?", strings.Repeat(",?", len(jobIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:job_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DownloadMirror
+	for rows.Next() {
+		var i DownloadMirror
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobID,
+			&i.Position,
+			&i.Host,
+			&i.Url,
+			&i.Platform,
+			&i.Supported,
+			&i.State,
+			&i.Error,
+			&i.Attempts,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDownloadTransitions = `-- name: ListDownloadTransitions :many
+SELECT id, job_id, from_state, to_state, actor, detail, at FROM download_job_transition WHERE job_id = ? ORDER BY id
+`
+
+func (q *Queries) ListDownloadTransitions(ctx context.Context, jobID int64) ([]DownloadJobTransition, error) {
+	rows, err := q.db.QueryContext(ctx, listDownloadTransitions, jobID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DownloadJobTransition
+	for rows.Next() {
+		var i DownloadJobTransition
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobID,
+			&i.FromState,
+			&i.ToState,
+			&i.Actor,
+			&i.Detail,
+			&i.At,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOpenDownloadJobsForGame = `-- name: ListOpenDownloadJobsForGame :many
+SELECT id, game_id, source_id, target_version, "trigger", state, needs_human_reason, active_mirror_id, bytes_done, bytes_total, result_path, created_at, updated_at FROM download_job WHERE game_id = ? AND state NOT IN ('done','cancelled') ORDER BY id DESC
+`
+
+func (q *Queries) ListOpenDownloadJobsForGame(ctx context.Context, gameID int64) ([]DownloadJob, error) {
+	rows, err := q.db.QueryContext(ctx, listOpenDownloadJobsForGame, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DownloadJob
+	for rows.Next() {
+		var i DownloadJob
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.SourceID,
+			&i.TargetVersion,
+			&i.Trigger,
+			&i.State,
+			&i.NeedsHumanReason,
+			&i.ActiveMirrorID,
+			&i.BytesDone,
+			&i.BytesTotal,
+			&i.ResultPath,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecentDownloadJobRows = `-- name: ListRecentDownloadJobRows :many
+SELECT j.id, j.game_id, j.source_id, j.target_version, j."trigger", j.state, j.needs_human_reason, j.active_mirror_id, j.bytes_done, j.bytes_total, j.result_path, j.created_at, j.updated_at, g.name AS game_name, g.platform_pref AS game_platform_pref
+FROM download_job j JOIN game g ON g.id = j.game_id
+WHERE j.state NOT IN ('done','cancelled') OR j.updated_at >= ?
+ORDER BY (j.state IN ('done','cancelled')), j.id DESC
+`
+
+type ListRecentDownloadJobRowsRow struct {
+	DownloadJob      DownloadJob
+	GameName         string
+	GamePlatformPref sql.NullString
+}
+
+func (q *Queries) ListRecentDownloadJobRows(ctx context.Context, updatedAt string) ([]ListRecentDownloadJobRowsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listRecentDownloadJobRows, updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRecentDownloadJobRowsRow
+	for rows.Next() {
+		var i ListRecentDownloadJobRowsRow
+		if err := rows.Scan(
+			&i.DownloadJob.ID,
+			&i.DownloadJob.GameID,
+			&i.DownloadJob.SourceID,
+			&i.DownloadJob.TargetVersion,
+			&i.DownloadJob.Trigger,
+			&i.DownloadJob.State,
+			&i.DownloadJob.NeedsHumanReason,
+			&i.DownloadJob.ActiveMirrorID,
+			&i.DownloadJob.BytesDone,
+			&i.DownloadJob.BytesTotal,
+			&i.DownloadJob.ResultPath,
+			&i.DownloadJob.CreatedAt,
+			&i.DownloadJob.UpdatedAt,
+			&i.GameName,
+			&i.GamePlatformPref,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resetFailedDownloadMirrors = `-- name: ResetFailedDownloadMirrors :exec
+UPDATE download_mirror SET state = 'pending', error = NULL WHERE job_id = ? AND state = 'failed'
+`
+
+func (q *Queries) ResetFailedDownloadMirrors(ctx context.Context, jobID int64) error {
+	_, err := q.db.ExecContext(ctx, resetFailedDownloadMirrors, jobID)
+	return err
+}
+
+const setDownloadJobProgress = `-- name: SetDownloadJobProgress :exec
+UPDATE download_job SET
+  active_mirror_id = COALESCE(?1, active_mirror_id),
+  bytes_done = COALESCE(?2, bytes_done),
+  bytes_total = COALESCE(?3, bytes_total),
+  result_path = COALESCE(?4, result_path),
+  updated_at = ?5
+WHERE id = ?6
+`
+
+type SetDownloadJobProgressParams struct {
+	ActiveMirrorID sql.NullInt64
+	BytesDone      sql.NullInt64
+	BytesTotal     sql.NullInt64
+	ResultPath     sql.NullString
+	UpdatedAt      string
+	ID             int64
+}
+
+func (q *Queries) SetDownloadJobProgress(ctx context.Context, arg SetDownloadJobProgressParams) error {
+	_, err := q.db.ExecContext(ctx, setDownloadJobProgress,
+		arg.ActiveMirrorID,
+		arg.BytesDone,
+		arg.BytesTotal,
+		arg.ResultPath,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	return err
+}
+
+const setDownloadJobState = `-- name: SetDownloadJobState :exec
+UPDATE download_job SET state = ?, needs_human_reason = ?, updated_at = ? WHERE id = ?
+`
+
+type SetDownloadJobStateParams struct {
+	State            string
+	NeedsHumanReason sql.NullString
+	UpdatedAt        string
+	ID               int64
+}
+
+func (q *Queries) SetDownloadJobState(ctx context.Context, arg SetDownloadJobStateParams) error {
+	_, err := q.db.ExecContext(ctx, setDownloadJobState,
+		arg.State,
+		arg.NeedsHumanReason,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	return err
+}
+
+const setDownloadMirrorState = `-- name: SetDownloadMirrorState :exec
+UPDATE download_mirror SET state = ?, error = ?, attempts = attempts + ? WHERE id = ?
+`
+
+type SetDownloadMirrorStateParams struct {
+	State    string
+	Error    sql.NullString
+	Attempts int64
+	ID       int64
+}
+
+func (q *Queries) SetDownloadMirrorState(ctx context.Context, arg SetDownloadMirrorStateParams) error {
+	_, err := q.db.ExecContext(ctx, setDownloadMirrorState,
+		arg.State,
+		arg.Error,
+		arg.Attempts,
+		arg.ID,
+	)
+	return err
 }

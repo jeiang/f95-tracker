@@ -7,6 +7,7 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const countActiveAPITokens = `-- name: CountActiveAPITokens :one
@@ -65,6 +66,123 @@ func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) ([]byt
 	var data []byte
 	err := row.Scan(&data)
 	return data, err
+}
+
+const getAPITokenByHash = `-- name: GetAPITokenByHash :one
+SELECT id, name, scope, token_hash, created_at, last_used_at, revoked_at FROM api_token WHERE token_hash = ? AND revoked_at IS NULL
+`
+
+func (q *Queries) GetAPITokenByHash(ctx context.Context, tokenHash []byte) (ApiToken, error) {
+	row := q.db.QueryRowContext(ctx, getAPITokenByHash, tokenHash)
+	var i ApiToken
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.TokenHash,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const insertAPIToken = `-- name: InsertAPIToken :one
+INSERT INTO api_token (name, scope, token_hash, created_at) VALUES (?, ?, ?, ?) RETURNING id, name, scope, token_hash, created_at, last_used_at, revoked_at
+`
+
+type InsertAPITokenParams struct {
+	Name      string
+	Scope     string
+	TokenHash []byte
+	CreatedAt string
+}
+
+func (q *Queries) InsertAPIToken(ctx context.Context, arg InsertAPITokenParams) (ApiToken, error) {
+	row := q.db.QueryRowContext(ctx, insertAPIToken,
+		arg.Name,
+		arg.Scope,
+		arg.TokenHash,
+		arg.CreatedAt,
+	)
+	var i ApiToken
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.TokenHash,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const listAPITokens = `-- name: ListAPITokens :many
+SELECT id, name, scope, token_hash, created_at, last_used_at, revoked_at FROM api_token WHERE revoked_at IS NULL ORDER BY id
+`
+
+func (q *Queries) ListAPITokens(ctx context.Context) ([]ApiToken, error) {
+	rows, err := q.db.QueryContext(ctx, listAPITokens)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ApiToken
+	for rows.Next() {
+		var i ApiToken
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Scope,
+			&i.TokenHash,
+			&i.CreatedAt,
+			&i.LastUsedAt,
+			&i.RevokedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const revokeAPIToken = `-- name: RevokeAPIToken :execrows
+UPDATE api_token SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL
+`
+
+type RevokeAPITokenParams struct {
+	RevokedAt sql.NullString
+	ID        int64
+}
+
+func (q *Queries) RevokeAPIToken(ctx context.Context, arg RevokeAPITokenParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, revokeAPIToken, arg.RevokedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const touchAPIToken = `-- name: TouchAPIToken :exec
+UPDATE api_token SET last_used_at = ?1 WHERE id = ?2 AND (last_used_at IS NULL OR last_used_at <= ?3)
+`
+
+type TouchAPITokenParams struct {
+	LastUsedAt   sql.NullString
+	ID           int64
+	LastUsedAt_2 sql.NullString
+}
+
+func (q *Queries) TouchAPIToken(ctx context.Context, arg TouchAPITokenParams) error {
+	_, err := q.db.ExecContext(ctx, touchAPIToken, arg.LastUsedAt, arg.ID, arg.LastUsedAt_2)
+	return err
 }
 
 const upsertSession = `-- name: UpsertSession :exec
