@@ -92,6 +92,12 @@ func (s *Service) SetQualifier(ctx context.Context, gameTagID int64, qualifier s
 	})
 }
 
+// CanRemap reports whether a Game tag with this origin and source phrase can be
+// re-pointed with SetMapping from the UI: it must come from a Genre phrase.
+func CanRemap(origin string, phrase sql.NullString) bool {
+	return phrase.Valid && (origin == OriginGenre || origin == OriginBoth)
+}
+
 // SetMapping re-points a Game tag that came from a Genre phrase to another tag.
 // The row is marked mapping_override, and the phrase is saved as a user Synonym
 // (re-applied to other Games' unverified tags) unless it is a compound "a/b"
@@ -129,6 +135,7 @@ func (s *Service) SetMapping(ctx context.Context, gameTagID int64, target TagRef
 			return nil
 		}
 		res, err = s.saveUserSynonymTx(ctx, q, key, tag.ID)
+		res.Saved = err == nil
 		return err
 	})
 	return res, err

@@ -149,7 +149,7 @@ func (s *Server) buildGameDetail(ctx context.Context, id int64, note detailNote)
 		row := ui.GameTagRow{
 			ID: r.ID, Label: r.TagLabel, Custom: r.TagKind == tags.KindCustom, Qualifier: r.Qualifier,
 			Verification: domain.Verification(r.Verification), Origin: originText[r.Origin], Note: r.ModifierNote.String,
-			Phrase: r.SourcePhrase.String, CanMap: r.SourcePhrase.Valid && (r.Origin == tags.OriginGenre || r.Origin == tags.OriginBoth),
+			Phrase: r.SourcePhrase.String, CanMap: tags.CanRemap(r.Origin, r.SourcePhrase),
 			New: r.IsNew == 1, Promoted: r.Promoted == 1, Removed: r.RemovedAtSourceAt.Valid, F95Only: r.F95Only == 1,
 		}
 		if r.F95Only == 1 && r.Origin != tags.OriginManual {

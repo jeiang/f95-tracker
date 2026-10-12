@@ -25,8 +25,9 @@ type SynonymRow struct {
 
 // ReapplyResult counts what re-applying a Synonym did to existing Games (R-TAG-10).
 type ReapplyResult struct {
-	Repointed int // Game tags moved to a different tag
-	Collapsed int // of those, rows folded into a tag the Game already had
+	Repointed int  // Game tags moved to a different tag
+	Collapsed int  // of those, rows folded into a tag the Game already had
+	Saved     bool // SetMapping only: a user Synonym exists for the phrase (not for compound or slug phrases)
 }
 
 // ListSynonyms returns the Synonym table, optionally filtered by a substring of
