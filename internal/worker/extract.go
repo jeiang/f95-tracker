@@ -77,35 +77,97 @@ func listFiles(dir string) ([]string, error) {
 	return files, err
 }
 
-// install puts the downloaded files into dest: archives are extracted,
-// otherwise the files are moved as-is.
-func install(ctx context.Context, files []string, dest string) error {
+// install puts the downloaded files into dest: archives are extracted into a
+// fresh stage directory, stripped of symlinks (an extracted link pointing
+// outside dest would let a later archive write through it) and merged into
+// dest; otherwise the files are moved as-is. It returns the number of symlinks
+// removed.
+func install(ctx context.Context, files []string, dest, stage string) (int, error) {
 	if len(files) == 0 {
-		return errors.New("download produced no files")
+		return 0, errors.New("download produced no files")
 	}
 	if err := os.MkdirAll(dest, 0o755); err != nil {
-		return err
+		return 0, err
 	}
-	extracted := false
+	var archives []string
+	kinds := map[string]archiveKind{}
 	for _, f := range files {
-		k := archiveEntry(filepath.Base(f))
-		if k == notArchive {
-			continue
+		if k := archiveEntry(filepath.Base(f)); k != notArchive {
+			archives = append(archives, f)
+			kinds[f] = k
 		}
-		extracted = true
-		if err := extract(ctx, k, f, dest); err != nil {
+	}
+	if len(archives) == 0 {
+		for _, f := range files {
+			if err := moveFile(f, filepath.Join(dest, filepath.Base(f))); err != nil {
+				return 0, err
+			}
+		}
+		return 0, nil
+	}
+	if err := os.RemoveAll(stage); err != nil {
+		return 0, err
+	}
+	if err := os.MkdirAll(stage, 0o755); err != nil {
+		return 0, err
+	}
+	defer os.RemoveAll(stage)
+	for _, f := range archives {
+		if err := extract(ctx, kinds[f], f, stage); err != nil {
+			return 0, err
+		}
+	}
+	links, err := stripSymlinks(stage)
+	if err != nil {
+		return links, err
+	}
+	return links, mergeTree(stage, dest)
+}
+
+// stripSymlinks deletes every symlink under root without following any.
+func stripSymlinks(root string) (int, error) {
+	n := 0
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
 			return err
 		}
-	}
-	if extracted {
+		if d.Type()&fs.ModeSymlink != 0 {
+			n++
+			return os.Remove(p)
+		}
 		return nil
-	}
-	for _, f := range files {
-		if err := moveFile(f, filepath.Join(dest, filepath.Base(f))); err != nil {
+	})
+	return n, err
+}
+
+// mergeTree moves src's directories and files into dst, replacing existing
+// files. A symlink already at a destination path is replaced, never followed.
+func mergeTree(src, dst string) error {
+	return filepath.WalkDir(src, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
 			return err
 		}
-	}
-	return nil
+		rel, _ := filepath.Rel(src, p)
+		if rel == "." {
+			return nil
+		}
+		to := filepath.Join(dst, rel)
+		st, lerr := os.Lstat(to)
+		if d.IsDir() {
+			if lerr == nil && !st.IsDir() {
+				if err := os.Remove(to); err != nil {
+					return err
+				}
+			}
+			return os.MkdirAll(to, 0o755)
+		}
+		if lerr == nil && (st.IsDir() || st.Mode()&fs.ModeSymlink != 0) {
+			if err := os.RemoveAll(to); err != nil {
+				return err
+			}
+		}
+		return moveFile(p, to)
+	})
 }
 
 func extract(ctx context.Context, k archiveKind, archive, dest string) error {

@@ -425,3 +425,41 @@ func TestArchiveEntry(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractedSymlinksAreRemoved(t *testing.T) {
+	e := newEnv(t, mkJob("G", "1", mirror(10, 0, "pixeldrain", "https://pixeldrain.com/u/abc", true)))
+	outside := t.TempDir()
+	script(t, filepath.Dir(mustLook(t, "7zz")), "7zz", `for a; do case "$a" in -o*) d="${a#-o}";; esac; done
+mkdir -p "$d/sub" && echo ok > "$d/game.exe"
+ln -s "`+outside+`" "$d/escape"
+ln -s ../../../etc "$d/sub/rel"`)
+	if err := e.worker.RunOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	dest := filepath.Join(e.games, "G", "1")
+	if _, err := os.Stat(filepath.Join(dest, "game.exe")); err != nil {
+		t.Fatal(err)
+	}
+	for _, l := range []string{"escape", "sub/rel"} {
+		if _, err := os.Lstat(filepath.Join(dest, l)); err == nil {
+			t.Fatalf("symlink %s survived", l)
+		}
+	}
+	if ents, _ := os.ReadDir(outside); len(ents) != 0 {
+		t.Fatalf("wrote outside dest: %v", ents)
+	}
+}
+
+func TestUnsafeURLRejectedForExecHosts(t *testing.T) {
+	for _, u := range []string{"https://mega.nz/file/a b", "https://mega.nz/file/a\"b", "https://mega.nz/f\\x", "https://mega.nz/f\nx", "https://mega.nz/f'x"} {
+		e := newEnv(t, mkJob("G", "1", mirror(10, 0, "mega", u, true)))
+		if err := e.worker.RunOnce(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		evs := e.tracker.snapshot()
+		last := evs[len(evs)-1]
+		if last.MirrorState != "failed" || !strings.Contains(last.Error, "url contains") {
+			t.Fatalf("%q: last event %+v", u, last)
+		}
+	}
+}
