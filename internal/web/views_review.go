@@ -58,7 +58,7 @@ func (s *Server) buildReview(ctx context.Context, gameID int64, version string, 
 	}
 	phrases := map[int64]string{}
 	for _, r := range rows {
-		if canMapRow(r.SourcePhrase.Valid, r.Origin) {
+		if tags.CanRemap(r.Origin, r.SourcePhrase) {
 			phrases[r.ID] = r.SourcePhrase.String
 		}
 	}
@@ -90,11 +90,6 @@ func (s *Server) buildReview(ctx context.Context, gameID int64, version string, 
 		v.Other = append(v.Other, reviewItem(t, phrases, posted))
 	}
 	return v, nil
-}
-
-// canMapRow: a Genre-phrase row can be re-pointed to another tag (same rule as game detail).
-func canMapRow(hasPhrase bool, origin string) bool {
-	return hasPhrase && (origin == tags.OriginGenre || origin == tags.OriginBoth)
 }
 
 func (s *Server) buildQueue(ctx context.Context) (ui.QueueView, error) {

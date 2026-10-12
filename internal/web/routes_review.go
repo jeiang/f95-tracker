@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/jeiang/f95-tracker/internal/domain"
+	"github.com/jeiang/f95-tracker/internal/tags"
 	"github.com/jeiang/f95-tracker/internal/web/ui"
 )
 
@@ -166,7 +167,7 @@ func (s *Server) applySynonym(ctx context.Context, gameID, tagID int64, target s
 		if row.ID != tagID {
 			continue
 		}
-		if !canMapRow(row.SourcePhrase.Valid, row.Origin) {
+		if !tags.CanRemap(row.Origin, row.SourcePhrase) {
 			return "", fmt.Errorf("%w: only a tag from the Genre text can become a Synonym", domain.ErrValidation)
 		}
 		ref, err := s.tagRefOf(ctx, target)
@@ -176,6 +177,9 @@ func (s *Server) applySynonym(ctx context.Context, gameID, tagID int64, target s
 		res, err := s.tags.SetMapping(ctx, tagID, ref)
 		if err != nil {
 			return "", err
+		}
+		if !res.Saved {
+			return fmt.Sprintf("“%s” now maps to %s on this Game", row.SourcePhrase.String, ref.Label), nil
 		}
 		return fmt.Sprintf("“%s” is now a Synonym of %s; %d other Games updated", row.SourcePhrase.String, ref.Label, res.Repointed), nil
 	}

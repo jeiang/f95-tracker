@@ -353,3 +353,23 @@ func tagIDByLabel(t *testing.T, e *reviewEnv, game int64, label string) int64 {
 	t.Fatalf("no tag %q", label)
 	return 0
 }
+
+func TestReviewSynonymCompoundPhraseSavesNoSynonym(t *testing.T) {
+	e := newReviewEnv(t)
+	g := e.game("Harm/Ntr")
+	var id int64
+	rows, _ := e.s.tags.GameTags(context.Background(), g)
+	for _, r := range rows {
+		if r.SourcePhrase.Valid {
+			id = r.ID
+		}
+	}
+	rec := e.req("POST", fmt.Sprintf("/games/%d/review/synonym", g), url.Values{"tag": {fmt.Sprint(id)}, "target": {"harem"}}, true)
+	body := rec.Body.String()
+	if rec.Code != 200 || !strings.Contains(body, "now maps to harem on this Game") || strings.Contains(body, "is now a Synonym") {
+		t.Fatalf("status %d body %s", rec.Code, body)
+	}
+	if syns, _ := e.s.tags.ListSynonyms(context.Background(), "harm"); len(syns) != 0 {
+		t.Errorf("synonyms = %+v", syns)
+	}
+}
