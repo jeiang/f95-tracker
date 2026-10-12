@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // Host downloads one resolved mirror URL into dir (created by the caller).
@@ -209,6 +210,12 @@ type execHost struct {
 }
 
 func (h *execHost) Download(ctx context.Context, rawURL, dir string, progress func(done, total int64)) error {
+	// MEGAcmd may re-split its arguments, so refuse anything that could smuggle one.
+	if strings.ContainsFunc(rawURL, func(r rune) bool {
+		return unicode.IsSpace(r) || unicode.IsControl(r) || strings.ContainsRune("\\\"'`", r)
+	}) {
+		return errors.New("url contains whitespace, quotes, backslashes or control characters")
+	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}

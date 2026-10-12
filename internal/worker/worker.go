@@ -80,6 +80,13 @@ func (w *Worker) removeJobFiles(id int64) {
 	for _, m := range matches {
 		os.RemoveAll(m)
 	}
+	os.Remove(w.markerPath(id))
+}
+
+// markerPath records a finished install whose done report may not have
+// reached the tracker; it holds the result path.
+func (w *Worker) markerPath(id int64) string {
+	return filepath.Join(w.incoming, "installed-"+strconv.FormatInt(id, 10))
 }
 
 type trackerErr struct{ error }
@@ -155,6 +162,16 @@ func (r *run) send(ctx context.Context, ev api.Event) (api.Job, error) {
 }
 
 func (r *run) execute(ctx context.Context) error {
+	if r.state == "extracting" {
+		// Left over from a stopped worker. The tracker has no extracting ->
+		// downloading edge: finish if the install completed, else fall through.
+		if b, err := os.ReadFile(r.w.markerPath(r.job.ID)); err == nil {
+			return r.finish(ctx, string(b), nil)
+		}
+		if _, err := r.send(ctx, api.Event{State: "queued"}); err != nil {
+			return err
+		}
+	}
 	if files := r.w.findDropped(r.job.ID); len(files) > 0 {
 		return r.installDropped(ctx, files)
 	}
@@ -229,17 +246,29 @@ func (r *run) tryMirror(ctx context.Context, m api.Mirror) error {
 		return err
 	}
 	dest := r.dest()
-	if err := r.installTo(ctx, files, dest); err != nil {
+	if err := r.installTo(ctx, files, dest, fmt.Sprintf("%d-%d", r.job.ID, m.ID)); err != nil {
 		if ctx.Err() == nil {
 			os.RemoveAll(dir)
 		}
 		return err
 	}
-	r.w.removeJobFiles(r.job.ID)
-	_, err = r.send(ctx, api.Event{State: "done", MirrorID: &m.ID, MirrorState: "done", ResultPath: dest})
-	if err != nil {
+	return r.finish(ctx, dest, &m.ID)
+}
+
+// finish reports done for an installed result. The marker survives until the
+// tracker has accepted the report.
+func (r *run) finish(ctx context.Context, dest string, mirrorID *int64) error {
+	if err := os.WriteFile(r.w.markerPath(r.job.ID), []byte(dest), 0o644); err != nil {
 		return err
 	}
+	ev := api.Event{State: "done", ResultPath: dest}
+	if mirrorID != nil {
+		ev.MirrorID, ev.MirrorState = mirrorID, "done"
+	}
+	if _, err := r.send(ctx, ev); err != nil {
+		return err
+	}
+	r.w.removeJobFiles(r.job.ID)
 	return nil
 }
 
@@ -248,9 +277,12 @@ func (r *run) dest() string {
 }
 
 // installTo removes a destination it created itself if extraction fails.
-func (r *run) installTo(ctx context.Context, files []string, dest string) error {
+func (r *run) installTo(ctx context.Context, files []string, dest, stageName string) error {
 	_, statErr := os.Stat(dest)
-	err := install(ctx, files, dest)
+	links, err := install(ctx, files, dest, filepath.Join(r.w.incoming, stageName, "x"))
+	if links > 0 {
+		r.w.Log.Warn("removed symlinks from extracted archive", "job", r.job.ID, "count", links)
+	}
 	if err != nil && os.IsNotExist(statErr) {
 		os.RemoveAll(dest)
 	}
@@ -285,7 +317,7 @@ func (r *run) installDropped(ctx context.Context, files []string) error {
 		return err
 	}
 	dest := r.dest()
-	if err := r.installTo(ctx, files, dest); err != nil {
+	if err := r.installTo(ctx, files, dest, fmt.Sprintf("%d-drop", r.job.ID)); err != nil {
 		if ctx.Err() != nil {
 			return err
 		}
@@ -299,6 +331,5 @@ func (r *run) installDropped(ctx context.Context, files []string) error {
 			os.Remove(f)
 		}
 	}
-	_, err := r.send(ctx, api.Event{State: "done", ResultPath: dest})
-	return err
+	return r.finish(ctx, dest, nil)
 }
