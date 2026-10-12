@@ -15,7 +15,7 @@ Status: consolidated from the resolved tickets of map [#1](https://github.com/je
 In scope (Destination of #1): a single-user web app that tracks adult games from F95zone threads plus manual sources (itch.io best-effort, fanbox manual); daily Update check with an ntfy digest; Nix flake + NixOS module; downloader protocol and tracker-side API (#13); one-off CSV import (#10).
 
 Out of scope (#1):
-- All downloader work (tracker-side jobs, JSON API, downloads and paste pages, digest/push download sections, the worker, the userscript): later milestone M6 ([backlog](backlog.md)). v1 ships with no download features; the schema tables exist but stay unused. R-DL is the contract for M6.
+- Nothing from the downloader milestone any more: M6 ([backlog](backlog.md)) is built (tracker-side jobs, JSON API, downloads and paste pages, digest/push download sections, the worker `f95-downloader`, `nixosModules.downloader`, the userscript in `userscript/`). R-DL is its contract.
 - Multi-user support. A JavaScript backend.
 - Not built, because [`data-model.md`](data-model.md) has no column for it: the itch.io `wharf/latest` per-Game channel opt-in mentioned as optional in #7. If wanted later it needs a migration.
 - Using `api.f95checker.dev`, RSS, or `latest_data.php` (#2).
