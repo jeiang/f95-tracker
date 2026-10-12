@@ -8,6 +8,11 @@ type ReviewView struct {
 	Present  []ReviewItem
 	Reviewed []ReviewItem // present tags unchanged since the last completed review (collapsed)
 	Other    []ReviewItem // planned and optional tags
+
+	KnownTags  []string // labels for the Synonym input's datalist
+	Notice     string   // one-line result of the last Synonym action
+	QueuePos   int      // 1-based position in the tags-to-review queue; 0 when not queued
+	QueueTotal int
 }
 
 // ReviewItem is one checklist row. Verdict is the prefilled choice ("" = unset).
@@ -22,6 +27,8 @@ type ReviewItem struct {
 	IsNew           bool
 	Promoted        bool
 	RemovedAtSource bool
+	CanSynonym      bool   // the row came from a Genre phrase and can be re-pointed
+	Phrase          string // that Genre phrase
 }
 
 // MarkedCount is how many Present tags have a prefilled or chosen verdict.

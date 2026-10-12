@@ -241,3 +241,115 @@ func TestReviewHTMXBehaviour(t *testing.T) {
 		t.Errorf("htmx save headers = %v", rec.Header())
 	}
 }
+
+func TestReviewSynonymRepointsKeepsVerdicts(t *testing.T) {
+	e := newReviewEnv(t)
+	g := e.game("Harm, Titfuck, Vore", "harem", "titfuck")
+	other := e.game("Harm")
+	ids := e.tagIDs(g)
+	harmID := tagIDByLabel(t, e, g, "Harm")
+	target := fmt.Sprintf("/games/%d/review/synonym", g)
+	form := url.Values{
+		"tag":                               {fmt.Sprint(harmID)},
+		fmt.Sprintf("target-%d", harmID):    {"harem"},
+		fmt.Sprintf("v-%d", ids["titfuck"]): {"wrong"},
+		fmt.Sprintf("v-%d", ids["vore"]):    {"correct"},
+		"v-99999":                           {"correct"},
+	}
+	rec := e.req("POST", target, form, true)
+	if rec.Code != 200 {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "<html") || !strings.Contains(body, `id="tag-list"`) {
+		t.Error("htmx must get the tag-list fragment")
+	}
+	if !strings.Contains(body, "is now a Synonym of harem; 1 other Games updated") {
+		t.Errorf("no result line in %s", body)
+	}
+	ids = e.tagIDs(g)
+	if checkedVerdict(body, ids["titfuck"]) != "wrong" || checkedVerdict(body, ids["vore"]) != "correct" {
+		t.Error("posted verdicts lost")
+	}
+	rows, _ := e.s.tags.GameTags(context.Background(), other)
+	if len(rows) != 1 || rows[0].TagSlug != "harem" {
+		t.Errorf("other Game's phrase not re-applied: %+v", rows)
+	}
+	syns, _ := e.s.tags.ListSynonyms(context.Background(), "harm")
+	if len(syns) != 1 || syns[0].Origin != "user" {
+		t.Errorf("synonyms = %+v", syns)
+	}
+
+	// No-JS: redirect back with the version kept.
+	g2 := e.game("Harm")
+	rec = e.req("POST", fmt.Sprintf("/games/%d/review/synonym?version=v1", g2), url.Values{"tag": {fmt.Sprint(e.tagIDs(g2)["harem"])}, "target": {"harem"}}, false)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != fmt.Sprintf("/games/%d/review?version=v1", g2) {
+		t.Errorf("no-JS = %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
+func TestReviewSynonymRejectsF95OnlyRow(t *testing.T) {
+	e := newReviewEnv(t)
+	g := e.game("Harem", "harem", "titfuck")
+	ids := e.tagIDs(g)
+	rec := e.req("POST", fmt.Sprintf("/games/%d/review/synonym", g), url.Values{"tag": {fmt.Sprint(ids["titfuck"])}, "target": {"harem"}}, true)
+	if rec.Code != http.StatusUnprocessableEntity || rec.Header().Get("HX-Retarget") != "#error-slot" {
+		t.Errorf("F95-only row = %d %v", rec.Code, rec.Header())
+	}
+	rec = e.req("POST", fmt.Sprintf("/games/%d/review/synonym", g), url.Values{"tag": {fmt.Sprint(ids["harem"])}, "target": {" "}}, true)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("empty target = %d", rec.Code)
+	}
+}
+
+func TestReviewSaveAndNext(t *testing.T) {
+	e := newReviewEnv(t)
+	a := e.game("Harem, Titfuck")
+	b := e.game("Vore")
+	save := func(g int64, v url.Values, hx bool) *httptest.ResponseRecorder {
+		v.Set("next", "1")
+		return e.req("POST", fmt.Sprintf("/games/%d/review", g), v, hx)
+	}
+	// Partial save of a: it stays queued but next must be b, not a.
+	ids := e.tagIDs(a)
+	rec := save(a, url.Values{fmt.Sprintf("v-%d", ids["harem"]): {"correct"}}, false)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != fmt.Sprintf("/games/%d/review?version=v1", b) {
+		t.Fatalf("next = %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	// htmx: same redirect via header.
+	rec = save(b, url.Values{}, true)
+	if rec.Header().Get("HX-Redirect") != fmt.Sprintf("/games/%d/review?version=v1", a) {
+		t.Fatalf("htmx next = %v", rec.Header())
+	}
+	rec = save(a, url.Values{fmt.Sprintf("v-%d", ids["titfuck"]): {"wrong"}}, false)
+	if rec.Header().Get("Location") != fmt.Sprintf("/games/%d/review?version=v1", b) {
+		t.Fatalf("next = %q", rec.Header().Get("Location"))
+	}
+	bids := e.tagIDs(b)
+	rec = save(b, url.Values{fmt.Sprintf("v-%d", bids["vore"]): {"correct"}}, false)
+	if rec.Header().Get("Location") != "/queue" {
+		t.Fatalf("empty queue next = %q", rec.Header().Get("Location"))
+	}
+}
+
+func TestReviewPageQueuePosition(t *testing.T) {
+	e := newReviewEnv(t)
+	e.game("Harem")
+	b := e.game("Vore")
+	body := e.req("GET", fmt.Sprintf("/games/%d/review", b), nil, false).Body.String()
+	if !strings.Contains(body, "2 of 2 in the queue") || !strings.Contains(body, "Save &amp; next") {
+		t.Error("queue position or Save & next missing")
+	}
+}
+
+func tagIDByLabel(t *testing.T, e *reviewEnv, game int64, label string) int64 {
+	t.Helper()
+	rows, _ := e.s.tags.GameTags(context.Background(), game)
+	for _, r := range rows {
+		if r.TagLabel == label {
+			return r.ID
+		}
+	}
+	t.Fatalf("no tag %q", label)
+	return 0
+}

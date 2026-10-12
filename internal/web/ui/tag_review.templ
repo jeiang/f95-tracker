@@ -1,6 +1,9 @@
 package ui
 
-import "strconv"
+import (
+	"net/url"
+	"strconv"
+)
 
 func reviewField(id int64) string { return "v-" + strconv.FormatInt(id, 10) }
 
@@ -10,6 +13,16 @@ func gameHref(id int64) templ.SafeURL {
 
 func reviewAction(id int64, suffix string) string {
 	return "/games/" + strconv.FormatInt(id, 10) + "/review" + suffix
+}
+
+// synonymAction is the Synonym endpoint; the played version rides along so a
+// plain-form redirect lands on the same review page.
+func synonymAction(gameID int64, version string) string {
+	a := reviewAction(gameID, "/synonym")
+	if version != "" {
+		a += "?version=" + url.QueryEscape(version)
+	}
+	return a
 }
 
 // bulkVerdictData gives a verdict to every present tag that has none yet, and
@@ -41,9 +54,20 @@ templ TagReviewPage(v ReviewView) {
 		}
 		Mark each present tag as correct or wrong. Tags in both the Genre text and the F95 list start as correct.
 	</p>
+	if v.QueuePos > 0 {
+		<p class="mt-1 text-sm text-muted">{ strconv.Itoa(v.QueuePos) } of { strconv.Itoa(v.QueueTotal) } in the queue</p>
+	}
 	<form id="review-form" method="post" action={ reviewAction(v.GameID, "") } hx-post={ reviewAction(v.GameID, "") } hx-target="#error-slot" hx-swap="innerHTML" class="mt-6 pb-24">
 		@templ.Fragment("tag-list") {
 			<div id="tag-list">
+				if v.Notice != "" {
+					<p class="mb-4 rounded-md border border-line bg-surface px-4 py-2 text-sm" role="status">{ v.Notice }</p>
+				}
+				<datalist id="known-tags">
+					for _, l := range v.KnownTags {
+						<option value={ l }></option>
+					}
+				</datalist>
 				<section class="panel" aria-labelledby="h-present">
 					<div class="flex items-baseline justify-between border-b border-line px-4 py-3">
 						<h2 id="h-present" class="font-semibold">Present tags</h2>
@@ -64,7 +88,7 @@ templ TagReviewPage(v ReviewView) {
 						</div>
 						<ul class="divide-y divide-line/60">
 							for _, t := range v.Present {
-								@reviewRow(t, "Correct", "correct", "Wrong", "wrong")
+								@reviewRow(v.GameID, v.Version, t, "Correct", "correct", "Wrong", "wrong")
 							}
 						</ul>
 					}
@@ -77,7 +101,7 @@ templ TagReviewPage(v ReviewView) {
 						</summary>
 						<ul class="divide-y divide-line/60 border-t border-line">
 							for _, t := range v.Reviewed {
-								@reviewRow(t, "Correct", "correct", "Wrong", "wrong")
+								@reviewRow(v.GameID, v.Version, t, "Correct", "correct", "Wrong", "wrong")
 							}
 						</ul>
 					</details>
@@ -90,7 +114,7 @@ templ TagReviewPage(v ReviewView) {
 						</summary>
 						<ul class="divide-y divide-line/60 border-t border-line">
 							for _, t := range v.Other {
-								@reviewRow(t, "Now present", "now_present", "Wrong", "wrong")
+								@reviewRow(v.GameID, v.Version, t, "Now present", "now_present", "Wrong", "wrong")
 							}
 						</ul>
 					</details>
@@ -99,17 +123,18 @@ templ TagReviewPage(v ReviewView) {
 		}
 		<div class="fixed inset-x-0 bottom-14 z-40 border-t border-line bg-surface sm:bottom-0">
 			<div class="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
-				<p class="text-xs text-muted">Tags without a verdict stay unverified.</p>
+				<p class="hidden text-xs text-muted sm:block">Tags without a verdict stay unverified.</p>
 				<div class="ml-auto flex gap-2">
-					<button type="submit" class="btn" formaction={ reviewAction(v.GameID, "/skip") } formnovalidate hx-post={ reviewAction(v.GameID, "/skip") } hx-target="#error-slot" hx-swap="innerHTML">Skip for now</button>
-					<button type="submit" class="btn btn-primary">Save review</button>
+					<button type="submit" class="btn" formaction={ reviewAction(v.GameID, "/skip") } formnovalidate hx-post={ reviewAction(v.GameID, "/skip") } hx-target="#error-slot" hx-swap="innerHTML"><span class="sm:hidden">Skip</span><span class="hidden sm:inline">Skip for now</span></button>
+					<button type="submit" class="btn"><span class="sm:hidden">Save</span><span class="hidden sm:inline">Save review</span></button>
+					<button type="submit" class="btn btn-primary" name="next" value="1">Save &amp; next</button>
 				</div>
 			</div>
 		</div>
 	</form>
 }
 
-templ reviewRow(t ReviewItem, firstLabel, firstValue, secondLabel, secondValue string) {
+templ reviewRow(gameID int64, version string, t ReviewItem, firstLabel, firstValue, secondLabel, secondValue string) {
 	<li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
 		<div class="min-w-0 flex-1">
 			<div class="flex flex-wrap items-center gap-2">
@@ -145,5 +170,28 @@ templ reviewRow(t ReviewItem, firstLabel, firstValue, secondLabel, secondValue s
 			},
 			Attrs: templ.Attributes{"aria-label": "Verdict for " + t.Label},
 		})
+		if t.CanSynonym {
+			<details class="basis-full">
+				<summary class="cursor-pointer text-xs text-muted hover:text-ink">Synonym…</summary>
+				<div class="mt-2 grid gap-1">
+					<label class="label" for={ "syn-" + reviewField(t.ID) }>Treat “{ t.Phrase }” as</label>
+					<div class="flex gap-1">
+						<input id={ "syn-" + reviewField(t.ID) } name={ "target-" + strconv.FormatInt(t.ID, 10) } class="field" list="known-tags" autocomplete="off"/>
+						<button
+							type="submit"
+							class="btn btn-sm"
+							name="tag"
+							value={ strconv.FormatInt(t.ID, 10) }
+							formaction={ synonymAction(gameID, version) }
+							formnovalidate
+							hx-post={ synonymAction(gameID, version) }
+							hx-include="#review-form"
+							hx-target="#tag-list"
+							hx-swap="outerHTML"
+						>Save Synonym</button>
+					</div>
+				</div>
+			</details>
+		}
 	</li>
 }
